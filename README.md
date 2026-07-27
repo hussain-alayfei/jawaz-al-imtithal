@@ -92,6 +92,28 @@ npm run test:e2e
 - `npm run test:e2e` يختبر التدفق في المتصفح ويحفظ اللقطات تحت
   `artifacts/e2e/`.
 
+## النشر
+
+الموقع منشور على Vercel: <https://jawaz-al-imtithal.vercel.app>
+
+يبني Vercel المشروع عند كل دفع إلى `main`، ويأخذ إعداداته من
+[`vercel.json`](vercel.json):
+
+- أمر البناء `tsc -b && vite build`، ومجلد المخرجات `dist/client` كما هو محدد
+  في `vite.config.ts`. لا يُشغّل Vercel سكربت `scripts/prepare-sites.mjs`
+  لأنه خاص بمنصة استضافة أخرى.
+- إعادة كتابة كل المسارات إلى `index.html` ليعمل التنقل داخل التطبيق.
+- تخزين مؤقت طويل للأصول المبصومة تحت `/assets/`.
+
+يستثني [`.vercelignore`](.vercelignore) مجلد `test-fixtures` من الرفع، حتى لا
+تصل ملفات IFC الخاصة بالاختبار إلى حزمة الموقع.
+
+للنشر يدويًا من الجهاز:
+
+```bash
+npx vercel deploy --prod
+```
+
 ## ملفات الاختبار
 
 كل ملفات الرفع اليدوي موجودة في [`test-fixtures/`](test-fixtures/README.md).
