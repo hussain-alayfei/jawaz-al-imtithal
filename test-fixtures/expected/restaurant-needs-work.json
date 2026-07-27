@@ -5,11 +5,38 @@
   "spaces": 6,
   "doors": 7,
   "elements": 148,
-  "passed": 7,
-  "failed": 2,
+  "passed": 4,
+  "failed": 5,
   "unknown": 1,
-  "score": 78,
+  "score": 40,
+  "scoreMethod": "passed_over_total",
+  "rulePackVersion": "MIYAR-REST-2026.2",
+  "fixtureKind": "synthetic_semantic_qa",
+  "productionGeometry": false,
+  "syntheticCatalogCategories": [
+    "ARCHITECTURAL_WALL",
+    "FLOOR_SLAB",
+    "EXTERIOR_WINDOW",
+    "STRUCTURAL_COLUMN",
+    "STRUCTURAL_BEAM",
+    "FIXED_FURNITURE",
+    "SAFETY_RAILING",
+    "VERTICAL_CIRCULATION"
+  ],
+  "failedRuleIds": [
+    "REST-SAN-001",
+    "EGRESS-001",
+    "FACADE-MEP-001",
+    "DOOR-WIDTH-001",
+    "ACCESS-ROUTE-001"
+  ],
+  "unknownRuleIds": [
+    "KITCHEN-VENT-001"
+  ],
   "unresolvedRuleIds": [
+    "REST-SAN-001",
+    "EGRESS-001",
+    "FACADE-MEP-001",
     "DOOR-WIDTH-001",
     "ACCESS-ROUTE-001",
     "KITCHEN-VENT-001"

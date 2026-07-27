@@ -1,52 +1,52 @@
 {
-  "contractVersion": "JAWAZ-IFC-1.0",
+  "contractVersion": "MIYAR-IFC-1.0",
   "cases": [
     {
       "activityId": "restaurant",
       "case": "needs-work",
-      "file": "ifc/restaurant/needs-work.ifc",
+      "file": "ifc/restaurant/submission-v1.ifc",
       "expected": "expected/restaurant-needs-work.json"
     },
     {
       "activityId": "restaurant",
       "case": "ready",
-      "file": "ifc/restaurant/ready.ifc",
+      "file": "ifc/restaurant/submission-v2-corrected.ifc",
       "expected": "expected/restaurant-ready.json"
     },
     {
       "activityId": "cafe",
       "case": "needs-work",
-      "file": "ifc/cafe/needs-work.ifc",
+      "file": "ifc/cafe/submission-v1.ifc",
       "expected": "expected/cafe-needs-work.json"
     },
     {
       "activityId": "cafe",
       "case": "ready",
-      "file": "ifc/cafe/ready.ifc",
+      "file": "ifc/cafe/submission-v2-corrected.ifc",
       "expected": "expected/cafe-ready.json"
     },
     {
       "activityId": "clinic",
       "case": "needs-work",
-      "file": "ifc/clinic/needs-work.ifc",
+      "file": "ifc/clinic/submission-v1.ifc",
       "expected": "expected/clinic-needs-work.json"
     },
     {
       "activityId": "clinic",
       "case": "ready",
-      "file": "ifc/clinic/ready.ifc",
+      "file": "ifc/clinic/submission-v2-corrected.ifc",
       "expected": "expected/clinic-ready.json"
     },
     {
       "activityId": "salon",
       "case": "needs-work",
-      "file": "ifc/salon/needs-work.ifc",
+      "file": "ifc/salon/submission-v1.ifc",
       "expected": "expected/salon-needs-work.json"
     },
     {
       "activityId": "salon",
       "case": "ready",
-      "file": "ifc/salon/ready.ifc",
+      "file": "ifc/salon/submission-v2-corrected.ifc",
       "expected": "expected/salon-ready.json"
     }
   ]

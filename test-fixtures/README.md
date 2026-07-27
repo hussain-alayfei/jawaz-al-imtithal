@@ -1,6 +1,6 @@
 # دليل ملفات اختبار IFC
 
-هذا المجلد هو حزمة QA محلية لاختبار خط معالجة «جواز الامتثال» بطريقة
+هذا المجلد هو حزمة QA محلية لاختبار خط معالجة «مِعيار» بطريقة
 قابلة للتكرار. الملفات لا تختار النتيجة باسمها، ولا تحتوي علامة
 `review/ready` تقرر الحكم؛ النتيجة مشتقة من عناصر IFC وخصائصها الفعلية.
 
@@ -28,17 +28,17 @@ test-fixtures/
 │   └── salon-ready.json
 └── ifc/
     ├── restaurant/
-    │   ├── needs-work.ifc
-    │   └── ready.ifc
+    │   ├── submission-v1.ifc
+    │   └── submission-v2-corrected.ifc
     ├── cafe/
-    │   ├── needs-work.ifc
-    │   └── ready.ifc
+    │   ├── submission-v1.ifc
+    │   └── submission-v2-corrected.ifc
     ├── clinic/
-    │   ├── needs-work.ifc
-    │   └── ready.ifc
+    │   ├── submission-v1.ifc
+    │   └── submission-v2-corrected.ifc
     ├── salon/
-    │   ├── needs-work.ifc
-    │   └── ready.ifc
+    │   ├── submission-v1.ifc
+    │   └── submission-v2-corrected.ifc
     └── invalid/
         ├── invalid-envelope.ifc
         ├── unsupported-schema.ifc
@@ -46,6 +46,7 @@ test-fixtures/
         ├── broken-reference.ifc
         ├── no-spaces.ifc
         ├── incomplete-properties.ifc
+        ├── unsupported-contract-version.ifc
         └── activity-mismatch.ifc
 ```
 
@@ -56,31 +57,56 @@ test-fixtures/
 
 ## الملفات الصالحة الثمانية
 
-جميعها تستخدم `IFC4` وعقد الخصائص `JAWAZ-IFC-1.0`.
+جميعها تستخدم `IFC4` وعقد الخصائص `MIYAR-IFC-1.0`.
+إصدارات حزم القواعد الظاهرة في الأدلة والتقرير هي
+`MIYAR-REST-2026.2` و`MIYAR-CAFE-2026.2` و`MIYAR-CLIN-2026.2`
+و`MIYAR-SALON-2026.2`. تظل مصادر القواعد وحدودها موسومة بوضوح بأنها
+تجريبية وغير رسمية.
+
+هذه ملفات QA دلالية اصطناعية وليست هندسة إنتاجية أو مجسمات BIM فعلية.
+العناصر التي تكمل جرد كل ملف موزعة حتميًا بين جدران وبلاطات ونوافذ وأعمدة
+وكمرات وتجهيزات وحواجز وسلالم، ولكل عنصر اسم وفئة دلالية ومنطقة وفهرس
+واسم مجموعة الخصائص `Pset_MiyarSyntheticQA`. يعلن المشروع كذلك
+`FixturePurpose=SYNTHETIC_QA_ONLY` و`ProductionGeometry=false`. لذلك تثبت
+هذه الملفات الاستخراج والقواعد والأعداد، ولا تثبت قراءة شبكة هندسية فعلية.
 
 | النشاط | ملف الرفع | ملف النتيجة المتوقع | المساحات | الأبواب | العناصر | النتيجة المتوقعة |
 |---|---|---|---:|---:|---:|---|
-| مطعم | `ifc/restaurant/needs-work.ifc` | `expected/restaurant-needs-work.json` | 6 | 7 | 148 | 7 مطابق، 2 ملاحظة، 1 غير مكتمل، الدرجة 78 |
-| مطعم | `ifc/restaurant/ready.ifc` | `expected/restaurant-ready.json` | 6 | 7 | 156 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
-| مقهى | `ifc/cafe/needs-work.ifc` | `expected/cafe-needs-work.json` | 6 | 5 | 132 | 7 مطابق، 2 ملاحظة، 1 غير مكتمل، الدرجة 78 |
-| مقهى | `ifc/cafe/ready.ifc` | `expected/cafe-ready.json` | 6 | 5 | 141 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
-| عيادة خارجية | `ifc/clinic/needs-work.ifc` | `expected/clinic-needs-work.json` | 8 | 9 | 204 | 7 مطابق، 2 ملاحظة، 1 غير مكتمل، الدرجة 78 |
-| عيادة خارجية | `ifc/clinic/ready.ifc` | `expected/clinic-ready.json` | 8 | 9 | 216 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
-| صالون تجميل | `ifc/salon/needs-work.ifc` | `expected/salon-needs-work.json` | 7 | 6 | 162 | 7 مطابق، 2 ملاحظة، 1 غير مكتمل، الدرجة 78 |
-| صالون تجميل | `ifc/salon/ready.ifc` | `expected/salon-ready.json` | 7 | 6 | 174 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
+| مطعم | `ifc/restaurant/submission-v1.ifc` | `expected/restaurant-needs-work.json` | 6 | 7 | 148 | 4 مطابق، 5 ملاحظات، 1 غير مكتمل، الدرجة 40 |
+| مطعم | `ifc/restaurant/submission-v2-corrected.ifc` | `expected/restaurant-ready.json` | 6 | 7 | 156 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
+| مقهى | `ifc/cafe/submission-v1.ifc` | `expected/cafe-needs-work.json` | 6 | 5 | 132 | 4 مطابق، 5 ملاحظات، 1 غير مكتمل، الدرجة 40 |
+| مقهى | `ifc/cafe/submission-v2-corrected.ifc` | `expected/cafe-ready.json` | 6 | 5 | 141 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
+| عيادة خارجية | `ifc/clinic/submission-v1.ifc` | `expected/clinic-needs-work.json` | 8 | 9 | 204 | 4 مطابق، 5 ملاحظات، 1 غير مكتمل، الدرجة 40 |
+| عيادة خارجية | `ifc/clinic/submission-v2-corrected.ifc` | `expected/clinic-ready.json` | 8 | 9 | 216 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
+| صالون تجميل | `ifc/salon/submission-v1.ifc` | `expected/salon-needs-work.json` | 7 | 6 | 162 | 4 مطابق، 5 ملاحظات، 1 غير مكتمل، الدرجة 40 |
+| صالون تجميل | `ifc/salon/submission-v2-corrected.ifc` | `expected/salon-ready.json` | 7 | 6 | 174 | 10 مطابق، ولا توجد حالات معلقة، الدرجة 100 |
 
 القواعد غير المحلولة في ملفات `needs-work`:
 
-- المطعم: `DOOR-WIDTH-001` و`ACCESS-ROUTE-001` و`KITCHEN-VENT-001`.
-- المقهى: `CAFE-AISLE-001` و`CAFE-EXIT-WIDTH-001` و`CAFE-DRAIN-001`.
-- العيادة: `CLINIC-DOOR-001` و`CLINIC-HANDWASH-001` و`CLINIC-HVAC-001`.
-- الصالون: `SALON-AISLE-001` و`SALON-CHEM-STORE-001` و`SALON-VENT-001`.
+- المطعم: `REST-SAN-001` و`EGRESS-001` و`FACADE-MEP-001`
+  و`DOOR-WIDTH-001` و`ACCESS-ROUTE-001` ملاحظات مثبتة،
+  و`KITCHEN-VENT-001` معلومات غير مكتملة.
+- المقهى: `CAFE-HANDWASH-001` و`CAFE-SAN-001` و`CAFE-EGRESS-001`
+  و`CAFE-AISLE-001` و`CAFE-EXIT-WIDTH-001` ملاحظات مثبتة،
+  و`CAFE-DRAIN-001` معلومات غير مكتملة.
+- العيادة: `CLINIC-PRIVACY-001` و`CLINIC-SAN-001`
+  و`CLINIC-EGRESS-001` و`CLINIC-DOOR-001` و`CLINIC-HANDWASH-001`
+  ملاحظات مثبتة، و`CLINIC-HVAC-001` معلومات غير مكتملة.
+- الصالون: `SALON-PRIVACY-001` و`SALON-WASH-001`
+  و`SALON-EGRESS-001` و`SALON-AISLE-001` و`SALON-CHEM-STORE-001`
+  ملاحظات مثبتة، و`SALON-VENT-001` معلومات غير مكتملة.
 
-في كل مجموعة، أول قاعدتين نتيجتهما **ملاحظة مثبتة**، والثالثة نتيجتها
-**معلومات غير مكتملة**. ملف `ready.ifc` المقابل يضيف أو يصحح الدليل الدلالي
-نفسه، ولذلك تصبح القواعد العشر مطابقة.
+تعتمد الملاحظات على خصائص فعلية مختلفة حسب النشاط: اتصال التجهيزات
+بالخدمات، واتصال المخارج بالخارج، وخصوصية الغرف، وعدد وحدات الغسيل، وعرض
+الأبواب والممرات، وإخفاء خدمات الواجهة، ووجود عناصر التهوية أو الصرف.
+ملف `submission-v2-corrected.ifc` المقابل يصحح الدليل الدلالي نفسه، ولذلك
+تصبح القواعد العشر مطابقة.
 
-## ملفات الأخطاء السبعة
+يحسب المؤشر بطريقة واحدة معلنة:
+`عدد القواعد المطابقة ÷ 10 × 100`. لا تحصل «معلومات غير مكتملة» على نقاط؛
+لذلك تعطي 4 قواعد مطابقة من 10 مؤشرًا قدره 40.
+
+## ملفات الأخطاء الثمانية
 
 هذه الملفات مقصودة لاختبار أن العملية تتوقف عند المرحلة الصحيحة. لا تتوقع
 منها تقرير جاهزية.
@@ -93,6 +119,7 @@ test-fixtures/
 | `invalid/broken-reference.ifc` | مطعم | التحقق من بنية IFC | `BROKEN_REFERENCE` | سجل يشير إلى معرّف غير موجود |
 | `invalid/no-spaces.ifc` | مطعم | استخراج المساحات والعناصر | `NO_SPACES` | لا توجد مساحة `IfcSpace` قابلة للفحص |
 | `invalid/incomplete-properties.ifc` | مطعم | فحص اكتمال البيانات | `SEMANTIC_CONTRACT_MISSING` | إصدار عقد الخصائص الدلالي المطلوب غير موجود |
+| `invalid/unsupported-contract-version.ifc` | مطعم | فحص اكتمال البيانات | `UNSUPPORTED_CONTRACT_VERSION` | الملف يعلن `MIYAR-IFC-9.9` بدل الإصدار المدعوم `MIYAR-IFC-1.0` |
 | `invalid/activity-mismatch.ifc` | **عيادة خارجية** | فحص اكتمال البيانات | `ACTIVITY_MISMATCH` | الملف يعرّف نفسه كمطعم بينما النشاط المختار عيادة |
 
 ملاحظة مهمة: `activity-mismatch.ifc` مبني من ملف مطعم صالح. يجب اختيار
@@ -123,8 +150,8 @@ test-fixtures/
    القواعد بملف JSON المحدد في عمود **ملف النتيجة المتوقع**.
 9. افتح كل ملاحظة وتأكد من وجود GUID ومرجع STEP وعنصر توضيحي مرتبط عند توفر
    الدليل، ثم افتح تقرير الجاهزية وتحقق من بصمة الملف وإصدار حزمة القواعد.
-10. اختبر ملف `ready.ifc` للنشاط نفسه، ثم استخدم **إعادة الفحص** أو ابدأ
-    فحصًا جديدًا للحالة التالية.
+10. اختبر ملف `submission-v2-corrected.ifc` للنشاط نفسه، ثم استخدم
+    **إعادة الفحص** أو ابدأ فحصًا جديدًا للحالة التالية.
 
 لاختبار ملفات `invalid/`، اتبع الخطوات نفسها. يجب أن تتوقف العملية عند
 المرحلة الموضحة في الجدول، وتعرض رمز الخطأ وسببه، ولا تنتقل إلى تقرير أو
@@ -148,11 +175,11 @@ npm run test:e2e
 - بصمة `SHA-256`.
 - اكتمال المراحل الست.
 - وجود GUID لكل نتيجة مرتبطة داخل النموذج المستخرج.
-- توقف ملفات الأخطاء السبعة عند مراحلها الفعلية.
+- توقف ملفات الأخطاء الثمانية عند مراحلها الفعلية.
 
 ## معنى «100%» في هذه الحزمة
 
-يمكن القول إن النظام يحقق **100% من النتائج المتوقعة لهذه الملفات الخمسة
+يمكن القول إن النظام يحقق **100% من النتائج المتوقعة لهذه الملفات الستة
 عشر ولهذا الإصدار من عقد الاختبار والقواعد** عندما تنجح الاختبارات كلها.
 هذا لا يعني دقة 100% لكل ملف IFC في العالم، ولا اعتماد الاشتراطات الرسمية،
 ولا موافقة البلدية. توسيع النطاق يحتاج ملفات IFC حقيقية متنوعة، ومراجع

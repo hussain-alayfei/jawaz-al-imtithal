@@ -9,5 +9,21 @@
   "failed": 0,
   "unknown": 0,
   "score": 100,
+  "scoreMethod": "passed_over_total",
+  "rulePackVersion": "MIYAR-SALON-2026.2",
+  "fixtureKind": "synthetic_semantic_qa",
+  "productionGeometry": false,
+  "syntheticCatalogCategories": [
+    "ARCHITECTURAL_WALL",
+    "FLOOR_SLAB",
+    "EXTERIOR_WINDOW",
+    "STRUCTURAL_COLUMN",
+    "STRUCTURAL_BEAM",
+    "FIXED_FURNITURE",
+    "SAFETY_RAILING",
+    "VERTICAL_CIRCULATION"
+  ],
+  "failedRuleIds": [],
+  "unknownRuleIds": [],
   "unresolvedRuleIds": []
 }

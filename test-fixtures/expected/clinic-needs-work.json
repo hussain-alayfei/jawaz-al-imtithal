@@ -5,11 +5,38 @@
   "spaces": 8,
   "doors": 9,
   "elements": 204,
-  "passed": 7,
-  "failed": 2,
+  "passed": 4,
+  "failed": 5,
   "unknown": 1,
-  "score": 78,
+  "score": 40,
+  "scoreMethod": "passed_over_total",
+  "rulePackVersion": "MIYAR-CLIN-2026.2",
+  "fixtureKind": "synthetic_semantic_qa",
+  "productionGeometry": false,
+  "syntheticCatalogCategories": [
+    "ARCHITECTURAL_WALL",
+    "FLOOR_SLAB",
+    "EXTERIOR_WINDOW",
+    "STRUCTURAL_COLUMN",
+    "STRUCTURAL_BEAM",
+    "FIXED_FURNITURE",
+    "SAFETY_RAILING",
+    "VERTICAL_CIRCULATION"
+  ],
+  "failedRuleIds": [
+    "CLINIC-PRIVACY-001",
+    "CLINIC-SAN-001",
+    "CLINIC-EGRESS-001",
+    "CLINIC-DOOR-001",
+    "CLINIC-HANDWASH-001"
+  ],
+  "unknownRuleIds": [
+    "CLINIC-HVAC-001"
+  ],
   "unresolvedRuleIds": [
+    "CLINIC-PRIVACY-001",
+    "CLINIC-SAN-001",
+    "CLINIC-EGRESS-001",
     "CLINIC-DOOR-001",
     "CLINIC-HANDWASH-001",
     "CLINIC-HVAC-001"

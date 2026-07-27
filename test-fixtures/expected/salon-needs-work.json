@@ -5,11 +5,38 @@
   "spaces": 7,
   "doors": 6,
   "elements": 162,
-  "passed": 7,
-  "failed": 2,
+  "passed": 4,
+  "failed": 5,
   "unknown": 1,
-  "score": 78,
+  "score": 40,
+  "scoreMethod": "passed_over_total",
+  "rulePackVersion": "MIYAR-SALON-2026.2",
+  "fixtureKind": "synthetic_semantic_qa",
+  "productionGeometry": false,
+  "syntheticCatalogCategories": [
+    "ARCHITECTURAL_WALL",
+    "FLOOR_SLAB",
+    "EXTERIOR_WINDOW",
+    "STRUCTURAL_COLUMN",
+    "STRUCTURAL_BEAM",
+    "FIXED_FURNITURE",
+    "SAFETY_RAILING",
+    "VERTICAL_CIRCULATION"
+  ],
+  "failedRuleIds": [
+    "SALON-PRIVACY-001",
+    "SALON-WASH-001",
+    "SALON-EGRESS-001",
+    "SALON-AISLE-001",
+    "SALON-CHEM-STORE-001"
+  ],
+  "unknownRuleIds": [
+    "SALON-VENT-001"
+  ],
   "unresolvedRuleIds": [
+    "SALON-PRIVACY-001",
+    "SALON-WASH-001",
+    "SALON-EGRESS-001",
     "SALON-AISLE-001",
     "SALON-CHEM-STORE-001",
     "SALON-VENT-001"

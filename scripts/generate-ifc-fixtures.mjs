@@ -11,6 +11,7 @@ const fixtureDirectory = path.join(projectDirectory, "test-fixtures");
 const configurations = {
   restaurant: {
     prefix: "R",
+    ruleVersion: "MIYAR-REST-2026.2",
     counts: { spaces: 6, doors: 7, review: 148, ready: 156 },
     spaces: [
       ["DINING", "منطقة الطعام", "SPACE-DINING", false],
@@ -29,14 +30,20 @@ const configurations = {
       ["UTILITY", "باب المنافع", "D-UTILITY-01"],
       ["ENTRANCE", "باب المدخل", "D-ENTRANCE-01"],
     ],
-    issueRuleIds: [
+    failedRuleIds: [
+      "REST-SAN-001",
+      "EGRESS-001",
+      "FACADE-MEP-001",
       "DOOR-WIDTH-001",
       "ACCESS-ROUTE-001",
+    ],
+    unknownRuleIds: [
       "KITCHEN-VENT-001",
     ],
   },
   cafe: {
     prefix: "C",
+    ruleVersion: "MIYAR-CAFE-2026.2",
     counts: { spaces: 6, doors: 5, review: 132, ready: 141 },
     spaces: [
       ["SEATING", "منطقة الجلوس", "CAFE-SPACE-SEATING", false],
@@ -53,14 +60,20 @@ const configurations = {
       ["WC", "باب دورة المياه", "CAFE-D-WC-01"],
       ["ENTRANCE", "باب المدخل", "CAFE-D-ENTRANCE-01"],
     ],
-    issueRuleIds: [
+    failedRuleIds: [
+      "CAFE-HANDWASH-001",
+      "CAFE-SAN-001",
+      "CAFE-EGRESS-001",
       "CAFE-AISLE-001",
       "CAFE-EXIT-WIDTH-001",
+    ],
+    unknownRuleIds: [
       "CAFE-DRAIN-001",
     ],
   },
   clinic: {
     prefix: "L",
+    ruleVersion: "MIYAR-CLIN-2026.2",
     counts: { spaces: 8, doors: 9, review: 204, ready: 216 },
     spaces: [
       ["RECEPTION", "الاستقبال", "CLINIC-SPACE-RECEPTION", false],
@@ -83,14 +96,20 @@ const configurations = {
       ["RECEPTION", "باب الاستقبال", "CLINIC-D-RECEPTION-01"],
       ["ENTRANCE", "باب المدخل", "CLINIC-D-ENTRANCE-01"],
     ],
-    issueRuleIds: [
+    failedRuleIds: [
+      "CLINIC-PRIVACY-001",
+      "CLINIC-SAN-001",
+      "CLINIC-EGRESS-001",
       "CLINIC-DOOR-001",
       "CLINIC-HANDWASH-001",
+    ],
+    unknownRuleIds: [
       "CLINIC-HVAC-001",
     ],
   },
   salon: {
     prefix: "S",
+    ruleVersion: "MIYAR-SALON-2026.2",
     counts: { spaces: 7, doors: 6, review: 162, ready: 174 },
     spaces: [
       ["RECEPTION", "الاستقبال", "SALON-SPACE-RECEPTION", false],
@@ -109,15 +128,95 @@ const configurations = {
       ["SERVICE", "باب الخدمة", "SALON-D-SERVICE-01"],
       ["ENTRANCE", "باب المدخل", "SALON-D-ENTRANCE-01"],
     ],
-    issueRuleIds: [
+    failedRuleIds: [
+      "SALON-PRIVACY-001",
+      "SALON-WASH-001",
+      "SALON-EGRESS-001",
       "SALON-AISLE-001",
       "SALON-CHEM-STORE-001",
+    ],
+    unknownRuleIds: [
       "SALON-VENT-001",
     ],
   },
 };
 
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
+
+const syntheticProductCatalog = [
+  {
+    type: "IFCWALL",
+    category: "ARCHITECTURAL_WALL",
+    arabicName: "جدار معماري",
+    predefinedType: ".NOTDEFINED.",
+  },
+  {
+    type: "IFCSLAB",
+    category: "FLOOR_SLAB",
+    arabicName: "بلاطة أرضية",
+    predefinedType: ".FLOOR.",
+  },
+  {
+    type: "IFCWINDOW",
+    category: "EXTERIOR_WINDOW",
+    arabicName: "نافذة خارجية",
+    predefinedType: ".WINDOW.",
+  },
+  {
+    type: "IFCCOLUMN",
+    category: "STRUCTURAL_COLUMN",
+    arabicName: "عمود إنشائي",
+    predefinedType: ".COLUMN.",
+  },
+  {
+    type: "IFCBEAM",
+    category: "STRUCTURAL_BEAM",
+    arabicName: "كمرة إنشائية",
+    predefinedType: ".BEAM.",
+  },
+  {
+    type: "IFCFURNISHINGELEMENT",
+    category: "FIXED_FURNITURE",
+    arabicName: "تجهيز ثابت",
+    predefinedType: ".NOTDEFINED.",
+  },
+  {
+    type: "IFCRAILING",
+    category: "SAFETY_RAILING",
+    arabicName: "حاجز سلامة",
+    predefinedType: ".GUARDRAIL.",
+  },
+  {
+    type: "IFCSTAIR",
+    category: "VERTICAL_CIRCULATION",
+    arabicName: "سلم حركة",
+    predefinedType: ".STRAIGHT_RUN_STAIR.",
+  },
+];
+
+function syntheticProductArgs(catalogItem, index) {
+  const paddedIndex = String(index).padStart(3, "0");
+  const common = [
+    "$",
+    quote(`${catalogItem.arabicName} اصطناعي QA ${paddedIndex}`),
+    quote("عنصر دلالي اصطناعي لأغراض اختبار مِعيار فقط"),
+    quote(catalogItem.category),
+    "$",
+    "$",
+    quote(`SYNTH-QA-${catalogItem.category}-${paddedIndex}`),
+  ];
+  if (catalogItem.type === "IFCWINDOW") {
+    return [
+      ...common,
+      "1.50",
+      "1.20",
+      catalogItem.predefinedType,
+      ".SINGLE_PANEL.",
+      "$",
+    ];
+  }
+  return [...common, catalogItem.predefinedType];
+}
 
 function fixtureFor(activityId, scenario) {
   const configuration = configurations[activityId];
@@ -192,7 +291,7 @@ function fixtureFor(activityId, scenario) {
 
   const project = addRoot(
     "IFCPROJECT",
-    ["$", quote(`Jawaz ${activityId} fixture`), "$", "$", "$", "$", "$", "$"],
+    ["$", quote(`Miyar ${activityId} fixture`), "$", "$", "$", "$", "$", "$"],
     undefined,
     false,
   );
@@ -205,6 +304,10 @@ function fixtureFor(activityId, scenario) {
 
   const spaceEntities = new Map();
   for (const [role, name, viewerElementId, isEnclosed] of configuration.spaces) {
+    const isDeliberatelyOpen =
+      scenario === "review" &&
+      ((activityId === "clinic" && role === "EXAM_2") ||
+        (activityId === "salon" && role === "TREATMENT"));
     const space = addRoot(
       "IFCSPACE",
       [
@@ -222,11 +325,11 @@ function fixtureFor(activityId, scenario) {
       role,
     );
     spaceEntities.set(role, space);
-    addPropertySet(space.id, "Pset_JawazSpace", {
+    addPropertySet(space.id, "Pset_MiyarSpace", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       NetFloorArea: 20 + spaceEntities.size * 4,
-      IsEnclosed: isEnclosed,
+      IsEnclosed: isDeliberatelyOpen ? false : isEnclosed,
     });
   }
 
@@ -262,14 +365,15 @@ function fixtureFor(activityId, scenario) {
       ],
       role,
     );
-    addPropertySet(door.id, "Pset_JawazDoor", {
+    addPropertySet(door.id, "Pset_MiyarDoor", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       ServesSpaceGuid:
         spaceEntities.get(role)?.guid ??
         spaceEntities.get(configuration.spaces[0][0])?.guid ??
         "",
-      ConnectsToExterior: role === "EXIT" || role === "ENTRANCE",
+      ConnectsToExterior:
+        role === "ENTRANCE" || (role === "EXIT" && scenario === "ready"),
     });
   }
 
@@ -286,7 +390,7 @@ function fixtureFor(activityId, scenario) {
       ["$", quote(name), "$", quote(role), "$", "$", quote(`TAG-${role}`), "$"],
       role,
     );
-    addPropertySet(element.id, "Pset_JawazEquipment", {
+    addPropertySet(element.id, "Pset_MiyarEquipment", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       ServedSpaceGuid: spaceEntities.get(servedRole)?.guid ?? "",
@@ -301,7 +405,7 @@ function fixtureFor(activityId, scenario) {
     name: "تجهيز صحي",
     viewerElementId: `${configuration.prefix}-SANITARY-01`,
     servedRole: "WC",
-    properties: { HasServiceConnection: true },
+    properties: { HasServiceConnection: scenario === "ready" },
   });
 
   if (activityId === "restaurant") {
@@ -310,7 +414,7 @@ function fixtureFor(activityId, scenario) {
       name: "الواجهة الرئيسية",
       viewerElementId: "FACADE-MAIN",
       servedRole: "DINING",
-      properties: { ServicesConcealed: true },
+      properties: { ServicesConcealed: scenario === "ready" },
     });
     semanticElement({
       role: "ACCESS_ROUTE",
@@ -340,7 +444,7 @@ function fixtureFor(activityId, scenario) {
       name: "حوض التحضير",
       viewerElementId: "CAFE-SINK-BAR-01",
       servedRole: "PREP",
-      properties: { HasServiceConnection: true },
+      properties: { HasServiceConnection: scenario === "ready" },
     });
     semanticElement({
       role: "COUNTER_AISLE",
@@ -383,7 +487,8 @@ function fixtureFor(activityId, scenario) {
   }
 
   if (activityId === "salon") {
-    for (let index = 1; index <= 2; index += 1) {
+    const washStationCount = scenario === "ready" ? 2 : 1;
+    for (let index = 1; index <= washStationCount; index += 1) {
       semanticElement({
         type: "IFCFLOWTERMINAL",
         role: "HAIR_WASH_STATION",
@@ -423,21 +528,30 @@ function fixtureFor(activityId, scenario) {
   }
 
   const targetProducts = configuration.counts[scenario];
+  let syntheticCatalogIndex = 1;
   while (products.length < targetProducts) {
-    addRoot(
-      "IFCBUILDINGELEMENTPROXY",
-      [
-        "$",
-        quote(`عنصر نموذجي ${products.length + 1}`),
-        "$",
-        quote("MODEL_ELEMENT"),
-        "$",
-        "$",
-        quote(`FILLER-${products.length + 1}`),
-        "$",
-      ],
+    const catalogItem =
+      syntheticProductCatalog[
+        (syntheticCatalogIndex - 1) % syntheticProductCatalog.length
+      ];
+    const zone =
+      configuration.spaces[
+        (syntheticCatalogIndex - 1) % configuration.spaces.length
+      ][0];
+    const syntheticProduct = addRoot(
+      catalogItem.type,
+      syntheticProductArgs(catalogItem, syntheticCatalogIndex),
       undefined,
     );
+    addPropertySet(syntheticProduct.id, "Pset_MiyarSyntheticQA", {
+      SemanticCategory: catalogItem.category,
+      ZoneCode: zone,
+      CatalogIndex: syntheticCatalogIndex,
+      SyntheticQA: true,
+      ProductionGeometry: false,
+      GeometryStatus: "SEMANTIC_ONLY_NO_PRODUCTION_GEOMETRY",
+    });
+    syntheticCatalogIndex += 1;
   }
   if (products.length !== targetProducts) {
     throw new Error(
@@ -445,7 +559,7 @@ function fixtureFor(activityId, scenario) {
     );
   }
 
-  addPropertySet(project.id, "Pset_JawazProject", {
+  addPropertySet(project.id, "Pset_MiyarProject", {
     ActivityCode: activityId,
     LengthUnit: "METRE",
     GrossArea:
@@ -464,15 +578,18 @@ function fixtureFor(activityId, scenario) {
           : activityId === "clinic"
             ? 36
             : 28,
-    FixtureContractVersion: "JAWAZ-IFC-1.0",
+    FixtureContractVersion: "MIYAR-IFC-1.0",
+    FixturePurpose: "SYNTHETIC_QA_ONLY",
+    ProductionGeometry: false,
+    GeometryStatus: "SEMANTIC_ONLY_NO_PRODUCTION_GEOMETRY",
     ArchitecturalEquipmentComplete: true,
     MEPModelComplete: scenario === "ready",
   });
 
   const header = `ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('Jawaz deterministic semantic fixture'),'2;1');
-FILE_NAME('${activityId}-semantic-model.ifc','2026-07-27T00:00:00',('Jawaz QA'),('Jawaz'),'Codex','Jawaz','');
+FILE_DESCRIPTION(('Miyar synthetic deterministic QA fixture; semantic only; not production geometry'),'2;1');
+FILE_NAME('${activityId}-semantic-model.ifc','2026-07-27T00:00:00',('Miyar QA'),('Miyar'),'Codex','Miyar','');
 FILE_SCHEMA(('IFC4'));
 ENDSEC;
 DATA;`;
@@ -490,12 +607,25 @@ DATA;`;
       spaces: configuration.counts.spaces,
       doors: configuration.counts.doors,
       elements: targetProducts,
-      passed: scenario === "ready" ? 10 : 7,
-      failed: scenario === "ready" ? 0 : 2,
+      passed: scenario === "ready" ? 10 : 4,
+      failed: scenario === "ready" ? 0 : 5,
       unknown: scenario === "ready" ? 0 : 1,
-      score: scenario === "ready" ? 100 : 78,
+      score: scenario === "ready" ? 100 : 40,
+      scoreMethod: "passed_over_total",
+      rulePackVersion: configuration.ruleVersion,
+      fixtureKind: "synthetic_semantic_qa",
+      productionGeometry: false,
+      syntheticCatalogCategories: syntheticProductCatalog.map(
+        (item) => item.category,
+      ),
+      failedRuleIds:
+        scenario === "ready" ? [] : configuration.failedRuleIds,
+      unknownRuleIds:
+        scenario === "ready" ? [] : configuration.unknownRuleIds,
       unresolvedRuleIds:
-        scenario === "ready" ? [] : configuration.issueRuleIds,
+        scenario === "ready"
+          ? []
+          : [...configuration.failedRuleIds, ...configuration.unknownRuleIds],
     },
   };
 }
@@ -512,7 +642,10 @@ for (const activityId of Object.keys(configurations)) {
     recursive: true,
   });
   for (const scenario of ["review", "ready"]) {
-    const fileName = scenario === "review" ? "needs-work.ifc" : "ready.ifc";
+    const fileName =
+      scenario === "review"
+        ? "submission-v1.ifc"
+        : "submission-v2-corrected.ifc";
     const fixture = fixtureFor(activityId, scenario);
     const relativePath = `ifc/${activityId}/${fileName}`;
     generated.set(`${activityId}-${scenario}`, fixture.text);
@@ -562,13 +695,15 @@ await writeFile(
   path.join(fixtureDirectory, "ifc", "invalid", "broken-reference.ifc"),
   restaurantReady.replace(
     "IFCBUILDINGELEMENTPROXY(",
-    "IFCBUILDINGELEMENTPROXY(#999,",
+    "IFCBUILDINGELEMENTPROXY(#999999,",
   ),
   "utf8",
 );
 await writeFile(
   path.join(fixtureDirectory, "ifc", "invalid", "no-spaces.ifc"),
-  restaurantReady.replaceAll("IFCSPACE(", "IFCBUILDINGELEMENTPROXY("),
+  restaurantReady
+    .replaceAll("IFCSPACE(", "IFCFURNISHINGELEMENT(")
+    .replaceAll("Pset_MiyarSpace", "Pset_MiyarEquipment"),
   "utf8",
 );
 await writeFile(
@@ -580,6 +715,16 @@ await writeFile(
   "utf8",
 );
 await writeFile(
+  path.join(
+    fixtureDirectory,
+    "ifc",
+    "invalid",
+    "unsupported-contract-version.ifc",
+  ),
+  restaurantReady.replace("MIYAR-IFC-1.0", "MIYAR-IFC-9.9"),
+  "utf8",
+);
+await writeFile(
   path.join(fixtureDirectory, "ifc", "invalid", "activity-mismatch.ifc"),
   restaurantReady,
   "utf8",
@@ -587,10 +732,10 @@ await writeFile(
 
 await writeFile(
   path.join(fixtureDirectory, "manifest.json"),
-  `${JSON.stringify({ contractVersion: "JAWAZ-IFC-1.0", cases: manifest }, null, 2)}\n`,
+  `${JSON.stringify({ contractVersion: "MIYAR-IFC-1.0", cases: manifest }, null, 2)}\n`,
   "utf8",
 );
 
 process.stdout.write(
-  `Generated ${manifest.length} valid IFC fixtures and 7 invalid fixtures.\n`,
+  `Generated ${manifest.length} valid IFC fixtures and 8 invalid fixtures.\n`,
 );

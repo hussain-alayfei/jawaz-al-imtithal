@@ -5,11 +5,38 @@
   "spaces": 6,
   "doors": 5,
   "elements": 132,
-  "passed": 7,
-  "failed": 2,
+  "passed": 4,
+  "failed": 5,
   "unknown": 1,
-  "score": 78,
+  "score": 40,
+  "scoreMethod": "passed_over_total",
+  "rulePackVersion": "MIYAR-CAFE-2026.2",
+  "fixtureKind": "synthetic_semantic_qa",
+  "productionGeometry": false,
+  "syntheticCatalogCategories": [
+    "ARCHITECTURAL_WALL",
+    "FLOOR_SLAB",
+    "EXTERIOR_WINDOW",
+    "STRUCTURAL_COLUMN",
+    "STRUCTURAL_BEAM",
+    "FIXED_FURNITURE",
+    "SAFETY_RAILING",
+    "VERTICAL_CIRCULATION"
+  ],
+  "failedRuleIds": [
+    "CAFE-HANDWASH-001",
+    "CAFE-SAN-001",
+    "CAFE-EGRESS-001",
+    "CAFE-AISLE-001",
+    "CAFE-EXIT-WIDTH-001"
+  ],
+  "unknownRuleIds": [
+    "CAFE-DRAIN-001"
+  ],
   "unresolvedRuleIds": [
+    "CAFE-HANDWASH-001",
+    "CAFE-SAN-001",
+    "CAFE-EGRESS-001",
     "CAFE-AISLE-001",
     "CAFE-EXIT-WIDTH-001",
     "CAFE-DRAIN-001"

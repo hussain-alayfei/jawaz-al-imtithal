@@ -6,6 +6,42 @@ import {
 } from "./types";
 
 const SUPPORTED_SCHEMAS = new Set(["IFC4", "IFC4X3", "IFC4X3_ADD2"]);
+const CHARACTER_CHUNK = 64 * 1024;
+const ENTITY_CHUNK = 500;
+
+type ParseOptions = {
+  signal?: AbortSignal;
+  onProgress?: (
+    progress: number,
+    detail: string,
+    evidence?: Record<string, string | number | boolean>,
+  ) => void;
+};
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+}
+
+async function yieldToMainThread(signal?: AbortSignal) {
+  await new Promise<void>((resolve) => {
+    if (typeof globalThis.requestAnimationFrame === "function") {
+      globalThis.requestAnimationFrame(() => resolve());
+      return;
+    }
+    globalThis.setTimeout(resolve, 0);
+  });
+  throwIfAborted(signal);
+}
+
+async function reportPhase(
+  progress: number,
+  detail: string,
+  options: ParseOptions,
+  evidence: Record<string, string | number | boolean>,
+) {
+  options.onProgress?.(progress, detail, evidence);
+  await yieldToMainThread(options.signal);
+}
 
 function splitTopLevel(value: string): string[] {
   const values: string[] = [];
@@ -45,11 +81,15 @@ function splitTopLevel(value: string): string[] {
   return values;
 }
 
-function splitRecords(data: string): string[] {
+async function splitRecords(
+  data: string,
+  options: ParseOptions,
+): Promise<string[]> {
   const records: string[] = [];
   let current = "";
   let inString = false;
   let collecting = false;
+  let nextYield = CHARACTER_CHUNK;
 
   for (let index = 0; index < data.length; index += 1) {
     const character = data[index];
@@ -60,23 +100,33 @@ function splitRecords(data: string): string[] {
         collecting = true;
         current = character;
       }
-      continue;
-    }
-
-    current += character;
-    if (character === "'") {
-      if (inString && next === "'") {
-        current += next;
-        index += 1;
-        continue;
+    } else {
+      current += character;
+      if (character === "'") {
+        if (inString && next === "'") {
+          current += next;
+          index += 1;
+        } else {
+          inString = !inString;
+        }
       }
-      inString = !inString;
+
+      if (character === ";" && !inString) {
+        records.push(current.trim());
+        current = "";
+        collecting = false;
+      }
     }
 
-    if (character === ";" && !inString) {
-      records.push(current.trim());
-      current = "";
-      collecting = false;
+    if (index >= nextYield) {
+      const fraction = data.length ? index / data.length : 1;
+      options.onProgress?.(
+        0.15 + fraction * 0.35,
+        `قراءة قسم DATA: ${Math.round(fraction * 100)}%`,
+        { scannedCharacters: index, discoveredRecords: records.length },
+      );
+      nextYield += CHARACTER_CHUNK;
+      await yieldToMainThread(options.signal);
     }
   }
 
@@ -121,12 +171,13 @@ function parseRecord(raw: string): StepEntity {
   return { stepId, type, args, raw, references };
 }
 
-async function sha256(value: string): Promise<{
+async function sha256(bytes: Uint8Array): Promise<{
   hash: string;
   byteLength: number;
 }> {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digestSource = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(digestSource).set(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", digestSource);
   const hash = [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
@@ -135,7 +186,9 @@ async function sha256(value: string): Promise<{
 
 export async function parseStepDocument(
   upload: IfcUpload,
+  options: ParseOptions = {},
 ): Promise<ParsedStepDocument> {
+  throwIfAborted(options.signal);
   if (!upload.name.toLowerCase().endsWith(".ifc")) {
     throw new IfcProcessingError(
       "validate",
@@ -143,14 +196,14 @@ export async function parseStepDocument(
       "الملف غير مدعوم. اختر ملفًا بامتداد .ifc",
     );
   }
-  if (!upload.text.trim()) {
+  if (!upload.bytes.byteLength) {
     throw new IfcProcessingError(
       "validate",
       "EMPTY_FILE",
       "ملف IFC فارغ ولا يحتوي بيانات قابلة للفحص.",
     );
   }
-  if (upload.size > 50 * 1024 * 1024) {
+  if (upload.bytes.byteLength > 50 * 1024 * 1024) {
     throw new IfcProcessingError(
       "validate",
       "FILE_TOO_LARGE",
@@ -158,7 +211,36 @@ export async function parseStepDocument(
     );
   }
 
-  const normalized = upload.text.replace(/^\uFEFF/, "");
+  await reportPhase(
+    0.03,
+    "تم استلام بايتات الملف",
+    options,
+    { byteLength: upload.bytes.byteLength },
+  );
+  let decoded = "";
+  try {
+    decoded = new TextDecoder("utf-8", { fatal: true }).decode(upload.bytes);
+  } catch {
+    throw new IfcProcessingError(
+      "validate",
+      "INVALID_TEXT_ENCODING",
+      "تعذر فك ترميز الملف بوصفه UTF-8 صالحًا.",
+    );
+  }
+  const normalized = decoded.replace(/^\uFEFF/, "");
+  if (!normalized.trim()) {
+    throw new IfcProcessingError(
+      "validate",
+      "EMPTY_FILE",
+      "ملف IFC فارغ ولا يحتوي بيانات قابلة للفحص.",
+    );
+  }
+  await reportPhase(
+    0.08,
+    "تم فك ترميز الملف والتحقق من وجود محتوى",
+    options,
+    { decodedCharacters: normalized.length },
+  );
   if (
     !/^\s*ISO-10303-21\s*;/i.test(normalized) ||
     !/END-ISO-10303-21\s*;\s*$/i.test(normalized)
@@ -188,6 +270,12 @@ export async function parseStepDocument(
       `المخطط ${schema} غير مدعوم في هذه النسخة. استخدم IFC4 أو IFC4X3.`,
     );
   }
+  await reportPhase(
+    0.15,
+    `تم التحقق من غلاف STEP ومخطط ${schema}`,
+    options,
+    { schema },
+  );
 
   const dataMatch = normalized.match(/\bDATA\s*;([\s\S]*?)\bENDSEC\s*;/i);
   if (!dataMatch) {
@@ -198,7 +286,26 @@ export async function parseStepDocument(
     );
   }
 
-  const entities = splitRecords(dataMatch[1]).map(parseRecord);
+  const rawRecords = await splitRecords(dataMatch[1], options);
+  await reportPhase(
+    0.5,
+    `اكتمل فصل ${rawRecords.length} سجل STEP`,
+    options,
+    { discoveredRecords: rawRecords.length },
+  );
+  const entities: StepEntity[] = [];
+  for (let index = 0; index < rawRecords.length; index += 1) {
+    entities.push(parseRecord(rawRecords[index]));
+    if ((index + 1) % ENTITY_CHUNK === 0) {
+      const fraction = (index + 1) / rawRecords.length;
+      options.onProgress?.(
+        0.5 + fraction * 0.18,
+        `تحليل سجلات EXPRESS: ${index + 1} من ${rawRecords.length}`,
+        { parsedRecords: index + 1, totalRecords: rawRecords.length },
+      );
+      await yieldToMainThread(options.signal);
+    }
+  }
   if (!entities.length) {
     throw new IfcProcessingError(
       "validate",
@@ -206,9 +313,16 @@ export async function parseStepDocument(
       "قسم DATA لا يحتوي سجلات IFC.",
     );
   }
+  await reportPhase(
+    0.68,
+    `اكتمل تحليل ${entities.length} سجل EXPRESS`,
+    options,
+    { parsedRecords: entities.length },
+  );
 
   const ids = new Set<number>();
-  for (const entity of entities) {
+  for (let index = 0; index < entities.length; index += 1) {
+    const entity = entities[index];
     if (ids.has(entity.stepId)) {
       throw new IfcProcessingError(
         "validate",
@@ -217,9 +331,25 @@ export async function parseStepDocument(
       );
     }
     ids.add(entity.stepId);
+    if ((index + 1) % ENTITY_CHUNK === 0) {
+      const fraction = (index + 1) / entities.length;
+      options.onProgress?.(
+        0.68 + fraction * 0.1,
+        `فحص تفرد المعرفات: ${index + 1} من ${entities.length}`,
+        { uniqueStepIds: ids.size },
+      );
+      await yieldToMainThread(options.signal);
+    }
   }
+  await reportPhase(
+    0.78,
+    `اكتمل فحص ${ids.size} معرف STEP فريد`,
+    options,
+    { uniqueStepIds: ids.size },
+  );
 
-  for (const entity of entities) {
+  for (let index = 0; index < entities.length; index += 1) {
+    const entity = entities[index];
     const missingReference = entity.references.find(
       (reference) => !ids.has(reference),
     );
@@ -230,9 +360,38 @@ export async function parseStepDocument(
         `السجل #${entity.stepId} يشير إلى معرف غير موجود #${missingReference}.`,
       );
     }
+    if ((index + 1) % ENTITY_CHUNK === 0) {
+      const fraction = (index + 1) / entities.length;
+      options.onProgress?.(
+        0.78 + fraction * 0.12,
+        `فحص المراجع: ${index + 1} من ${entities.length}`,
+        { checkedReferencesFor: index + 1 },
+      );
+      await yieldToMainThread(options.signal);
+    }
   }
+  await reportPhase(
+    0.9,
+    `اكتمل فحص مراجع ${entities.length} سجلًا`,
+    options,
+    { checkedReferencesFor: entities.length },
+  );
 
-  const digest = await sha256(normalized);
+  await reportPhase(
+    0.92,
+    "حساب بصمة SHA-256 من البايتات الأصلية",
+    options,
+    { records: entities.length },
+  );
+  throwIfAborted(options.signal);
+  const digest = await sha256(upload.bytes);
+  throwIfAborted(options.signal);
+  await reportPhase(
+    1,
+    "اكتملت سلامة الملف والبصمة",
+    options,
+    { records: entities.length, sha256: digest.hash },
+  );
   return {
     schema,
     entities,

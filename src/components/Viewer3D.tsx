@@ -13,6 +13,7 @@ import {
   CircleHelp,
   Compass,
   Eye,
+  FileCheck2,
   Focus,
   Footprints,
   Layers3,
@@ -25,7 +26,9 @@ import {
 } from "lucide-react";
 import {
   type MouseEvent as ReactMouseEvent,
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -43,12 +46,24 @@ type Vec3 = [number, number, number];
 type LayerName = "shell" | "furniture" | "mep" | "spaces";
 type ViewPreset = "iso" | "top" | "front" | "walk";
 
+interface ViewerFindingMarker {
+  elementId: string;
+  status: ResultStatus;
+  label: string;
+  ruleId: string;
+  title: string;
+}
+
 interface Viewer3DProps {
   activityId: ActivityId;
   scenario: Scenario;
   selectedElement?: string;
   selectedStatus?: ResultStatus;
+  selectedFindingTitle?: string;
+  selectedRuleId?: string;
+  findingMarkers?: ViewerFindingMarker[];
   onSelectElement: (elementId: string) => void;
+  onSelectFinding?: (ruleId: string, elementId: string) => void;
 }
 
 interface PartProps {
@@ -71,6 +86,22 @@ interface PartProps {
   shellPart?: boolean;
   marker?: { status: ResultStatus; label: string };
 }
+
+type ModelMarker = {
+  status: ResultStatus;
+  label: string;
+  ruleId?: string;
+  title?: string;
+};
+
+interface FindingMarkerContextValue {
+  byElement: Record<string, ModelMarker[]>;
+  onSelectFinding?: (ruleId: string, elementId: string) => void;
+}
+
+const FindingMarkerContext = createContext<FindingMarkerContextValue | null>(
+  null,
+);
 
 type CommonPartProps = Pick<
   PartProps,
@@ -102,6 +133,12 @@ const statusColors: Record<ResultStatus, string> = {
   pass: "#16835d",
   fail: "#d8523c",
   unknown: "#d18a24",
+};
+
+const viewerStatusLabels: Record<ResultStatus, string> = {
+  pass: "مطابق",
+  fail: "ملاحظة تحتاج معالجة",
+  unknown: "معلومات غير مكتملة",
 };
 
 const activityPalettes: Record<
@@ -277,10 +314,17 @@ const activityRooms: Record<ActivityId, RoomDefinition[]> = {
     },
     {
       id: "SALON-SPACE-TREATMENT",
-      name: "العناية والأظافر",
-      position: [5.09, -1.5],
-      size: [5.52, 3.74],
+      name: "غرفة العناية",
+      position: [6.45, -1.5],
+      size: [2.8, 3.74],
       color: "#9582b4",
+    },
+    {
+      id: "SALON-SPACE-NAIL",
+      name: "منطقة الأظافر",
+      position: [3.7, -1.5],
+      size: [2.7, 3.74],
+      color: "#c189aa",
     },
     {
       id: "SALON-SPACE-CHEMICAL",
@@ -442,6 +486,26 @@ const localElementTargets: Record<string, CameraTarget> = {
     camera: [9.2, 6.5, -3],
     target: [4.9, 2.65, -1.35],
   },
+  "SALON-SPACE-NAIL": {
+    camera: [9.4, 6.2, 4],
+    target: [3.7, 0.15, -1.5],
+  },
+  "R-SANITARY-01": {
+    camera: [6.4, 4.2, -8],
+    target: [1.35, 0.7, -4.55],
+  },
+  "C-SANITARY-01": {
+    camera: [6.4, 4.2, -8],
+    target: [1.35, 0.7, -4.55],
+  },
+  "L-SANITARY-01": {
+    camera: [-9.5, 4.2, -7.8],
+    target: [-5.25, 0.7, -4.2],
+  },
+  "S-SANITARY-01": {
+    camera: [6.4, 4.2, -8],
+    target: [1.35, 0.7, -4.55],
+  },
 };
 
 const elementLabels: Record<string, string> = {
@@ -470,11 +534,16 @@ const elementLabels: Record<string, string> = {
   "CLINIC-VENT-EXAM-02": "نقطة تهوية غرفة الكشف ٢",
   "SALON-SPACE-STYLING": "منطقة التصفيف",
   "SALON-SPACE-TREATMENT": "غرفة العناية",
+  "SALON-SPACE-NAIL": "منطقة الأظافر",
   "SALON-SPACE-WC": "دورة مياه الصالون",
   "SALON-D-TREATMENT-01": "باب غرفة العناية",
   "SALON-SINK-WASH-01": "وحدة غسل الشعر",
   "SALON-STORAGE-CHEM-01": "تخزين مواد التشغيل",
   "SALON-VENT-NAIL-01": "تهوية منطقة الأظافر",
+  "R-SANITARY-01": "التجهيز الصحي للمطعم",
+  "C-SANITARY-01": "التجهيز الصحي للمقهى",
+  "L-SANITARY-01": "التجهيز الصحي للعيادة",
+  "S-SANITARY-01": "التجهيز الصحي للصالون",
   "SPACE-WASH": "منطقة الغسيل",
   "SPACE-WC": "دورة المياه المهيأة",
   "EQ-ESPRESSO-01": "ماكينة الإسبريسو",
@@ -512,6 +581,13 @@ function Part({
   marker,
 }: PartProps) {
   const [hovered, setHovered] = useState(false);
+  const findingMarkerContext = useContext(FindingMarkerContext);
+  const resolvedMarkers: ModelMarker[] =
+    findingMarkerContext === null
+      ? marker
+        ? [marker]
+        : []
+      : findingMarkerContext.byElement[id] ?? [];
   const selected = selectedElement === id;
   const dimmed = isolate && Boolean(selectedElement) && !selected;
   const materialOpacity = dimmed
@@ -550,41 +626,85 @@ function Part({
       <meshStandardMaterial
         color={color}
         emissive={selected ? statusColors[selectedStatus] : "#000000"}
-        emissiveIntensity={selected ? 0.34 : 0}
+        emissiveIntensity={selected ? 0.5 : 0}
         transparent={materialOpacity < 1}
         opacity={materialOpacity}
         depthWrite={materialOpacity > 0.28}
         metalness={metalness}
         roughness={roughness}
       />
+      {selected && (
+        <mesh scale={1.035}>
+          <boxGeometry args={size} />
+          <meshBasicMaterial
+            color={statusColors[selectedStatus]}
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+            side={THREE.BackSide}
+          />
+        </mesh>
+      )}
       {(selected || hovered) && (
         <Edges
-          scale={1.006}
+          scale={selected ? 1.025 : 1.006}
           color={selected ? statusColors[selectedStatus] : "#0b5d48"}
-          lineWidth={selected ? 2.5 : 1.15}
+          lineWidth={selected ? 3.4 : 1.15}
         />
       )}
       {(hovered || selected) && (
-        <Html position={[0, size[1] / 2 + 0.25, 0]} center distanceFactor={9}>
-          <div className="model-tooltip" dir="rtl">
+        <Html
+          position={[
+            0,
+            size[1] / 2 + (selected && resolvedMarkers.length ? 0.72 : 0.28),
+            0,
+          ]}
+          center
+          distanceFactor={9}
+        >
+          <div
+            className={`model-tooltip ${
+              selected ? `model-tooltip--selected model-tooltip--${selectedStatus}` : ""
+            }`}
+            dir="rtl"
+          >
+            {selected && <small>{viewerStatusLabels[selectedStatus]}</small>}
             <strong>{name}</strong>
             <span dir="ltr">{id}</span>
           </div>
         </Html>
       )}
-      {marker && (
+      {resolvedMarkers.length > 0 && (
         <Html position={[0, size[1] / 2 + 0.16, 0]} center distanceFactor={9}>
-          <button
-            type="button"
-            className={`model-pin model-pin--${marker.status}`}
-            aria-label={`${marker.label}: ${name}`}
-            onClick={(event: ReactMouseEvent) => {
-              event.stopPropagation();
-              onSelect(id);
-            }}
-          >
-            {marker.label}
-          </button>
+          <div className="model-pin-group" aria-label={`نتائج مرتبطة بالعنصر ${name}`}>
+            {resolvedMarkers.map((resolvedMarker, index) => (
+              <button
+                type="button"
+                className={`model-pin model-pin--${resolvedMarker.status}`}
+                aria-label={`${resolvedMarker.label}: ${
+                  resolvedMarker.title ?? name
+                }`}
+                title={resolvedMarker.title}
+                key={resolvedMarker.ruleId ?? `${resolvedMarker.label}-${index}`}
+                onClick={(event: ReactMouseEvent) => {
+                  event.stopPropagation();
+                  if (
+                    resolvedMarker.ruleId &&
+                    findingMarkerContext?.onSelectFinding
+                  ) {
+                    findingMarkerContext.onSelectFinding(
+                      resolvedMarker.ruleId,
+                      id,
+                    );
+                    return;
+                  }
+                  onSelect(id);
+                }}
+              >
+                {resolvedMarker.label}
+              </button>
+            ))}
+          </div>
         </Html>
       )}
     </mesh>
@@ -1961,16 +2081,18 @@ function WashBasin({
 
 function RestroomFixture({
   common,
+  id,
   position = [1.35, 0, -4.55],
 }: {
   common: CommonPartProps;
+  id: string;
   position?: Vec3;
 }) {
   return (
     <group position={position}>
       <Part
         {...common}
-        id="WC-FIXTURE-01"
+        id={id}
         name="مرحاض مهيأ"
         position={[0, 0.42, 0]}
         size={[0.68, 0.78, 0.76]}
@@ -2085,7 +2207,7 @@ function RestaurantFitout({
         color="#856e56"
         roughness={0.62}
       />
-      <RestroomFixture common={common} />
+      <RestroomFixture common={common} id="R-SANITARY-01" />
     </>
   );
 }
@@ -2186,7 +2308,7 @@ function CafeFitout({
         metalness={0.7}
         roughness={0.24}
       />
-      <RestroomFixture common={common} />
+      <RestroomFixture common={common} id="C-SANITARY-01" />
     </>
   );
 }
@@ -2279,7 +2401,11 @@ function ClinicFitout({
         opacity={0.82}
         roughness={0.58}
       />
-      <RestroomFixture common={common} position={[-5.25, 0, -4.2]} />
+      <RestroomFixture
+        common={common}
+        id="L-SANITARY-01"
+        position={[-5.25, 0, -4.2]}
+      />
     </>
   );
 }
@@ -2403,7 +2529,7 @@ function SalonFitout({
           ))}
         </group>
       )}
-      <RestroomFixture common={common} />
+      <RestroomFixture common={common} id="S-SANITARY-01" />
     </>
   );
 }
@@ -2998,7 +3124,11 @@ export function Viewer3D({
   scenario,
   selectedElement,
   selectedStatus,
+  selectedFindingTitle,
+  selectedRuleId,
+  findingMarkers = [],
   onSelectElement,
+  onSelectFinding,
 }: Viewer3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [layers, setLayers] = useState<Record<LayerName, boolean>>({
@@ -3024,6 +3154,22 @@ export function Viewer3D({
         : undefined,
     [selectedElement],
   );
+  const selectionStatus = selectedStatus ?? "pass";
+  const isFileResult = Boolean(selectedFindingTitle && !selectedElement);
+  const findingMarkerContext = useMemo<FindingMarkerContextValue>(() => {
+    const byElement: Record<string, ModelMarker[]> = {};
+    findingMarkers.forEach((markerItem) => {
+      const markers = byElement[markerItem.elementId] ?? [];
+      markers.push({
+        status: markerItem.status,
+        label: markerItem.label,
+        ruleId: markerItem.ruleId,
+        title: markerItem.title,
+      });
+      byElement[markerItem.elementId] = markers;
+    });
+    return { byElement, onSelectFinding };
+  }, [findingMarkers, onSelectFinding]);
 
   const toggleLayer = (layer: LayerName) =>
     setLayers((current) => ({ ...current, [layer]: !current[layer] }));
@@ -3121,21 +3267,23 @@ export function Viewer3D({
           }}
           onPointerMissed={() => onSelectElement("")}
         >
-          <FacilityScene
-            activityId={activityId}
-            scenario={scenario}
-            selectedElement={selectedElement}
-            selectedStatus={selectedStatus}
-            onSelectElement={onSelectElement}
-            layers={layers}
-            isolate={isolate}
-            ghost={ghost}
-            labels={labels}
-            dimensions={dimensions}
-            exploded={exploded}
-            preset={preset}
-            focusNonce={focusNonce}
-          />
+          <FindingMarkerContext.Provider value={findingMarkerContext}>
+            <FacilityScene
+              activityId={activityId}
+              scenario={scenario}
+              selectedElement={selectedElement}
+              selectedStatus={selectedStatus}
+              onSelectElement={onSelectElement}
+              layers={layers}
+              isolate={isolate}
+              ghost={ghost}
+              labels={labels}
+              dimensions={dimensions}
+              exploded={exploded}
+              preset={preset}
+              focusNonce={focusNonce}
+            />
+          </FindingMarkerContext.Provider>
         </Canvas>
       </div>
 
@@ -3356,11 +3504,34 @@ export function Viewer3D({
         </strong>
       </div>
 
-      {selectedElement && (
-        <div className="viewer__selection" dir="rtl">
-          <Focus size={15} />
-          <span>{selectedName}</span>
-          <code dir="ltr">{selectedElement}</code>
+      {(selectedElement || selectedFindingTitle) && (
+        <div
+          className={`viewer__selection viewer__selection--${selectionStatus} ${
+            isFileResult ? "viewer__selection--file" : ""
+          }`}
+          dir="rtl"
+          role="status"
+        >
+          <span className="viewer__selection-icon">
+            {isFileResult ? <FileCheck2 size={17} /> : <Focus size={17} />}
+          </span>
+          <span className="viewer__selection-copy">
+            <small>
+              {isFileResult
+                ? "نتيجة على مستوى الملف"
+                : viewerStatusLabels[selectionStatus]}
+            </small>
+            <strong>{selectedFindingTitle ?? selectedName}</strong>
+            <span>
+              {isFileResult
+                ? "لا يوجد عنصر هندسي مرتبط بهذه النتيجة"
+                : selectedName}
+              {selectedRuleId && <code dir="ltr">{selectedRuleId}</code>}
+              {!selectedRuleId && selectedElement && (
+                <code dir="ltr">{selectedElement}</code>
+              )}
+            </span>
+          </span>
         </div>
       )}
 

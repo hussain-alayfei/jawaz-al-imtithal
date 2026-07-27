@@ -20,7 +20,7 @@ export type StageState = "pending" | "running" | "completed" | "failed";
 export interface IfcUpload {
   name: string;
   size: number;
-  text: string;
+  bytes: Uint8Array;
   lastModified?: number;
 }
 
@@ -46,7 +46,13 @@ export interface ExtractedIfcEntity {
   type: string;
   globalId?: string;
   name?: string;
+  /**
+   * Contract properties from the entity's expected MIYAR property-set
+   * namespace. Rules read this flattened view only after namespace validation.
+   */
   properties: Record<string, IfcPropertyValue>;
+  /** All related property sets retained by their original IFC name. */
+  propertySets: Record<string, Record<string, IfcPropertyValue>>;
 }
 
 export interface ExtractedIfcModel {
@@ -69,6 +75,7 @@ export interface StageResult {
   detail: string;
   durationMs: number;
   evidence: Record<string, string | number | boolean>;
+  progress: 1;
   errorCode?: string;
 }
 
@@ -79,6 +86,11 @@ export interface PipelineEvent {
   detail?: string;
   durationMs?: number;
   evidence?: Record<string, string | number | boolean>;
+  /**
+   * Actual work completed inside this stage, from 0 to 1. This is emitted by
+   * the parser/extractor checkpoints and is never advanced by a display timer.
+   */
+  progress?: number;
   errorCode?: string;
 }
 
@@ -93,6 +105,7 @@ export interface ReadinessReport {
   generatedAt: string;
   fileSha256: string;
   rulePackVersion: string;
+  scoreMethod: "passed_over_total";
   modelEvidence: {
     schema: string;
     records: number;

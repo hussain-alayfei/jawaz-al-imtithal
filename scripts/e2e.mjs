@@ -23,6 +23,8 @@ const server = spawn(
     "--port",
     testPort,
     "--strictPort",
+    "--configLoader",
+    "runner",
   ],
   {
     cwd: projectDirectory,
@@ -105,14 +107,38 @@ const uploadAndFinishAnalysis = async (
     "test-fixtures",
     "ifc",
     activityId,
-    "needs-work.ifc",
+    "submission-v1.ifc",
   );
   await page.locator('input[type="file"]').setInputFiles(fixturePath);
-  await page.getByText("needs-work.ifc", { exact: true }).waitFor();
+  await page.getByText("submission-v1.ifc", { exact: true }).waitFor();
   if (uploadScreenshotPath) {
-    await page.screenshot({ path: uploadScreenshotPath, fullPage: true });
+  await page.screenshot({ path: uploadScreenshotPath, fullPage: true });
   }
   await waitForEnabled(startAnalysis, `${context} analysis button`);
+  await page.evaluate(() => {
+    window.__miyarProcessingTrace = {
+      sawActiveStage: false,
+      sawIntermediateWork: false,
+    };
+    const observer = new MutationObserver(() => {
+      const activeStage = document.querySelector(".analysis-stage.is-active");
+      const progress = activeStage?.querySelector(
+        ".analysis-stage__work",
+      )?.getAttribute("aria-valuenow");
+      if (activeStage) window.__miyarProcessingTrace.sawActiveStage = true;
+      if (progress && Number(progress) > 0 && Number(progress) < 100) {
+        window.__miyarProcessingTrace.sawIntermediateWork = true;
+      }
+      if (document.querySelector(".analysis-stage.is-failed")) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+  });
   await startAnalysis.click();
 
   const analysis = page.locator(".analysis-card");
@@ -126,8 +152,14 @@ const uploadAndFinishAnalysis = async (
       `${context} did not complete all six real processing stages.`,
     );
   }
-  if ((await completedStages.locator("small").count()) !== 6) {
+  if ((await completedStages.locator(".analysis-stage__detail").count()) !== 6) {
     throw new Error(`${context} processing stages did not retain their evidence.`);
+  }
+  const processingTrace = await page.evaluate(() => window.__miyarProcessingTrace);
+  if (!processingTrace?.sawActiveStage || !processingTrace?.sawIntermediateWork) {
+    throw new Error(
+      `${context} did not render byte-derived intermediate processing work: ${JSON.stringify(processingTrace)}.`,
+    );
   }
   if (uploadScreenshotPath) {
     await page.screenshot({
@@ -141,6 +173,16 @@ const uploadAndFinishAnalysis = async (
 
   await showResults.click();
   await page.locator(".workspace-page").waitFor({ state: "visible" });
+
+  const score = (await page.locator(".summary-overview .score-ring strong").innerText()).trim();
+  const passed = (await page.locator(".summary-stat--pass strong").innerText()).trim();
+  const failed = (await page.locator(".summary-stat--fail strong").innerText()).trim();
+  const unknown = (await page.locator(".summary-stat--unknown strong").innerText()).trim();
+  if (score !== "40" || passed !== "4" || failed !== "5" || unknown !== "1") {
+    throw new Error(
+      `${context} summary is inconsistent: score=${score}, pass=${passed}, fail=${failed}, unknown=${unknown}.`,
+    );
+  }
 };
 
 const openSectorFixture = async (page, activityId, context) => {
@@ -278,6 +320,39 @@ const exerciseViewerControls = async (page) => {
   };
 };
 
+const exerciseFindingMarkers = async (page, context) => {
+  const markers = page.locator(".model-pin");
+  await markers.first().waitFor({ state: "visible" });
+  const markerCount = await markers.count();
+  if (markerCount !== 6) {
+    throw new Error(
+      `${context}: expected six dynamic markers for the six unresolved findings, found ${markerCount}.`,
+    );
+  }
+
+  const labels = (await markers.allTextContents())
+    .map((label) => label.trim())
+    .sort((left, right) => Number(left) - Number(right));
+  if (labels.join(",") !== "1,2,3,4,5,6") {
+    throw new Error(
+      `${context}: dynamic marker labels are not the actual unresolved ordinals: ${labels}.`,
+    );
+  }
+
+  const firstMarker = markers.first();
+  const linkedTitle = await firstMarker.getAttribute("title");
+  await firstMarker.evaluate((button) => button.click());
+  const selectedCard = page.locator(".finding-card.is-selected");
+  await selectedCard.waitFor({ state: "visible" });
+  if (linkedTitle && !(await selectedCard.innerText()).includes(linkedTitle)) {
+    throw new Error(
+      `${context}: clicking marker "${linkedTitle}" did not select its exact finding card.`,
+    );
+  }
+
+  return { markerCount, labels };
+};
+
 let browser;
 try {
   await waitForServer();
@@ -319,6 +394,7 @@ try {
     timeout: 15_000,
   });
   const restaurantCanvas = await ensureUsableCanvas(page, "Restaurant");
+  const findingMarkers = await exerciseFindingMarkers(page, "Restaurant");
   await page.screenshot({
     path: path.join(artifactDirectory, "03-workspace.png"),
     fullPage: true,
@@ -328,6 +404,12 @@ try {
     .getByRole("button", { name: /إظهار العنصر في النموذج/ })
     .click();
   await page.waitForTimeout(900);
+  const focusedSelectionText = (
+    await page.locator(".viewer__selection").innerText()
+  ).trim();
+  if (!focusedSelectionText) {
+    throw new Error("Focused 3D result callout rendered without readable content.");
+  }
   await page.screenshot({
     path: path.join(artifactDirectory, "04-focused-issue.png"),
     fullPage: true,
@@ -347,6 +429,7 @@ try {
   await openSectorFixture(page, "clinic", "Clinic");
   await page.getByText(/عيادة خارجية/).first().waitFor();
   const clinicCanvas = await ensureUsableCanvas(page, "Clinic");
+  const clinicFindingMarkers = await exerciseFindingMarkers(page, "Clinic");
   await page.screenshot({
     path: path.join(artifactDirectory, "06-clinic-workspace.png"),
     fullPage: true,
@@ -360,6 +443,7 @@ try {
   });
 
   const additionalSectorCanvases = {};
+  const additionalSectorMarkers = {};
   for (const [activityId, label, screenshotName] of [
     ["cafe", "مقهى", "08-cafe-workspace.png"],
     ["salon", "صالون تجميل", "09-salon-workspace.png"],
@@ -370,6 +454,10 @@ try {
       .locator(`.viewer[data-activity="${activityId}"]`)
       .waitFor({ state: "visible" });
     additionalSectorCanvases[activityId] = await ensureUsableCanvas(
+      page,
+      label,
+    );
+    additionalSectorMarkers[activityId] = await exerciseFindingMarkers(
       page,
       label,
     );
@@ -405,8 +493,11 @@ try {
         ok: true,
         screenshots: 11,
         restaurantCanvas,
+        findingMarkers,
         clinicCanvas,
+        clinicFindingMarkers,
         additionalSectorCanvases,
+        additionalSectorMarkers,
         viewerControls,
         mobile: dimensions,
       },

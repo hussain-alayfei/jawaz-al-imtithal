@@ -17,11 +17,12 @@ const fixtureUrl = (relativePath: string) =>
   new URL(`../../test-fixtures/${relativePath}`, import.meta.url);
 
 async function loadUpload(relativePath: string): Promise<IfcUpload> {
-  const text = await readFile(fixtureUrl(relativePath), "utf8");
+  const fileBytes = await readFile(fixtureUrl(relativePath));
+  const bytes = Uint8Array.from(fileBytes);
   return {
     name: relativePath.split("/").at(-1) ?? "fixture.ifc",
-    size: Buffer.byteLength(text),
-    text,
+    size: bytes.byteLength,
+    bytes,
   };
 }
 
@@ -34,12 +35,25 @@ async function loadExpected(activityId: ActivityId, caseName: string) {
   );
 }
 
+function mutateUpload(
+  upload: IfcUpload,
+  pattern: string | RegExp,
+  replacement: string,
+  name: string,
+): IfcUpload {
+  const source = new TextDecoder().decode(upload.bytes);
+  const modified = source.replace(pattern, replacement);
+  expect(modified).not.toBe(source);
+  const bytes = new TextEncoder().encode(modified);
+  return { ...upload, name, bytes, size: bytes.byteLength };
+}
+
 describe("real IFC compliance pipeline", () => {
   it.each(activityIds)(
     "derives the %s needs-work result from IFC evidence",
     async (activityId) => {
       const upload = await loadUpload(
-        `ifc/${activityId}/needs-work.ifc`,
+        `ifc/${activityId}/submission-v1.ifc`,
       );
       const expected = await loadExpected(activityId, "needs-work");
       const events: PipelineEvent[] = [];
@@ -64,6 +78,19 @@ describe("real IFC compliance pipeline", () => {
           .filter((finding) => finding.status !== "pass")
           .map((finding) => finding.ruleId),
       ).toEqual(expected.unresolvedRuleIds);
+      expect(
+        run.findings
+          .filter((finding) => finding.status === "fail")
+          .map((finding) => finding.ruleId),
+      ).toEqual(expected.failedRuleIds);
+      expect(
+        run.findings
+          .filter((finding) => finding.status === "unknown")
+          .map((finding) => finding.ruleId),
+      ).toEqual(expected.unknownRuleIds);
+      expect(expected.unresolvedRuleIds.length).toBeGreaterThan(4);
+      expect(run.report.scoreMethod).toBe(expected.scoreMethod);
+      expect(run.report.rulePackVersion).toBe(expected.rulePackVersion);
       expect(run.stages.map((stage) => stage.id)).toEqual([
         "validate",
         "extract",
@@ -91,7 +118,9 @@ describe("real IFC compliance pipeline", () => {
   it.each(activityIds)(
     "derives the %s ready result as ten passes",
     async (activityId) => {
-      const upload = await loadUpload(`ifc/${activityId}/ready.ifc`);
+      const upload = await loadUpload(
+        `ifc/${activityId}/submission-v2-corrected.ifc`,
+      );
       const expected = await loadExpected(activityId, "ready");
       const run = await runIfcCompliance({
         upload,
@@ -101,23 +130,102 @@ describe("real IFC compliance pipeline", () => {
 
       expect(run.model.elements).toHaveLength(expected.elements);
       expect(run.summary).toEqual({
-        passed: 10,
-        failed: 0,
-        unknown: 0,
-        score: 100,
+        passed: expected.passed,
+        failed: expected.failed,
+        unknown: expected.unknown,
+        score: expected.score,
       });
+      expect(run.report.scoreMethod).toBe("passed_over_total");
+      expect(run.report.rulePackVersion).toBe(expected.rulePackVersion);
+      expect(run.findings.every((finding) => finding.status === "pass")).toBe(
+        true,
+      );
       expect(run.scenario).toBe("ready");
     },
   );
 
+  it.each(activityIds)(
+    "uses a varied, named semantic QA catalog for %s instead of anonymous fillers",
+    async (activityId) => {
+      const upload = await loadUpload(
+        `ifc/${activityId}/submission-v2-corrected.ifc`,
+      );
+      const expected = await loadExpected(activityId, "ready");
+      const run = await runIfcCompliance({
+        upload,
+        activityId,
+        facility: getDefaultFacility(activityId),
+      });
+      const syntheticElements = run.model.elements.filter(
+        (element) =>
+          element.propertySets.Pset_MiyarSyntheticQA?.SyntheticQA === true,
+      );
+      const types = new Set(syntheticElements.map((element) => element.type));
+
+      expect(expected).toMatchObject({
+        fixtureKind: "synthetic_semantic_qa",
+        productionGeometry: false,
+      });
+      expect(expected.syntheticCatalogCategories).toEqual([
+        "ARCHITECTURAL_WALL",
+        "FLOOR_SLAB",
+        "EXTERIOR_WINDOW",
+        "STRUCTURAL_COLUMN",
+        "STRUCTURAL_BEAM",
+        "FIXED_FURNITURE",
+        "SAFETY_RAILING",
+        "VERTICAL_CIRCULATION",
+      ]);
+      expect(syntheticElements.length).toBeGreaterThan(0);
+      expect([...types]).toEqual(
+        expect.arrayContaining([
+          "IFCWALL",
+          "IFCSLAB",
+          "IFCWINDOW",
+          "IFCCOLUMN",
+          "IFCBEAM",
+          "IFCFURNISHINGELEMENT",
+          "IFCRAILING",
+          "IFCSTAIR",
+        ]),
+      );
+      for (const element of syntheticElements) {
+        const properties = element.propertySets.Pset_MiyarSyntheticQA;
+        expect(element.name).toMatch(/اصطناعي QA \d{3}$/);
+        expect(properties.SemanticCategory).toEqual(expect.any(String));
+        expect(properties.ZoneCode).toEqual(expect.any(String));
+        expect(properties.CatalogIndex).toEqual(expect.any(Number));
+        expect(properties.ProductionGeometry).toBe(false);
+        expect(properties.GeometryStatus).toBe(
+          "SEMANTIC_ONLY_NO_PRODUCTION_GEOMETRY",
+        );
+      }
+      expect(
+        run.model.elements.some(
+          (element) =>
+            element.properties.RoleCode === "MODEL_ELEMENT" ||
+            element.name === "عنصر نموذجي",
+        ),
+      ).toBe(false);
+      expect(run.model.project?.properties).toMatchObject({
+        FixturePurpose: "SYNTHETIC_QA_ONLY",
+        ProductionGeometry: false,
+        GeometryStatus: "SEMANTIC_ONLY_NO_PRODUCTION_GEOMETRY",
+      });
+    },
+  );
+
   it("uses the actual IfcDoor OverallWidth boundary", async () => {
-    const original = await loadUpload("ifc/restaurant/ready.ifc");
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
     const makeWidth = (width: string): IfcUpload => {
-      const text = original.text.replace(
+      const text = new TextDecoder().decode(original.bytes).replace(
         ",'TAG-EXIT',2.10,1,.DOOR.",
         `,'TAG-EXIT',2.10,${width},.DOOR.`,
       );
-      return { ...original, text, size: Buffer.byteLength(text) };
+      const bytes = new TextEncoder().encode(text);
+      return { ...original, bytes, size: bytes.byteLength };
     };
 
     const below = await runIfcCompliance({
@@ -139,8 +247,162 @@ describe("real IFC compliance pipeline", () => {
     ).toMatchObject({ status: "pass", actual: "0.90 م من IfcDoor.OverallWidth" });
   });
 
+  it("reports a missing exit width as unknown without claiming a measured failure", async () => {
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+    const run = await runIfcCompliance({
+      upload: mutateUpload(
+        original,
+        ",'TAG-EXIT',2.10,1,.DOOR.",
+        ",'TAG-EXIT',2.10,$,.DOOR.",
+        "missing-exit-width.ifc",
+      ),
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+    const finding = run.findings.find(
+      (item) => item.ruleId === "DOOR-WIDTH-001",
+    );
+
+    expect(finding).toMatchObject({
+      status: "unknown",
+      actual: "OverallWidth غير مسجل على باب EXIT",
+    });
+    expect(finding?.title).toContain("تعذر التحقق");
+    expect(finding?.title).not.toContain("أقل");
+    expect(finding?.explanation).toContain("OverallWidth غير مسجل");
+  });
+
+  it("reports a missing route width as unknown without claiming a narrow route", async () => {
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+    const run = await runIfcCompliance({
+      upload: mutateUpload(
+        original,
+        "IFCPROPERTYSINGLEVALUE('MinimumClearWidth',$,IFCREAL(1.1),$)",
+        "IFCPROPERTYSINGLEVALUE('MinimumClearWidth',$,$,$)",
+        "missing-route-width.ifc",
+      ),
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+    const finding = run.findings.find(
+      (item) => item.ruleId === "ACCESS-ROUTE-001",
+    );
+
+    expect(finding).toMatchObject({
+      status: "unknown",
+      actual: "MinimumClearWidth غير مسجل على ACCESS_ROUTE",
+    });
+    expect(finding?.title).toContain("تعذر التحقق");
+    expect(finding?.title).not.toContain("تضيق");
+    expect(finding?.explanation).toContain("MinimumClearWidth غير مسجل");
+  });
+
+  it("does not retain pass prose when a required space role is missing", async () => {
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+    const run = await runIfcCompliance({
+      upload: mutateUpload(
+        original,
+        "IFCPROPERTYSINGLEVALUE('RoleCode',$,IFCLABEL('KITCHEN'),$)",
+        "IFCPROPERTYSINGLEVALUE('RoleCode',$,IFCLABEL('KITCHEN_UNCLASSIFIED'),$)",
+        "missing-kitchen-role.ifc",
+      ),
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+    const finding = run.findings.find(
+      (item) => item.ruleId === "REST-SPACE-001",
+    );
+
+    expect(finding).toMatchObject({
+      status: "fail",
+      actual: "المساحات المطلوبة المفقودة: KITCHEN",
+    });
+    expect(finding?.title).toContain("لم يتحقق");
+    expect(finding?.title).not.toContain("موجودة");
+    expect(finding?.explanation).toContain(
+      "المساحات المطلوبة المفقودة: KITCHEN",
+    );
+  });
+
+  it("rejects restaurant equipment linked to the wrong room", async () => {
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+    const source = new TextDecoder().decode(original.bytes);
+    const kitchenGuid = source.match(
+      /IFCSPACE\('([^']+)',\$,'المطبخ'/,
+    )?.[1];
+    const diningGuid = source.match(
+      /IFCSPACE\('([^']+)',\$,'منطقة الطعام'/,
+    )?.[1];
+    expect(kitchenGuid).toEqual(expect.any(String));
+    expect(diningGuid).toEqual(expect.any(String));
+    const run = await runIfcCompliance({
+      upload: mutateUpload(
+        original,
+        `IFCPROPERTYSINGLEVALUE('ServedSpaceGuid',$,IFCLABEL('${kitchenGuid}'),$)`,
+        `IFCPROPERTYSINGLEVALUE('ServedSpaceGuid',$,IFCLABEL('${diningGuid}'),$)`,
+        "ventilation-linked-to-dining.ifc",
+      ),
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+    const finding = run.findings.find(
+      (item) => item.ruleId === "KITCHEN-VENT-001",
+    );
+
+    expect(finding?.status).toBe("fail");
+    expect(finding?.actual).toContain("ServedSpaceGuid=");
+    expect(finding?.actual).toContain("لا يطابق");
+    expect(finding?.explanation).toContain("لا يطابق");
+  });
+
+  it("rejects clinic doors linked to the wrong room", async () => {
+    const original = await loadUpload(
+      "ifc/clinic/submission-v2-corrected.ifc",
+    );
+    const source = new TextDecoder().decode(original.bytes);
+    const examGuid = source.match(
+      /IFCSPACE\('([^']+)',\$,'غرفة الفحص 2'/,
+    )?.[1];
+    const receptionGuid = source.match(
+      /IFCSPACE\('([^']+)',\$,'الاستقبال'/,
+    )?.[1];
+    expect(examGuid).toEqual(expect.any(String));
+    expect(receptionGuid).toEqual(expect.any(String));
+    const run = await runIfcCompliance({
+      upload: mutateUpload(
+        original,
+        `IFCPROPERTYSINGLEVALUE('ServesSpaceGuid',$,IFCLABEL('${examGuid}'),$)`,
+        `IFCPROPERTYSINGLEVALUE('ServesSpaceGuid',$,IFCLABEL('${receptionGuid}'),$)`,
+        "exam-door-linked-to-reception.ifc",
+      ),
+      activityId: "clinic",
+      facility: getDefaultFacility("clinic"),
+    });
+    const privacy = run.findings.find(
+      (item) => item.ruleId === "CLINIC-PRIVACY-001",
+    );
+    const width = run.findings.find(
+      (item) => item.ruleId === "CLINIC-DOOR-001",
+    );
+
+    expect(privacy?.status).toBe("fail");
+    expect(privacy?.actual).toContain("ServesSpaceGuid=");
+    expect(privacy?.actual).toContain("لا يطابق");
+    expect(width?.status).toBe("unknown");
+    expect(width?.actual).toContain("ServesSpaceGuid=");
+    expect(width?.title).toContain("تعذر التحقق");
+  });
+
   it("is deterministic for identical bytes apart from time and durations", async () => {
-    const upload = await loadUpload("ifc/cafe/needs-work.ifc");
+    const upload = await loadUpload("ifc/cafe/submission-v1.ifc");
     const first = await runIfcCompliance({
       upload,
       activityId: "cafe",
@@ -164,6 +426,91 @@ describe("real IFC compliance pipeline", () => {
     });
     expect(normalize(second)).toEqual(normalize(first));
   });
+
+  it("derives outcomes from IFC bytes rather than the upload filename", async () => {
+    const needsWork = await loadUpload(
+      "ifc/restaurant/submission-v1.ifc",
+    );
+    const corrected = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+
+    const renamedNeedsWork = await runIfcCompliance({
+      upload: { ...needsWork, name: "looks-ready.ifc" },
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+    const renamedCorrected = await runIfcCompliance({
+      upload: { ...corrected, name: "looks-needs-work.ifc" },
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+
+    expect(renamedNeedsWork.summary).toEqual({
+      passed: 4,
+      failed: 5,
+      unknown: 1,
+      score: 40,
+    });
+    expect(renamedCorrected.summary).toEqual({
+      passed: 10,
+      failed: 0,
+      unknown: 0,
+      score: 100,
+    });
+  });
+
+  it("changes a verdict when parsed IFC evidence changes", async () => {
+    const original = await loadUpload(
+      "ifc/restaurant/submission-v2-corrected.ifc",
+    );
+    const source = new TextDecoder().decode(original.bytes);
+    const modified = source.replace(
+      "IFCPROPERTYSINGLEVALUE('ServicesConcealed',$,IFCBOOLEAN(.T.),$)",
+      "IFCPROPERTYSINGLEVALUE('ServicesConcealed',$,IFCBOOLEAN(.F.),$)",
+    );
+    expect(modified).not.toBe(source);
+    const bytes = new TextEncoder().encode(modified);
+    const run = await runIfcCompliance({
+      upload: {
+        ...original,
+        name: "facade-evidence-change.ifc",
+        bytes,
+        size: bytes.byteLength,
+      },
+      activityId: "restaurant",
+      facility: getDefaultFacility("restaurant"),
+    });
+
+    expect(
+      run.findings.find((finding) => finding.ruleId === "FACADE-MEP-001"),
+    ).toMatchObject({
+      status: "fail",
+      actual: "بيانات إخفاء خدمات الواجهة غير مكتملة",
+    });
+    expect(run.summary).toEqual({
+      passed: 9,
+      failed: 1,
+      unknown: 0,
+      score: 90,
+    });
+  });
+
+  it.each(activityIds)(
+    "keeps %s fixture bytes free of result-selection hints",
+    async (activityId) => {
+      for (const fileName of [
+        "submission-v1.ifc",
+        "submission-v2-corrected.ifc",
+      ]) {
+        const upload = await loadUpload(`ifc/${activityId}/${fileName}`);
+        const text = new TextDecoder().decode(upload.bytes);
+        expect(text).not.toMatch(
+          /(?:JAWAZ|MIYAR)_(?:SCENARIO|RESULT)|needs-work|ready|review/i,
+        );
+      }
+    },
+  );
 
   it.each([
     ["invalid-envelope.ifc", "INVALID_ENVELOPE", "validate"],
@@ -193,6 +540,12 @@ describe("real IFC compliance pipeline", () => {
       "activity-mismatch.ifc",
       "clinic",
       "ACTIVITY_MISMATCH",
+      "completeness",
+    ],
+    [
+      "unsupported-contract-version.ifc",
+      "restaurant",
+      "UNSUPPORTED_CONTRACT_VERSION",
       "completeness",
     ],
   ] as const)(

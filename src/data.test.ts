@@ -19,7 +19,7 @@ describe("finding template catalog", () => {
         passed: 7,
         failed: 2,
         unknown: 1,
-        score: 78,
+        score: 70,
       });
     },
   );
@@ -101,7 +101,7 @@ describe("finding template catalog", () => {
       passed: 7,
       failed: 2,
       unknown: 1,
-      score: 78,
+      score: 70,
     });
   });
 });

@@ -41,6 +41,7 @@ import {
   Suspense,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { BrandMark } from "./components/BrandMark";
@@ -85,7 +86,7 @@ type Screen =
   | "workspace"
   | "report";
 
-const STORAGE_KEY = "jawaz-compliance-demo";
+const STORAGE_KEY = "miyar-plan-compliance-v2";
 
 function loadStoredState(): {
   facility: FacilityDetails;
@@ -257,8 +258,6 @@ function Dashboard({
   onDemo: (activityId?: ActivityId) => void;
   onOpenRecent: () => void;
 }) {
-  const recentActivityId = run?.activityId ?? "restaurant";
-
   return (
     <>
       <main className="dashboard">
@@ -278,21 +277,25 @@ function Dashboard({
               <button
                 type="button"
                 className="button button--ghost-light"
-                onClick={() => onDemo(recentActivityId)}
+                onClick={() =>
+                  document
+                    .getElementById("example-heading")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
               >
                 <PanelTop size={18} />
-                جرّب نموذجًا جاهزًا
+                اختَر نشاطًا مدعومًا
               </button>
             </div>
           </div>
 
-          <div className="hero__visual" aria-label="معاينة منتج جواز الامتثال">
+          <div className="hero__visual" aria-label="معاينة منتج مِعيار">
             <div className="mini-window">
               <div className="mini-window__bar">
                 <span />
                 <span />
                 <span />
-                <small>semantic-model.ifc</small>
+                <small>project-model.ifc</small>
               </div>
               <div className="mini-window__body">
                 <div className="mini-plan">
@@ -312,10 +315,10 @@ function Dashboard({
                 <aside className="mini-results">
                   <div className="mini-score">
                     <div>
-                      <strong>78</strong>
+                      <strong>40</strong>
                       <small>/ 100</small>
                     </div>
-                    <span>مؤشر الجاهزية</span>
+                    <span>معاينة توضيحية</span>
                   </div>
                   <div className="mini-result mini-result--fail">
                     <AlertCircle size={15} />
@@ -349,8 +352,8 @@ function Dashboard({
         <section className="example-section" aria-labelledby="example-heading">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">نماذج قطاعية جاهزة</span>
-              <h2 id="example-heading">اختبر الفكرة على أكثر من نشاط</h2>
+              <span className="eyebrow">أنشطة مدعومة للفحص</span>
+              <h2 id="example-heading">ابدأ بيانات المشروع حسب النشاط</h2>
             </div>
           </div>
           <div className="activity-grid">
@@ -441,8 +444,8 @@ function Dashboard({
       </main>
       <footer className="site-footer">
         <BrandMark compact />
-        <p>نموذج إثبات مفهوم. لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
-        <span dir="ltr">DEMO-MULTI-2026.2</span>
+        <p>نسخة تجريبية مستقلة. لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
+        <span dir="ltr">MIYAR-MULTI-2026.2</span>
       </footer>
     </>
   );
@@ -723,7 +726,7 @@ function ModelUpload({
 }: {
   activityId: ActivityId;
   upload?: IfcUpload;
-  onUpload: (upload: IfcUpload) => void;
+  onUpload: (upload?: IfcUpload) => void;
   onContinue: () => void;
   onBack: () => void;
   onHome: () => void;
@@ -731,10 +734,18 @@ function ModelUpload({
 }) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
+  const [reading, setReading] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
+  const readToken = useRef(0);
 
   const processFile = async (file?: File) => {
     if (!file) return;
+    const token = readToken.current + 1;
+    readToken.current = token;
     setError("");
+    setReading(false);
+    setReadProgress(0);
+    onUpload(undefined);
 
     if (!file.name.toLowerCase().endsWith(".ifc")) {
       setError("الملف غير مدعوم. اختر ملفًا بامتداد .ifc");
@@ -746,22 +757,45 @@ function ModelUpload({
       return;
     }
 
-    let text = "";
+    setReading(true);
+    let bytes: Uint8Array;
     try {
-      text = await file.text();
+      bytes = await new Promise<Uint8Array>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onprogress = (event) => {
+          if (token !== readToken.current || !event.lengthComputable) return;
+          setReadProgress(Math.round((event.loaded / event.total) * 100));
+        };
+        reader.onerror = () =>
+          reject(reader.error ?? new Error("FILE_READ_FAILED"));
+        reader.onabort = () => reject(new DOMException("Aborted", "AbortError"));
+        reader.onload = () => {
+          if (!(reader.result instanceof ArrayBuffer)) {
+            reject(new Error("FILE_READ_FAILED"));
+            return;
+          }
+          resolve(new Uint8Array(reader.result));
+        };
+        reader.readAsArrayBuffer(file);
+      });
     } catch {
+      if (token !== readToken.current) return;
       setError("تعذر قراءة الملف. جرّب نسخة أخرى.");
+      setReading(false);
       return;
     }
-    if (!text.trim()) {
+    if (token !== readToken.current) return;
+    setReading(false);
+    setReadProgress(100);
+    if (!bytes.byteLength) {
       setError("الملف فارغ ولا يحتوي بيانات قابلة للمعالجة.");
       return;
     }
 
     onUpload({
       name: file.name,
-      size: file.size,
-      text,
+      size: bytes.byteLength,
+      bytes,
       lastModified: file.lastModified,
     });
   };
@@ -803,12 +837,31 @@ function ModelUpload({
               <input
                 type="file"
                 accept=".ifc"
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  void processFile(event.target.files?.[0])
-                }
+                disabled={reading}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  void processFile(file);
+                }}
               />
             </label>
-            <small>الحد الأقصى 50 MB. لا تبدأ أي نتيجة قبل قراءة الملف فعليًا.</small>
+            <small>
+              {reading
+                ? `جارٍ تحميل بايتات الملف: ${readProgress}%`
+                : "الحد الأقصى 50 MB. لا تبدأ أي نتيجة قبل قراءة الملف فعليًا."}
+            </small>
+            {reading && (
+              <span
+                className="dropzone__read-progress"
+                role="progressbar"
+                aria-label="تقدم قراءة بايتات الملف"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={readProgress}
+              >
+                <i style={{ width: `${readProgress}%` }} />
+              </span>
+            )}
           </div>
 
           {error && (
@@ -827,7 +880,8 @@ function ModelUpload({
               <strong>معالجة قابلة للتحقق</strong>
               <p>
                 يقرأ المحرك سجلات STEP وخصائص IFC والعلاقات، ثم يستخرج الأدلة
-                ويحسب النتيجة. لا يعتمد على اسم الملف أو علامة نتيجة مخفية.
+                ويحسب النتيجة من البايتات نفسها. تغيير اسم الملف لا يغير البصمة
+                أو الحكم، وتغيير محتواه يغيرهما.
               </p>
             </div>
           </div>
@@ -848,7 +902,7 @@ function ModelUpload({
             </div>
             {upload && (
               <span className="quality-badge">
-                <CheckCircle2 size={14} /> جاهز للمعالجة
+                <CheckCircle2 size={14} /> تم تحميل البايتات
               </span>
             )}
           </div>
@@ -902,7 +956,7 @@ function ModelUpload({
           type="button"
           className="button button--primary"
           onClick={onContinue}
-          disabled={!upload || Boolean(error)}
+          disabled={!upload || reading || Boolean(error)}
         >
           تأكيد النموذج وبدء الفحص
           <ArrowLeft size={17} />
@@ -927,8 +981,79 @@ type AnalysisStageView = {
   label: string;
   state: StageState;
   detail?: string;
+  durationMs?: number;
+  progress: number;
+  evidence: Record<string, string | number | boolean>;
   errorCode?: string;
 };
+
+const analysisEvidenceLabels: Record<string, string> = {
+  schema: "مخطط IFC",
+  records: "سجلات STEP",
+  sha256: "SHA-256",
+  byteLength: "البايتات",
+  decodedCharacters: "المحارف المقروءة",
+  scannedCharacters: "المحارف المفحوصة",
+  discoveredRecords: "السجلات المكتشفة",
+  parsedRecords: "السجلات المحللة",
+  totalRecords: "إجمالي السجلات",
+  uniqueStepIds: "معرّفات STEP الفريدة",
+  checkedReferencesFor: "السجلات المفحوصة مرجعيًا",
+  indexedRecords: "السجلات المفهرسة",
+  extractedEntities: "الكيانات المستخرجة",
+  extractedPropertyValues: "قيم الخصائص",
+  propertySets: "مجموعات الخصائص",
+  appliedPropertyRelations: "علاقات الخصائص",
+  uniqueGlobalIds: "معرّفات GlobalId الفريدة",
+  discoveredTypes: "أنواع IFC المكتشفة",
+  spaces: "المساحات",
+  doors: "الأبواب",
+  storeys: "الطوابق",
+  elements: "العناصر",
+  classifiedSpaces: "المساحات المصنفة",
+  totalSpaces: "إجمالي المساحات",
+  facilityFieldsComplete: "اكتمال بيانات المنشأة",
+  activityMatch: "تطابق النشاط",
+  activityId: "رمز النشاط",
+  contractVersion: "عقد البيانات",
+  rulePackVersion: "إصدار القواعد",
+  rules: "القواعد",
+  evaluatedRules: "القواعد المقيّمة",
+  conclusiveEvidence: "الأدلة الحاسمة",
+  materializedResults: "النتائج المنشأة",
+  linkedResults: "النتائج المرتبطة",
+  actionableResults: "النتائج التي تتطلب إجراء",
+  actionableLinkedResults: "النتائج الإجرائية المرتبطة",
+  actionableFileLevelResults: "النتائج الإجرائية على مستوى الملف",
+  passingResults: "النتائج المطابقة",
+  passingLinkedResults: "النتائج المطابقة المرتبطة",
+  passingFileLevelResults: "النتائج المطابقة على مستوى الملف",
+  fileLevelResults: "نتائج مستوى الملف",
+  totalResults: "إجمالي النتائج",
+  score: "الدرجة",
+  passed: "مطابق",
+  failed: "ملاحظات",
+  unknown: "غير مكتمل",
+  totalRules: "إجمالي القواعد",
+  scoreMethod: "طريقة الحساب",
+};
+
+function formatStageDuration(value: number): string {
+  if (value < 1) return "أقل من 1 ms";
+  if (value < 1000) return `${Math.round(value)} ms`;
+  return `${(value / 1000).toFixed(2)} s`;
+}
+
+function formatEvidenceValue(
+  key: string,
+  value: string | number | boolean,
+): string {
+  if (key === "scoreMethod" && value === "passed_over_total") {
+    return "المطابق ÷ إجمالي القواعد";
+  }
+  if (typeof value === "boolean") return value ? "نعم" : "لا";
+  return String(value);
+}
 
 function AnalysisScreen({
   activityId,
@@ -951,6 +1076,8 @@ function AnalysisScreen({
       id,
       label: getAnalysisStages(activityId)[index],
       state: "pending",
+      progress: 0,
+      evidence: {},
     })),
   );
   const [completedRun, setCompletedRun] = useState<ComplianceRun>();
@@ -966,6 +1093,8 @@ function AnalysisScreen({
         id,
         label: labels[index],
         state: "pending",
+        progress: 0,
+        evidence: {},
       })),
     );
 
@@ -977,7 +1106,16 @@ function AnalysisScreen({
             ? {
                 ...item,
                 state: event.state,
-                detail: event.detail,
+                detail: event.detail ?? item.detail,
+                durationMs: event.durationMs ?? item.durationMs,
+                progress:
+                  event.state === "completed"
+                    ? 1
+                    : Math.max(item.progress, event.progress ?? 0),
+                evidence: {
+                  ...item.evidence,
+                  ...event.evidence,
+                },
                 errorCode: event.errorCode,
               }
             : item,
@@ -1008,9 +1146,33 @@ function AnalysisScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityId, upload]);
 
-  const completedCount = stages.filter((stage) => stage.state === "completed").length;
   const complete = Boolean(completedRun);
-  const progress = Math.round((completedCount / stages.length) * 100);
+  const completedWork = stages.reduce(
+    (total, stage) =>
+      total + (stage.state === "completed" ? 1 : stage.progress),
+    0,
+  );
+  const progress = Math.min(
+    100,
+    Math.round((completedWork / stages.length) * 100),
+  );
+  const validateEvidence = stages.find(
+    (stage) => stage.id === "validate",
+  )?.evidence;
+  const fileHash =
+    completedRun?.file.sha256 ??
+    (typeof validateEvidence?.sha256 === "string"
+      ? validateEvidence.sha256
+      : undefined);
+  const recordCount =
+    completedRun?.model.records ??
+    (typeof validateEvidence?.records === "number"
+      ? validateEvidence.records
+      : undefined);
+  const totalDuration = stages.reduce(
+    (total, stage) => total + (stage.durationMs ?? 0),
+    0,
+  );
 
   return (
     <div className="analysis-page">
@@ -1050,7 +1212,7 @@ function AnalysisScreen({
             <strong>{progress}%</strong>
           </div>
 
-          <div className="analysis-stages">
+          <div className="analysis-stages" aria-live="polite">
             {stages.map((stage, index) => {
               const done = stage.state === "completed";
               const active = stage.state === "running";
@@ -1074,7 +1236,52 @@ function AnalysisScreen({
                     )}
                   </span>
                   <p>{stage.label}</p>
-                  {stage.detail && <small>{stage.detail}</small>}
+                  {stage.detail && (
+                    <small className="analysis-stage__detail">
+                      {stage.detail}
+                    </small>
+                  )}
+                  {active && (
+                    <span
+                      className="analysis-stage__work"
+                      role="progressbar"
+                      aria-label={`تقدم ${stage.label}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(stage.progress * 100)}
+                    >
+                      <i style={{ width: `${stage.progress * 100}%` }} />
+                      <b>{Math.round(stage.progress * 100)}%</b>
+                    </span>
+                  )}
+                  {done && stage.durationMs !== undefined && (
+                    <small className="analysis-stage__duration">
+                      زمن المرحلة: {formatStageDuration(stage.durationMs)}
+                    </small>
+                  )}
+                  {done && Object.keys(stage.evidence).length > 0 && (
+                    <details className="analysis-stage__evidence">
+                      <summary>عرض دليل المرحلة</summary>
+                      <dl>
+                        {Object.entries(stage.evidence).map(([key, value]) => (
+                          <div key={key}>
+                            <dt>{analysisEvidenceLabels[key] ?? key}</dt>
+                            <dd
+                              dir={
+                                key === "sha256" ||
+                                key.includes("Version") ||
+                                key === "scoreMethod"
+                                  ? "ltr"
+                                  : undefined
+                              }
+                            >
+                              {formatEvidenceValue(key, value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </details>
+                  )}
                   {failed && stage.errorCode && (
                     <code dir="ltr">{stage.errorCode}</code>
                   )}
@@ -1083,15 +1290,52 @@ function AnalysisScreen({
             })}
           </div>
 
+          {fileHash && (
+            <section className="analysis-proof" aria-label="دليل معالجة الملف">
+              <div>
+                <ShieldCheck size={18} />
+                <span>
+                  <strong>دليل الملف المرفوع</strong>
+                  <small>
+                    النتيجة مشتقة من البايتات، ولا يحددها اسم الملف.
+                  </small>
+                </span>
+              </div>
+              <code dir="ltr" title={fileHash}>
+                {fileHash}
+              </code>
+              <dl>
+                <div>
+                  <dt>الحجم الفعلي</dt>
+                  <dd dir="ltr">{upload.bytes.byteLength.toLocaleString()} bytes</dd>
+                </div>
+                <div>
+                  <dt>سجلات STEP</dt>
+                  <dd>{recordCount ?? "جارٍ الاستخراج"}</dd>
+                </div>
+                <div>
+                  <dt>مجموع زمن المراحل</dt>
+                  <dd dir="ltr">{formatStageDuration(totalDuration)}</dd>
+                </div>
+              </dl>
+            </section>
+          )}
+
           {complete ? (
-            <button
-              type="button"
-              className="button button--primary button--full"
-              onClick={onOpenResults}
-            >
-              عرض نتائج الفحص
-              <ArrowLeft size={17} />
-            </button>
+            <>
+              <p className="analysis-complete-note">
+                اكتملت القواعد من محتوى الملف. راجع الأدلة أعلاه، ثم افتح
+                النتائج.
+              </p>
+              <button
+                type="button"
+                className="button button--primary button--full"
+                onClick={onOpenResults}
+              >
+                عرض نتائج الفحص
+                <ArrowLeft size={17} />
+              </button>
+            </>
           ) : (
             <button type="button" className="text-button" onClick={onCancel}>
               {failure ? "العودة واختيار ملف آخر" : "إلغاء والعودة إلى النموذج"}
@@ -1113,39 +1357,40 @@ function SummaryStrip({
   const summary = calculateSummary(findings, scenario);
   return (
     <div className="summary-strip">
-      <div className="summary-score">
+      <div className="summary-overview">
         <div
           className={`score-ring ${
             summary.failed === 0 && summary.unknown === 0 ? "score-ring--ready" : ""
           }`}
           style={{ "--score": summary.score } as React.CSSProperties}
+          aria-label={`مؤشر الجاهزية ${summary.score} من 100`}
         >
           <strong>{summary.score}</strong>
-          <small>/100</small>
         </div>
         <span>
           <strong>مؤشر الجاهزية</strong>
+          <b>{summary.score} من 100</b>
           <small>
-            {summary.failed || summary.unknown
-              ? "يحتاج معالجة قبل التقديم"
-              : "مستوفٍ لقواعد العرض"}
+            {summary.passed} من {findings.length} قواعد مطابقة
           </small>
         </span>
       </div>
-      <div className="summary-stat summary-stat--pass">
-        <span>{statusIcon("pass", 18)}</span>
-        <strong>{summary.passed}</strong>
-        <small>مطابق</small>
-      </div>
-      <div className="summary-stat summary-stat--fail">
-        <span>{statusIcon("fail", 18)}</span>
-        <strong>{summary.failed}</strong>
-        <small>ملاحظة</small>
-      </div>
-      <div className="summary-stat summary-stat--unknown">
-        <span>{statusIcon("unknown", 18)}</span>
-        <strong>{summary.unknown}</strong>
-        <small>غير مكتمل</small>
+      <div className="summary-counts" aria-label="ملخص نتائج القواعد">
+        <div className="summary-stat summary-stat--pass">
+          <span>{statusIcon("pass", 18)}</span>
+          <strong>{summary.passed}</strong>
+          <small>مطابق</small>
+        </div>
+        <div className="summary-stat summary-stat--fail">
+          <span>{statusIcon("fail", 18)}</span>
+          <strong>{summary.failed}</strong>
+          <small>ملاحظة</small>
+        </div>
+        <div className="summary-stat summary-stat--unknown">
+          <span>{statusIcon("unknown", 18)}</span>
+          <strong>{summary.unknown}</strong>
+          <small>غير مكتمل</small>
+        </div>
       </div>
       <div className="summary-message">
         <ShieldCheck size={19} />
@@ -1175,6 +1420,7 @@ function FindingCard({
         selected ? "is-selected" : ""
       }`}
       onClick={onClick}
+      aria-pressed={selected}
     >
       <span className="finding-card__status">{statusIcon(finding.status)}</span>
       <span className="finding-card__body">
@@ -1187,6 +1433,16 @@ function FindingCard({
           <small>المرصود</small>
           <b>{finding.actual}</b>
         </span>
+        {selected && (
+          <span
+            className={`finding-card__model-link ${
+              finding.elementId ? "" : "finding-card__model-link--file"
+            }`}
+          >
+            {finding.elementId ? <Search size={12} /> : <FileCheck2 size={12} />}
+            {finding.elementId ? "محدد في النموذج" : "نتيجة على مستوى الملف"}
+          </span>
+        )}
       </span>
       <ChevronLeft size={17} className="finding-card__arrow" />
     </button>
@@ -1209,7 +1465,10 @@ function FindingDetail({
       <div className="finding-detail__head">
         <span className="finding-detail__icon">{statusIcon(finding.status, 19)}</span>
         <div>
-          <small>{statusLabels[finding.status]}</small>
+          <span className="finding-detail__kicker">
+            <small>{statusLabels[finding.status]}</small>
+            <code dir="ltr">{finding.ruleId}</code>
+          </span>
           <h3>{finding.title}</h3>
         </div>
         <button type="button" className="icon-button" onClick={onClose} aria-label="إغلاق">
@@ -1238,6 +1497,18 @@ function FindingDetail({
         <p>{finding.recommendation}</p>
         <small>الجهد المتوقع: {finding.effort}</small>
       </div>
+      {!finding.elementId && (
+        <div className="finding-file-result">
+          <FileCheck2 size={18} />
+          <span>
+            <strong>نتيجة على مستوى الملف</strong>
+            <small>
+              ترتبط هذه النتيجة باكتمال بيانات الملف، ولا يوجد عنصر هندسي منفرد
+              يمكن اختلاق تحديد له في المشهد.
+            </small>
+          </span>
+        </div>
+      )}
       <dl className="evidence-list">
         <div>
           <dt>العنصر</dt>
@@ -1301,7 +1572,9 @@ function Workspace({
   const { activityId, facility, findings, scenario } = run;
   const firstUnresolved = findings.find((finding) => finding.status !== "pass");
   const activity = activityExamples.find((item) => item.id === activityId);
-  const [filter, setFilter] = useState<ResultFilter>("all");
+  const [filter, setFilter] = useState<ResultFilter>(() =>
+    findings.some((finding) => finding.status !== "pass") ? "action" : "all",
+  );
   const [selectedRule, setSelectedRule] = useState<string | undefined>(
     firstUnresolved?.ruleId,
   );
@@ -1314,24 +1587,45 @@ function Workspace({
     const unresolved = findings.find((finding) => finding.status !== "pass");
     setSelectedRule(unresolved?.ruleId);
     setSelectedElement(unresolved?.elementId);
-    setFilter("all");
+    setFilter(
+      findings.some((finding) => finding.status !== "pass") ? "action" : "all",
+    );
   }, [findings]);
 
   const visibleFindings =
-    filter === "all"
+    filter === "action"
+      ? findings.filter((finding) => finding.status !== "pass")
+      : filter === "all"
       ? findings
       : findings.filter((finding) => finding.status === filter);
   const selectedFinding = findings.find((finding) => finding.ruleId === selectedRule);
+  const findingMarkers = useMemo(() => {
+    let unresolvedOrdinal = 0;
+    return findings.flatMap((finding) => {
+      if (finding.status === "pass") return [];
+      unresolvedOrdinal += 1;
+      if (!finding.elementId) return [];
+      return [
+        {
+          elementId: finding.elementId,
+          status: finding.status,
+          label: String(unresolvedOrdinal),
+          ruleId: finding.ruleId,
+          title: finding.shortTitle,
+        },
+      ];
+    });
+  }, [findings]);
 
   const selectFinding = (finding: Finding) => {
     setSelectedRule(finding.ruleId);
     setSelectedElement(finding.elementId);
-    setMobileTab("model");
   };
 
   const selectElement = (elementId: string) => {
     if (!elementId) {
       setSelectedElement(undefined);
+      setSelectedRule(undefined);
       return;
     }
     setSelectedElement(elementId);
@@ -1345,8 +1639,12 @@ function Workspace({
 
   const copyGuid = async () => {
     if (!selectedFinding?.elementGuid) return;
-    await navigator.clipboard.writeText(selectedFinding.elementGuid);
-    notify("تم نسخ معرف العنصر.");
+    try {
+      await navigator.clipboard.writeText(selectedFinding.elementGuid);
+      notify("تم نسخ معرف العنصر.");
+    } catch {
+      notify("تعذر النسخ تلقائيًا. حدّد المعرّف وانسخه يدويًا.");
+    }
   };
 
   return (
@@ -1366,7 +1664,7 @@ function Workspace({
             </small>
           </span>
         </div>
-        <span className="prototype-badge">نموذج إثبات مفهوم</span>
+        <span className="prototype-badge">نسخة تجريبية</span>
         <div className="workspace-header__actions">
           <button type="button" className="button button--small button--outline" onClick={onRerun}>
             <RefreshCcw size={15} /> إعادة الفحص
@@ -1420,7 +1718,14 @@ function Workspace({
               scenario={scenario}
               selectedElement={selectedElement}
               selectedStatus={selectedFinding?.status}
+              selectedFindingTitle={selectedFinding?.shortTitle}
+              selectedRuleId={selectedFinding?.ruleId}
+              findingMarkers={findingMarkers}
               onSelectElement={selectElement}
+              onSelectFinding={(ruleId, elementId) => {
+                setSelectedRule(ruleId);
+                setSelectedElement(elementId);
+              }}
             />
           </Suspense>
         </section>
@@ -1441,6 +1746,7 @@ function Workspace({
           <div className="finding-filters">
             {(
               [
+                ["action", "يتطلب إجراء"],
                 ["all", "الكل"],
                 ["fail", "الملاحظات"],
                 ["unknown", "غير مكتمل"],
@@ -1448,16 +1754,34 @@ function Workspace({
               ] as [ResultFilter, string][]
             ).map(([key, label]) => {
               const count =
-                key === "all"
+                key === "action"
+                  ? findings.filter((finding) => finding.status !== "pass").length
+                  : key === "all"
                   ? findings.length
                   : findings.filter((finding) => finding.status === key).length;
               return (
                 <button
                   type="button"
-                  className={filter === key ? "is-active" : ""}
+                  className={`finding-filter finding-filter--${key} ${
+                    filter === key ? "is-active" : ""
+                  }`}
                   onClick={() => {
                     setFilter(key);
-                    setSelectedRule(undefined);
+                    const nextFindings =
+                      key === "action"
+                        ? findings.filter((finding) => finding.status !== "pass")
+                        : key === "all"
+                        ? findings
+                        : findings.filter((finding) => finding.status === key);
+                    const currentSelection = nextFindings.find(
+                      (finding) => finding.ruleId === selectedRule,
+                    );
+                    const nextSelection =
+                      currentSelection ??
+                      nextFindings.find((finding) => finding.status !== "pass") ??
+                      nextFindings[0];
+                    setSelectedRule(nextSelection?.ruleId);
+                    setSelectedElement(nextSelection?.elementId);
                   }}
                   key={key}
                 >
@@ -1468,24 +1792,11 @@ function Workspace({
           </div>
 
           <div className="findings-panel__scroll">
-            {selectedFinding ? (
-              <FindingDetail
-                finding={selectedFinding}
-                onClose={() => {
-                  setSelectedRule(undefined);
-                  setSelectedElement(undefined);
-                }}
-                onFocus={() => {
-                  setSelectedElement(undefined);
-                  window.setTimeout(
-                    () => setSelectedElement(selectedFinding.elementId),
-                    20,
-                  );
-                  setMobileTab("model");
-                }}
-                onCopy={() => void copyGuid()}
-              />
-            ) : (
+            <section className="findings-browser" aria-label="قائمة نتائج الفحص">
+              <div className="findings-list__head">
+                <span>اختر نتيجة لعرض تفاصيلها وربطها بالنموذج</span>
+                <small>{visibleFindings.length} ظاهرة</small>
+              </div>
               <div className="findings-list">
                 {visibleFindings.map((finding) => (
                   <FindingCard
@@ -1503,7 +1814,33 @@ function Workspace({
                   </div>
                 )}
               </div>
-            )}
+            </section>
+            <section className="finding-detail-pane" aria-label="تفاصيل النتيجة المحددة">
+              {selectedFinding ? (
+                <FindingDetail
+                  finding={selectedFinding}
+                  onClose={() => {
+                    setSelectedRule(undefined);
+                    setSelectedElement(undefined);
+                  }}
+                  onFocus={() => {
+                    setSelectedElement(undefined);
+                    window.setTimeout(
+                      () => setSelectedElement(selectedFinding.elementId),
+                      20,
+                    );
+                    setMobileTab("model");
+                  }}
+                  onCopy={() => void copyGuid()}
+                />
+              ) : (
+                <div className="finding-detail-empty">
+                  <Search size={22} />
+                  <strong>اختر نتيجة من القائمة</strong>
+                  <p>ستظهر تفاصيل الدليل والإجراء المقترح هنا.</p>
+                </div>
+              )}
+            </section>
           </div>
 
           <div className="findings-panel__footer">
@@ -1547,9 +1884,19 @@ function Report({
     () => formatDate(new Date(run.processedAt)),
     [run.processedAt],
   );
+  const reportFindings = useMemo(() => {
+    const priority: Record<ResultStatus, number> = {
+      fail: 0,
+      unknown: 1,
+      pass: 2,
+    };
+    return [...findings].sort(
+      (left, right) => priority[left.status] - priority[right.status],
+    );
+  }, [findings]);
 
   const downloadReport = () => {
-    const rows = findings
+    const rows = reportFindings
       .map(
         (finding) => `
           <tr>
@@ -1573,10 +1920,11 @@ h1{color:#0b5d48;margin-bottom:4px}.meta{color:#637069}.summary{display:flex;gap
 table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #d7ded9;padding:8px;text-align:right;vertical-align:top}
 th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7ded9;background:#f5f7f3}
 </style></head><body>
-<p>جواز الامتثال • نسخة تجريبية</p>
+<p>مِعيار • نسخة تجريبية</p>
 <h1>تقرير جاهزية الطلب</h1>
 <p class="meta">${escapeHtml(facility.projectName)} • ${escapeHtml(facility.city)} • ${escapeHtml(generatedAt)}</p>
 <div class="summary"><span><strong>${summary.score}</strong>مؤشر الجاهزية</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>ملاحظة</span><span><strong>${summary.unknown}</strong>غير مكتمل</span></div>
+<p>طريقة الحساب: ${summary.passed} قاعدة مطابقة ÷ ${findings.length} قواعد × 100 = ${summary.score}</p>
 <p>الملف: ${escapeHtml(metadata.fileName)} • ${escapeHtml(metadata.schema)} • ${metadata.elements} عنصرًا</p>
 <p>بصمة الملف SHA-256: ${escapeHtml(run.file.sha256)}</p>
 <table><thead><tr><th>القاعدة</th><th>الحالة</th><th>النتيجة</th><th>المرصود</th><th>المتوقع</th><th>مرجع STEP</th><th>الإجراء المقترح</th></tr></thead><tbody>${rows}</tbody></table>
@@ -1586,7 +1934,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `jawaz-readiness-${activityId}-${scenario}.html`;
+    anchor.download = `miyar-readiness-${activityId}-${scenario}.html`;
     anchor.click();
     URL.revokeObjectURL(url);
     notify("تم تنزيل نسخة HTML قابلة للطباعة من التقرير.");
@@ -1622,7 +1970,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
           <div>
             <span className="prototype-badge">تقرير تجريبي غير رسمي</span>
             <small>رقم التقرير</small>
-            <strong dir="ltr">JCP-{run.file.sha256.slice(0, 12).toUpperCase()}</strong>
+            <strong dir="ltr">MYR-{run.file.sha256.slice(0, 12).toUpperCase()}</strong>
           </div>
         </div>
 
@@ -1661,15 +2009,19 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
           <div className="report-score">
             <span>
               <strong>{summary.score}</strong>
-              <small>/100</small>
+              <small>من 100</small>
             </span>
             <div>
               <h2>مؤشر جاهزية الطلب</h2>
               <p>
-                {summary.failed
+                {summary.failed || summary.unknown
                   ? "يحتاج المشروع إلى معالجة الملاحظات واستكمال البيانات قبل التقديم."
                   : "اجتاز المشروع جميع قواعد العرض التجريبية."}
               </p>
+              <small className="report-score-method">
+                طريقة الحساب: {summary.passed} ÷ {findings.length} × 100 ={" "}
+                {summary.score}
+              </small>
             </div>
           </div>
           <div className="report-summary__stats">
@@ -1753,45 +2105,60 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
             </span>
             <small>{findings.length} نتائج</small>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>الحالة</th>
-                <th>القاعدة والنتيجة</th>
-                <th>الدليل</th>
-                <th>العنصر</th>
-                <th>الإجراء المقترح</th>
-              </tr>
-            </thead>
-            <tbody>
-              {findings.map((finding) => (
-                <tr key={finding.ruleId}>
-                  <td>
-                    <span className={`report-status report-status--${finding.status}`}>
-                      {statusIcon(finding.status, 13)}
-                      {statusShortLabels[finding.status]}
-                    </span>
-                  </td>
-                  <td>
+          <div className="report-result-list">
+            {reportFindings.map((finding, index) => (
+              <article
+                className={`report-result-card report-result-card--${finding.status}`}
+                key={finding.ruleId}
+              >
+                <header>
+                  <span className={`report-status report-status--${finding.status}`}>
+                    {statusIcon(finding.status, 13)}
+                    {statusShortLabels[finding.status]}
+                  </span>
+                  <div>
                     <code dir="ltr">{finding.ruleId}</code>
-                    <strong>{finding.shortTitle}</strong>
-                  </td>
-                  <td>
-                    <span>{finding.actual}</span>
-                    <small>المتوقع: {finding.expected}</small>
-                  </td>
-                  <td>
-                    <span>{finding.elementName ?? "على مستوى الملف"}</span>
-                    {finding.elementGuid && <code dir="ltr">{finding.elementGuid}</code>}
-                    {finding.elementStepId && (
-                      <small dir="ltr">STEP #{finding.elementStepId}</small>
+                    <h3>{finding.shortTitle}</h3>
+                  </div>
+                  <small aria-label={`النتيجة ${index + 1}`}>
+                    {String(index + 1).padStart(2, "0")}
+                  </small>
+                </header>
+                <div className="report-result-evidence">
+                  <div>
+                    <small>القيمة المرصودة</small>
+                    <strong>{finding.actual}</strong>
+                  </div>
+                  <div>
+                    <small>القيمة المتوقعة</small>
+                    <strong>{finding.expected}</strong>
+                  </div>
+                  <div>
+                    <small>الارتباط بالنموذج</small>
+                    <strong>
+                      {finding.elementName ?? "نتيجة على مستوى الملف"}
+                    </strong>
+                    {finding.elementGuid && (
+                      <code dir="ltr">{finding.elementGuid}</code>
                     )}
-                  </td>
-                  <td>{finding.recommendation}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {finding.elementStepId && (
+                      <span dir="ltr">STEP #{finding.elementStepId}</span>
+                    )}
+                    {!finding.elementId && (
+                      <span className="report-file-label">
+                        <FileCheck2 size={12} />
+                        لا يوجد عنصر هندسي منفرد
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="report-result-action">
+                  <strong>الإجراء المقترح</strong>
+                  <p>{finding.recommendation}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="report-disclaimer">
@@ -1801,16 +2168,15 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
             <p>{primaryDisclaimer}</p>
             <p>{modelDisclaimer}</p>
             <p>
-              قواعد وحدود النسخة التجريبية مخصصة لإثبات المفهوم، وتحتاج إلى
-              مراجعة واعتماد مختص وربطها بالوثيقة الرسمية وإصدارها وتاريخ
-              سريانها.
+              قواعد وحدود النسخة التجريبية غير معتمدة رسميًا، وتحتاج إلى
+              مراجعة مختص وربطها بالوثيقة الرسمية وإصدارها وتاريخ سريانها.
             </p>
           </div>
         </section>
 
         <footer className="report-footer">
-          <span>جواز الامتثال • نموذج إثبات مفهوم</span>
-          <span dir="ltr">Page 1 / 1</span>
+          <span>مِعيار • فحص استباقي قبل الترخيص</span>
+          <span>تقرير إلكتروني قابل للطباعة</span>
         </footer>
       </main>
     </div>
@@ -1827,10 +2193,14 @@ export default function App() {
   const [toast, setToast] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ facility, activityId }),
-    );
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ facility, activityId }),
+      );
+    } catch {
+      // Storage can be unavailable in strict privacy modes; the active run continues.
+    }
   }, [activityId, facility]);
 
   useEffect(() => {
