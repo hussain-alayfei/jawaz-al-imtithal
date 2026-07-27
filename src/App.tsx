@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   CircleHelp,
   Clipboard,
+  Coffee,
   Download,
   FileBox,
   FileCheck2,
@@ -25,8 +26,11 @@ import {
   RefreshCcw,
   RotateCcw,
   Search,
+  Scissors,
   ShieldCheck,
+  Stethoscope,
   UploadCloud,
+  UtensilsCrossed,
   X,
 } from "lucide-react";
 import {
@@ -41,15 +45,19 @@ import {
 } from "react";
 import { BrandMark } from "./components/BrandMark";
 import {
-  analysisStages,
+  activityExamples,
   calculateSummary,
   defaultFacility,
+  getActivityIdFromLabel,
+  getAnalysisStages,
+  getDefaultFacility,
   getFindings,
+  getModelMetadata,
   modelDisclaimer,
-  modelMetadata,
   primaryDisclaimer,
   statusLabels,
   statusShortLabels,
+  type ActivityId,
   type FacilityDetails,
   type Finding,
   type ModelMetadata,
@@ -77,20 +85,30 @@ const STORAGE_KEY = "jawaz-compliance-demo";
 function loadStoredState(): {
   facility: FacilityDetails;
   scenario: Scenario;
+  activityId: ActivityId;
 } {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
     if (value) {
       const parsed = JSON.parse(value);
+      const activityId = getActivityIdFromLabel(
+        parsed.activityId ?? parsed.facility?.activity,
+      );
+      const activityDefaults = getDefaultFacility(activityId);
       return {
-        facility: { ...defaultFacility, ...parsed.facility },
+        facility: { ...activityDefaults, ...parsed.facility, activity: activityDefaults.activity },
         scenario: parsed.scenario === "ready" ? "ready" : "review",
+        activityId,
       };
     }
   } catch {
     // The app remains fully usable when storage is unavailable.
   }
-  return { facility: defaultFacility, scenario: "review" };
+  return {
+    facility: defaultFacility,
+    scenario: "review",
+    activityId: "restaurant",
+  };
 }
 
 function formatDate(date = new Date()) {
@@ -104,6 +122,13 @@ function statusIcon(status: ResultStatus, size = 16) {
   if (status === "pass") return <CheckCircle2 size={size} />;
   if (status === "fail") return <AlertCircle size={size} />;
   return <CircleHelp size={size} />;
+}
+
+function activityIcon(activityId: ActivityId, size = 20) {
+  if (activityId === "cafe") return <Coffee size={size} />;
+  if (activityId === "clinic") return <Stethoscope size={size} />;
+  if (activityId === "salon") return <Scissors size={size} />;
+  return <UtensilsCrossed size={size} />;
 }
 
 function AppHeader({
@@ -235,9 +260,11 @@ function Dashboard({
 }: {
   facility: FacilityDetails;
   onStart: () => void;
-  onDemo: () => void;
+  onDemo: (activityId?: ActivityId) => void;
   onOpenRecent: () => void;
 }) {
+  const recentActivityId = getActivityIdFromLabel(facility.activity);
+
   return (
     <>
       <main className="dashboard">
@@ -263,7 +290,7 @@ function Dashboard({
               <button
                 type="button"
                 className="button button--ghost-light"
-                onClick={onDemo}
+                onClick={() => onDemo(recentActivityId)}
               >
                 <PanelTop size={18} />
                 استكشف النموذج التفاعلي
@@ -338,7 +365,7 @@ function Dashboard({
               <ShieldCheck size={19} />
               <span>
                 <strong>10 قواعد</strong>
-                <small>DEMO-REST-2026.1</small>
+                <small>DEMO-MULTI-2026.2</small>
               </span>
             </div>
             <div className="hero__float hero__float--bottom">
@@ -352,6 +379,44 @@ function Dashboard({
         </section>
 
         <Disclaimer compact />
+
+        <section className="example-section" aria-labelledby="example-heading">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">نماذج قطاعية جاهزة</span>
+              <h2 id="example-heading">اختبر الفكرة على أكثر من نشاط</h2>
+            </div>
+            <p>
+              لكل نشاط توزيع هندسي وتجهيزات وقواعد عرض مرتبطة بعناصره داخل
+              النموذج ثلاثي الأبعاد.
+            </p>
+          </div>
+          <div className="activity-grid">
+            {activityExamples.map((example) => (
+              <button
+                type="button"
+                className={`activity-card activity-card--${example.id}`}
+                key={example.id}
+                onClick={() => onDemo(example.id)}
+                data-testid={`activity-example-${example.id}`}
+              >
+                <span className="activity-card__icon">
+                  {activityIcon(example.id, 22)}
+                </span>
+                <span className="activity-card__copy">
+                  <small>نموذج IFC دلالي</small>
+                  <strong>{example.label}</strong>
+                  <span>{example.description}</span>
+                </span>
+                <span className="activity-card__meta">
+                  <b>10 قواعد</b>
+                  <em>عرض ثلاثي الأبعاد تفاعلي</em>
+                </span>
+                <ArrowUpLeft size={18} />
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section className="dashboard-grid">
           <div className="dashboard-main">
@@ -378,7 +443,7 @@ function Dashboard({
               </div>
               <div className="recent-project__content">
                 <div>
-                  <span className="project-type">مطعم • IFC</span>
+                  <span className="project-type">{facility.activity} • IFC</span>
                   <h3>{facility.projectName}</h3>
                   <p>
                     <MapPin size={14} />
@@ -413,13 +478,18 @@ function Dashboard({
 
           <aside className="quick-start">
             <div className="quick-start__icon">
-              <Plus size={23} />
+              {activityIcon(recentActivityId, 23)}
             </div>
             <h3>ابدأ من نموذج جاهز</h3>
             <p>
-              جرّب الرحلة الكاملة على مطعم معدّ مسبقًا وفيه ملاحظات مقصودة.
+              جرّب الرحلة الكاملة على أربعة أنشطة معدّة مسبقًا، مع ملاحظات
+              مقصودة يمكن استكشافها داخل النموذج.
             </p>
-            <button type="button" className="button button--primary" onClick={onDemo}>
+            <button
+              type="button"
+              className="button button--primary"
+              onClick={() => onDemo(recentActivityId)}
+            >
               تشغيل العرض التجريبي
               <ArrowLeft size={17} />
             </button>
@@ -434,7 +504,7 @@ function Dashboard({
       <footer className="site-footer">
         <BrandMark compact />
         <p>نموذج إثبات مفهوم — لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
-        <span dir="ltr">DEMO-REST-2026.1</span>
+        <span dir="ltr">DEMO-MULTI-2026.2</span>
       </footer>
     </>
   );
@@ -499,13 +569,17 @@ function WizardShell({
 
 function FacilityForm({
   value,
+  activityId,
   onChange,
+  onActivityChange,
   onSubmit,
   onHome,
   onNew,
 }: {
   value: FacilityDetails;
+  activityId: ActivityId;
   onChange: (value: FacilityDetails) => void;
+  onActivityChange: (activityId: ActivityId) => void;
   onSubmit: () => void;
   onHome: () => void;
   onNew: () => void;
@@ -541,9 +615,13 @@ function FacilityForm({
         <div className="form-card__notice">
           <BadgeCheck size={19} />
           <span>
-            <strong>نطاق النموذج الأولي: نشاط المطاعم</strong>
+            <strong>
+              حزمة الفحص المختارة:{" "}
+              {activityExamples.find((example) => example.id === activityId)?.label}
+            </strong>
             <small>
-              البيانات التالية معبأة لتستطيع تجربة الرحلة مباشرة، ويمكنك تعديلها.
+              تتوفر نماذج مترابطة للمطاعم والمقاهي والعيادات والصالونات، ويمكنك
+              تعديل البيانات قبل المتابعة.
             </small>
           </span>
         </div>
@@ -568,12 +646,19 @@ function FacilityForm({
               <Building2 size={17} />
               <select
                 value={value.activity}
-                onChange={(event) => update("activity", event.target.value)}
+                onChange={(event) =>
+                  onActivityChange(getActivityIdFromLabel(event.target.value))
+                }
+                data-testid="activity-select"
               >
-                <option>مطعم</option>
+                {activityExamples.map((example) => (
+                  <option key={example.id} value={example.label}>
+                    {example.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <small>النشاط الوحيد المتاح في نسخة العرض.</small>
+            <small>يغيّر النشاط البيانات التجريبية وحزمة القواعد والمشهد.</small>
           </label>
 
           <label className="field">
@@ -692,8 +777,10 @@ function FacilityForm({
 }
 
 function ModelUpload({
+  activityId,
   scenario,
   metadata,
+  onActivity,
   onScenario,
   onMetadata,
   onContinue,
@@ -701,8 +788,10 @@ function ModelUpload({
   onHome,
   onNew,
 }: {
+  activityId: ActivityId;
   scenario: Scenario;
   metadata: ModelMetadata;
+  onActivity: (activityId: ActivityId) => void;
   onScenario: (scenario: Scenario) => void;
   onMetadata: (metadata: ModelMetadata) => void;
   onContinue: () => void;
@@ -716,7 +805,7 @@ function ModelUpload({
 
   const chooseScenario = (nextScenario: Scenario) => {
     onScenario(nextScenario);
-    onMetadata(modelMetadata[nextScenario]);
+    onMetadata(getModelMetadata(activityId, nextScenario));
     setError("");
     setValidated(true);
   };
@@ -749,30 +838,37 @@ function ModelUpload({
       return;
     }
 
-    const marker = text.match(/JAWAZ_SCENARIO=(review|ready)/i)?.[1] as
+    const scenarioMarker = text.match(/JAWAZ_SCENARIO=(review|ready)/i)?.[1] as
       | Scenario
       | undefined;
+    const activityMarker = text.match(
+      /JAWAZ_ACTIVITY=(restaurant|cafe|clinic|salon)/i,
+    )?.[1] as ActivityId | undefined;
 
-    if (!marker) {
+    if (!scenarioMarker || !activityMarker) {
       setError(
-        "تم التحقق من ترويسة IFC، لكن الفحص الكامل في هذه النسخة يعمل فقط على ملفي الاختبار المرتبطين بالنموذج الدلالي. استخدم أحد الملفين أدناه.",
+        "تم التحقق من ترويسة IFC، لكن الفحص الكامل يعمل على نماذج الاختبار الدلالية الثمانية فقط. استخدم أحد الملفين المرتبطين بالنشاط أدناه.",
       );
       return;
     }
 
     const spaces = (text.match(/IFCSPACE\s*\(/gi) ?? []).length || 6;
     const doors = (text.match(/IFCDOOR\s*\(/gi) ?? []).length || 7;
+    const fixtureMetadata = getModelMetadata(activityMarker, scenarioMarker);
     const nextMetadata: ModelMetadata = {
-      ...modelMetadata[marker],
+      ...fixtureMetadata,
       fileName: file.name,
       size: `${Math.max(file.size / 1024, 1).toFixed(1)} KB`,
       spaces,
       doors,
-      elements: (text.match(/^#\d+=/gim) ?? []).length || modelMetadata[marker].elements,
-      scenario: marker,
+      elements:
+        (text.match(/^#\d+=/gim) ?? []).length || fixtureMetadata.elements,
+      scenario: scenarioMarker,
+      activityId: activityMarker,
     };
 
-    onScenario(marker);
+    onActivity(activityMarker);
+    onScenario(scenarioMarker);
     onMetadata(nextMetadata);
     setValidated(true);
   };
@@ -787,7 +883,7 @@ function ModelUpload({
     <WizardShell
       current={2}
       title="أضف النموذج الهندسي"
-      description="استخدم أحد نموذجي الاختبار للحصول على تجربة ثلاثية كاملة، أو تحقّق من ملف IFC خاص بك."
+      description={`استخدم أحد نموذجي اختبار ${activityExamples.find((item) => item.id === activityId)?.label ?? ""} للحصول على تجربة ثلاثية كاملة، أو تحقّق من ملف IFC خاص بك.`}
       onHome={onHome}
       onNew={onNew}
     >
@@ -839,7 +935,11 @@ function ModelUpload({
           <div className="fixture-heading">
             <div>
               <span className="eyebrow">نماذج اختبار جاهزة</span>
-              <h3>اختر نتيجة الرحلة التي تريد تجربتها</h3>
+              <h3>
+                {activityIcon(activityId, 18)}
+                اختر حالة نموذج{" "}
+                {activityExamples.find((item) => item.id === activityId)?.label}
+              </h3>
             </div>
             <span>IFC4 • نموذج دلالي</span>
           </div>
@@ -859,7 +959,10 @@ function ModelUpload({
                 <i />
               </span>
               <span className="fixture-card__copy">
-                <strong>مطعم — يحتاج معالجة</strong>
+                <strong>
+                  {activityExamples.find((item) => item.id === activityId)?.label} —
+                  يحتاج معالجة
+                </strong>
                 <small>7 مطابق • 2 ملاحظة • 1 غير مكتمل</small>
               </span>
               <span className="fixture-card__tag fixture-card__tag--fail">
@@ -881,7 +984,10 @@ function ModelUpload({
                 <i />
               </span>
               <span className="fixture-card__copy">
-                <strong>مطعم — مستوفٍ لقواعد العرض</strong>
+                <strong>
+                  {activityExamples.find((item) => item.id === activityId)?.label} —
+                  مستوفٍ لقواعد العرض
+                </strong>
                 <small>10 مطابق • لا توجد حالات معلقة</small>
               </span>
               <span className="fixture-card__tag fixture-card__tag--pass">جاهز</span>
@@ -890,10 +996,10 @@ function ModelUpload({
 
           <div className="sample-downloads">
             <span>هل تريد اختبار الرفع بنفسك؟</span>
-            <a href="/samples/restaurant-review.ifc" download>
+            <a href={`/samples/${activityId}-review.ifc`} download>
               <Download size={14} /> تحميل ملف يحتاج معالجة
             </a>
-            <a href="/samples/restaurant-ready.ifc" download>
+            <a href={`/samples/${activityId}-ready.ifc`} download>
               <Download size={14} /> تحميل الملف الجاهز
             </a>
           </div>
@@ -975,17 +1081,21 @@ function ModelUpload({
 }
 
 function AnalysisScreen({
+  activityId,
   metadata,
   scenario,
   onComplete,
   onCancel,
 }: {
+  activityId: ActivityId;
   metadata: ModelMetadata;
   scenario: Scenario;
   onComplete: () => void;
   onCancel: () => void;
 }) {
   const [stage, setStage] = useState(0);
+  const analysisStages = useMemo(() => getAnalysisStages(activityId), [activityId]);
+  const activity = activityExamples.find((item) => item.id === activityId);
 
   useEffect(() => {
     setStage(0);
@@ -999,7 +1109,7 @@ function AnalysisScreen({
       });
     }, 620);
     return () => window.clearInterval(timer);
-  }, [scenario]);
+  }, [activityId, analysisStages.length, scenario]);
 
   const complete = stage >= analysisStages.length;
   const progress = Math.min(100, Math.round((stage / analysisStages.length) * 100));
@@ -1031,7 +1141,7 @@ function AnalysisScreen({
         </div>
 
         <div className="analysis-card__content">
-          <span className="eyebrow">فحص حزمة المطاعم</span>
+          <span className="eyebrow">فحص حزمة {activity?.label}</span>
           <h1>{complete ? "اكتمل الفحص بنجاح" : "نفحص النموذج الآن…"}</h1>
           <p>
             ينفذ محرك القواعد حسابات محددة ويربط كل نتيجة بالدليل والعنصر
@@ -1073,7 +1183,7 @@ function AnalysisScreen({
                     </small>
                   )}
                   {done && index === 3 && (
-                    <small dir="ltr">DEMO-REST-2026.1 • 10 rules</small>
+                    <small dir="ltr">{activity?.ruleVersion} • 10 rules</small>
                   )}
                 </div>
               );
@@ -1265,6 +1375,7 @@ function FindingDetail({
 
 function Workspace({
   facility,
+  activityId,
   scenario,
   metadata,
   onReport,
@@ -1274,6 +1385,7 @@ function Workspace({
   notify,
 }: {
   facility: FacilityDetails;
+  activityId: ActivityId;
   scenario: Scenario;
   metadata: ModelMetadata;
   onReport: () => void;
@@ -1282,20 +1394,27 @@ function Workspace({
   onNew: () => void;
   notify: (message: string) => void;
 }) {
-  const findings = useMemo(() => getFindings(scenario), [scenario]);
+  const findings = useMemo(
+    () => getFindings(scenario, activityId),
+    [activityId, scenario],
+  );
+  const firstUnresolved = findings.find((finding) => finding.status !== "pass");
+  const activity = activityExamples.find((item) => item.id === activityId);
   const [filter, setFilter] = useState<ResultFilter>("all");
   const [selectedRule, setSelectedRule] = useState<string | undefined>(
-    scenario === "review" ? "DOOR-WIDTH-001" : undefined,
+    firstUnresolved?.ruleId,
   );
   const [selectedElement, setSelectedElement] = useState<string | undefined>(
-    scenario === "review" ? "D-EXIT-02" : undefined,
+    firstUnresolved?.elementId,
   );
   const [mobileTab, setMobileTab] = useState<"model" | "findings">("model");
 
   useEffect(() => {
-    setSelectedRule(scenario === "review" ? "DOOR-WIDTH-001" : undefined);
-    setSelectedElement(scenario === "review" ? "D-EXIT-02" : undefined);
-  }, [scenario]);
+    const unresolved = findings.find((finding) => finding.status !== "pass");
+    setSelectedRule(unresolved?.ruleId);
+    setSelectedElement(unresolved?.elementId);
+    setFilter("all");
+  }, [activityId, findings, scenario]);
 
   const visibleFindings =
     filter === "all"
@@ -1320,7 +1439,7 @@ function Workspace({
         (finding) =>
           finding.elementId === elementId && finding.status !== "pass",
       ) ?? findings.find((finding) => finding.elementId === elementId);
-    if (linked) setSelectedRule(linked.ruleId);
+    setSelectedRule(linked?.ruleId);
   };
 
   const copyGuid = async () => {
@@ -1395,6 +1514,8 @@ function Workspace({
             }
           >
             <Viewer3D
+              key={`${activityId}-${scenario}`}
+              activityId={activityId}
               scenario={scenario}
               selectedElement={selectedElement}
               selectedStatus={selectedFinding?.status}
@@ -1410,7 +1531,7 @@ function Workspace({
         >
           <div className="findings-panel__head">
             <div>
-              <span className="eyebrow">DEMO-REST-2026.1</span>
+              <span className="eyebrow">{activity?.ruleVersion}</span>
               <h2>نتائج الفحص</h2>
             </div>
             <span className="findings-count">{findings.length} قواعد</span>
@@ -1510,6 +1631,7 @@ function escapeHtml(value: unknown) {
 
 function Report({
   facility,
+  activityId,
   scenario,
   metadata,
   onBack,
@@ -1517,13 +1639,18 @@ function Report({
   notify,
 }: {
   facility: FacilityDetails;
+  activityId: ActivityId;
   scenario: Scenario;
   metadata: ModelMetadata;
   onBack: () => void;
   onHome: () => void;
   notify: (message: string) => void;
 }) {
-  const findings = useMemo(() => getFindings(scenario), [scenario]);
+  const findings = useMemo(
+    () => getFindings(scenario, activityId),
+    [activityId, scenario],
+  );
+  const activity = activityExamples.find((item) => item.id === activityId);
   const summary = calculateSummary(findings, scenario);
   const generatedAt = useMemo(() => formatDate(), []);
 
@@ -1563,7 +1690,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `jawaz-readiness-${scenario}.html`;
+    anchor.download = `jawaz-readiness-${activityId}-${scenario}.html`;
     anchor.click();
     URL.revokeObjectURL(url);
     notify("تم تنزيل نسخة HTML قابلة للطباعة من التقرير.");
@@ -1668,7 +1795,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
               <FileCheck2 size={18} />
               <strong>ملخص النموذج الهندسي</strong>
             </span>
-            <small dir="ltr">DEMO-REST-2026.1</small>
+            <small dir="ltr">{activity?.ruleVersion}</small>
           </div>
           <div className="report-model__grid">
             <span>
@@ -1767,15 +1894,19 @@ export default function App() {
   const stored = useMemo(loadStoredState, []);
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [facility, setFacility] = useState<FacilityDetails>(stored.facility);
+  const [activityId, setActivityId] = useState<ActivityId>(stored.activityId);
   const [scenario, setScenario] = useState<Scenario>(stored.scenario);
   const [metadata, setMetadata] = useState<ModelMetadata>(
-    modelMetadata[stored.scenario],
+    getModelMetadata(stored.activityId, stored.scenario),
   );
   const [toast, setToast] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ facility, scenario }));
-  }, [facility, scenario]);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ facility, activityId, scenario }),
+    );
+  }, [activityId, facility, scenario]);
 
   useEffect(() => {
     if (!toast) return;
@@ -1791,16 +1922,33 @@ export default function App() {
     setScreen("details");
   };
 
-  const openDemo = () => {
+  const selectActivity = (nextActivityId: ActivityId) => {
+    setActivityId(nextActivityId);
+    setFacility(getDefaultFacility(nextActivityId));
+    setMetadata(getModelMetadata(nextActivityId, scenario));
+  };
+
+  const applyUploadedActivity = (nextActivityId: ActivityId) => {
+    setActivityId(nextActivityId);
+    setFacility((current) => ({
+      ...current,
+      activity: getDefaultFacility(nextActivityId).activity,
+    }));
+  };
+
+  const openDemo = (nextActivityId: ActivityId = "restaurant") => {
+    setActivityId(nextActivityId);
+    setFacility(getDefaultFacility(nextActivityId));
     setScenario("review");
-    setMetadata(modelMetadata.review);
+    setMetadata(getModelMetadata(nextActivityId, "review"));
     setScreen("analysis");
   };
 
   const resetAll = () => {
+    setActivityId("restaurant");
     setFacility(defaultFacility);
     setScenario("review");
-    setMetadata(modelMetadata.review);
+    setMetadata(getModelMetadata("restaurant", "review"));
     setScreen("details");
   };
 
@@ -1818,7 +1966,7 @@ export default function App() {
             onDemo={openDemo}
             onOpenRecent={() => {
               setScenario("review");
-              setMetadata(modelMetadata.review);
+              setMetadata(getModelMetadata(activityId, "review"));
               setScreen("workspace");
             }}
           />
@@ -1828,7 +1976,9 @@ export default function App() {
       {screen === "details" && (
         <FacilityForm
           value={facility}
+          activityId={activityId}
           onChange={setFacility}
+          onActivityChange={selectActivity}
           onSubmit={() => setScreen("model")}
           onHome={() => setScreen("dashboard")}
           onNew={resetAll}
@@ -1837,11 +1987,13 @@ export default function App() {
 
       {screen === "model" && (
         <ModelUpload
+          activityId={activityId}
           scenario={scenario}
           metadata={metadata}
+          onActivity={applyUploadedActivity}
           onScenario={(nextScenario) => {
             setScenario(nextScenario);
-            setMetadata(modelMetadata[nextScenario]);
+            setMetadata(getModelMetadata(activityId, nextScenario));
           }}
           onMetadata={setMetadata}
           onContinue={() => setScreen("analysis")}
@@ -1853,6 +2005,7 @@ export default function App() {
 
       {screen === "analysis" && (
         <AnalysisScreen
+          activityId={activityId}
           metadata={metadata}
           scenario={scenario}
           onComplete={() => setScreen("workspace")}
@@ -1863,6 +2016,7 @@ export default function App() {
       {screen === "workspace" && (
         <Workspace
           facility={facility}
+          activityId={activityId}
           scenario={scenario}
           metadata={metadata}
           onReport={() => setScreen("report")}
@@ -1876,6 +2030,7 @@ export default function App() {
       {screen === "report" && (
         <Report
           facility={facility}
+          activityId={activityId}
           scenario={scenario}
           metadata={metadata}
           onBack={() => setScreen("workspace")}

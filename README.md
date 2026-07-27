@@ -25,15 +25,15 @@ The intended flow is:
 6. Locate each issue in a 3D model viewer.
 7. Export a report containing the rule source and suggested action.
 
-## Initial prototype scope
+## Prototype scope
 
-- One activity: restaurant
-- One prepared IFC model
-- Five to ten verified rules
-- IFC model viewer
+- Four activity examples: restaurant, café, outpatient clinic, and beauty salon
+- Two prepared IFC fixtures per activity (`review` and `ready`)
+- Ten deterministic demonstration rules per activity
+- Activity-specific, interactive 3D fit-outs with architectural construction
 - Rule results linked to IFC GUIDs
-- Three result states: `pass`, `fail`, and `needs_review`
-- One readiness report
+- Three result states: `pass`, `fail`, and `unknown`
+- Activity-aware readiness reports
 
 Examples of prototype checks include required spaces, room metadata, door
 width, accessible routes, sanitary facilities, exits, and required ventilation
@@ -78,7 +78,7 @@ Suggested components for later implementation:
 ## Status
 
 Functional proof-of-concept implemented with an Arabic-first RTL interface,
-deterministic restaurant rule fixtures, a live interactive 3D model,
+deterministic multi-sector rule fixtures, a live interactive 3D model,
 model-linked findings, and printable/downloadable readiness reports.
 
 ## Run locally
@@ -103,8 +103,8 @@ screenshots under `artifacts/e2e/`.
 
 ## Prototype note
 
-The bundled restaurant is a deterministic semantic 3D fixture linked to stable
-IFC-like identifiers. The two small IFC files under `public/samples/` exercise
-the upload and validation flow. Arbitrary IFC geometry parsing is intentionally
-not claimed in this version; integrating `web-ifc` against verified production
-models is a later phase.
+The bundled sector examples are deterministic semantic 3D fixtures linked to
+stable IFC-like identifiers. The small IFC files under `public/samples/`
+exercise the upload and validation flow for every activity and state.
+Arbitrary IFC geometry parsing is intentionally not claimed in this version;
+integrating `web-ifc` against verified production models is a later phase.

@@ -8,7 +8,8 @@ import { chromium } from "playwright-core";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.resolve(scriptDirectory, "..");
 const artifactDirectory = path.join(projectDirectory, "artifacts", "e2e");
-const baseUrl = "http://127.0.0.1:4173";
+const testPort = "4287";
+const baseUrl = `http://127.0.0.1:${testPort}`;
 const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 
 await mkdir(artifactDirectory, { recursive: true });
@@ -20,12 +21,14 @@ const server = spawn(
     "--host",
     "127.0.0.1",
     "--port",
-    "4173",
+    testPort,
+    "--strictPort",
   ],
   {
     cwd: projectDirectory,
     windowsHide: true,
-    stdio: ["ignore", "pipe", "pipe"],
+    // Keep stdin open. Vite's CLI shuts down when its stdin stream closes.
+    stdio: ["pipe", "inherit", "inherit"],
   },
 );
 
@@ -40,6 +43,173 @@ const waitForServer = async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   throw new Error("Timed out waiting for the Vite development server.");
+};
+
+const ensureUsableCanvas = async (page, context) => {
+  const canvas = page.locator("canvas");
+  await canvas.waitFor({ state: "visible" });
+  await page.waitForTimeout(1_200);
+
+  const box = await canvas.boundingBox();
+  if (!box || box.width < 300 || box.height < 300) {
+    throw new Error(
+      `${context} 3D canvas did not render at a usable size: ${JSON.stringify(box)}.`,
+    );
+  }
+
+  return box;
+};
+
+const requireViewerControl = async (page, testId, label) => {
+  const control = page.getByTestId(testId);
+  if ((await control.count()) !== 1) {
+    throw new Error(`Expected exactly one 3D viewer control with id "${testId}".`);
+  }
+  await control.waitFor({ state: "visible" });
+  const accessibleLabel =
+    (await control.getAttribute("aria-label")) ?? (await control.getAttribute("title"));
+  if (accessibleLabel !== label) {
+    throw new Error(
+      `Viewer control "${testId}" has label "${accessibleLabel}", expected "${label}".`,
+    );
+  }
+  return control;
+};
+
+const waitForEnabled = async (locator, context) => {
+  await locator.waitFor({ state: "visible" });
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (await locator.isEnabled()) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  throw new Error(`${context} did not become enabled after validation.`);
+};
+
+const exerciseViewerControls = async (page) => {
+  const requiredControls = [
+    ["viewer-reset", "إعادة ضبط المشهد"],
+    ["viewer-preset-top", "المسقط الأفقي"],
+    ["viewer-preset-front", "الواجهة الأمامية"],
+    ["viewer-preset-walk", "جولة داخلية"],
+    ["viewer-ghost", "شفافية الغلاف المعماري"],
+    ["viewer-labels-toggle", "إظهار أسماء المساحات"],
+    ["viewer-dimensions-toggle", "إظهار القياسات"],
+    ["viewer-exploded-toggle", "عرض المشهد المفكك"],
+    ["viewer-layers", "طبقات النموذج"],
+    ["viewer-fullscreen", "ملء الشاشة"],
+    ["viewer-help", "مساعدة التحكم"],
+  ];
+
+  for (const [testId, label] of requiredControls) {
+    await requireViewerControl(page, testId, label);
+  }
+
+  const topView = await requireViewerControl(
+    page,
+    "viewer-preset-top",
+    "المسقط الأفقي",
+  );
+  await topView.click();
+  if (!(await topView.getAttribute("class"))?.includes("is-active")) {
+    throw new Error("The top-view control did not enter its active state.");
+  }
+
+  const ghost = await requireViewerControl(
+    page,
+    "viewer-ghost",
+    "شفافية الغلاف المعماري",
+  );
+  await ghost.click();
+  if ((await ghost.getAttribute("aria-pressed")) !== "true") {
+    throw new Error("The wall-transparency control did not enter its active state.");
+  }
+
+  const layers = await requireViewerControl(
+    page,
+    "viewer-layers",
+    "طبقات النموذج",
+  );
+  await layers.click();
+  const layerPanel = page.locator(".viewer__layers");
+  await layerPanel.waitFor({ state: "visible" });
+  const layerCount = await layerPanel.locator('input[type="checkbox"]').count();
+  if (layerCount < 4) {
+    throw new Error(`Expected at least four model layers, found ${layerCount}.`);
+  }
+  await layers.click();
+  await layerPanel.waitFor({ state: "hidden" });
+
+  const spaceLabels = await requireViewerControl(
+    page,
+    "viewer-labels-toggle",
+    "إظهار أسماء المساحات",
+  );
+  const labelsBefore = await spaceLabels.getAttribute("aria-pressed");
+  await spaceLabels.click();
+  if ((await spaceLabels.getAttribute("aria-pressed")) === labelsBefore) {
+    throw new Error("The space-label control did not toggle its state.");
+  }
+  await spaceLabels.click();
+
+  const dimensions = await requireViewerControl(
+    page,
+    "viewer-dimensions-toggle",
+    "إظهار القياسات",
+  );
+  const dimensionsBefore = await dimensions.getAttribute("aria-pressed");
+  await dimensions.click();
+  if ((await dimensions.getAttribute("aria-pressed")) === dimensionsBefore) {
+    throw new Error("The dimensions control did not toggle its state.");
+  }
+  await dimensions.click();
+
+  const exploded = await requireViewerControl(
+    page,
+    "viewer-exploded-toggle",
+    "عرض المشهد المفكك",
+  );
+  await exploded.click();
+  if ((await exploded.getAttribute("aria-pressed")) !== "true") {
+    throw new Error("The exploded-view control did not enter its active state.");
+  }
+
+  const walk = await requireViewerControl(
+    page,
+    "viewer-preset-walk",
+    "جولة داخلية",
+  );
+  await walk.click();
+  if (!(await walk.getAttribute("class"))?.includes("is-active")) {
+    throw new Error("The walkthrough control did not enter its active state.");
+  }
+
+  const help = await requireViewerControl(
+    page,
+    "viewer-help",
+    "مساعدة التحكم",
+  );
+  await help.click();
+  await page.getByTestId("viewer-help-panel").waitFor({ state: "visible" });
+  await help.click();
+  await page.getByTestId("viewer-help-panel").waitFor({ state: "hidden" });
+
+  const reset = await requireViewerControl(
+    page,
+    "viewer-reset",
+    "إعادة ضبط المشهد",
+  );
+  await reset.click();
+  await page.waitForTimeout(1_200);
+  if ((await walk.getAttribute("class"))?.includes("is-active")) {
+    throw new Error("Reset did not leave walkthrough mode.");
+  }
+  await page.locator(".viewer__selection").waitFor({ state: "hidden" });
+
+  return {
+    requiredControls: requiredControls.map(([testId]) => testId),
+    layerCount,
+  };
 };
 
 let browser;
@@ -61,7 +231,7 @@ try {
     if (message.type() === "error") runtimeErrors.push(message.text());
   });
 
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await page.locator(".hero h1").waitFor();
   await page.screenshot({
     path: path.join(artifactDirectory, "01-dashboard.png"),
@@ -86,23 +256,19 @@ try {
     fullPage: true,
   });
 
-  await page
-    .getByRole("button", { name: /تأكيد النموذج وبدء الفحص/ })
-    .click();
+  const startAnalysis = page.getByRole("button", {
+    name: /تأكيد النموذج وبدء الفحص/,
+  });
+  await waitForEnabled(startAnalysis, "The restaurant analysis button");
+  await startAnalysis.click();
   await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
     timeout: 15_000,
   });
-  await page.locator("canvas").waitFor();
-  await page.waitForTimeout(1_500);
+  const restaurantCanvas = await ensureUsableCanvas(page, "Restaurant");
   await page.screenshot({
     path: path.join(artifactDirectory, "03-workspace.png"),
     fullPage: true,
   });
-
-  const canvasBox = await page.locator("canvas").boundingBox();
-  if (!canvasBox || canvasBox.width < 300 || canvasBox.height < 300) {
-    throw new Error("The interactive 3D canvas did not render at a usable size.");
-  }
 
   await page
     .getByRole("button", { name: /إظهار العنصر في النموذج/ })
@@ -123,8 +289,54 @@ try {
     fullPage: true,
   });
 
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  const clinicExample = page.getByTestId("activity-example-clinic");
+  await clinicExample.waitFor({ state: "visible" });
+  await clinicExample.click();
+  await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
+    timeout: 15_000,
+  });
+  await page.getByText(/عيادة خارجية/).first().waitFor();
+  const clinicCanvas = await ensureUsableCanvas(page, "Clinic");
+  await page.screenshot({
+    path: path.join(artifactDirectory, "06-clinic-workspace.png"),
+    fullPage: true,
+  });
+
+  const viewerControls = await exerciseViewerControls(page);
+  await page.waitForTimeout(500);
+  await page.screenshot({
+    path: path.join(artifactDirectory, "07-clinic-controls.png"),
+    fullPage: true,
+  });
+
+  const additionalSectorCanvases = {};
+  for (const [activityId, label, screenshotName] of [
+    ["cafe", "مقهى", "08-cafe-workspace.png"],
+    ["salon", "صالون تجميل", "09-salon-workspace.png"],
+  ]) {
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.getByTestId(`activity-example-${activityId}`).click();
+    await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
+      timeout: 15_000,
+    });
+    await page.getByText(new RegExp(label)).first().waitFor();
+    await page
+      .locator(`.viewer[data-activity="${activityId}"]`)
+      .waitFor({ state: "visible" });
+    additionalSectorCanvases[activityId] = await ensureUsableCanvas(
+      page,
+      label,
+    );
+    await page.screenshot({
+      path: path.join(artifactDirectory, screenshotName),
+      fullPage: true,
+    });
+  }
+
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   const dimensions = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewportWidth: window.innerWidth,
@@ -135,7 +347,7 @@ try {
     );
   }
   await page.screenshot({
-    path: path.join(artifactDirectory, "06-mobile-dashboard.png"),
+    path: path.join(artifactDirectory, "10-mobile-dashboard.png"),
     fullPage: true,
   });
 
@@ -147,8 +359,11 @@ try {
     JSON.stringify(
       {
         ok: true,
-        screenshots: 6,
-        canvas: canvasBox,
+        screenshots: 10,
+        restaurantCanvas,
+        clinicCanvas,
+        additionalSectorCanvases,
+        viewerControls,
         mobile: dimensions,
       },
       null,
@@ -157,5 +372,6 @@ try {
   );
 } finally {
   await browser?.close();
+  server.stdin?.end();
   server.kill();
 }
