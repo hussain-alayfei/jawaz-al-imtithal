@@ -149,22 +149,17 @@ function AppHeader({
       </button>
       {!minimal && (
         <>
+          {/* One route to "new scan", not three. The logo goes home, so a
+              "الرئيسية" link is redundant too. */}
           <nav className={`app-nav ${menuOpen ? "is-open" : ""}`}>
-            <button type="button" onClick={onHome}>
-              الرئيسية
-            </button>
-            <button type="button" onClick={onNew}>
-              فحص جديد
-            </button>
             <a href="#how-it-works" onClick={() => setMenuOpen(false)}>
               كيف يعمل؟
             </a>
-            <span className="prototype-badge">نسخة تجريبية</span>
           </nav>
           <div className="app-header__actions">
             <button
               type="button"
-              className="button button--small button--outline"
+              className="button button--small button--primary"
               onClick={onNew}
             >
               <Plus size={16} />
@@ -229,9 +224,6 @@ function FlowDiagram() {
           <span className="eyebrow">رحلة الفحص</span>
           <h2>من النموذج إلى ملاحظة قابلة للمعالجة</h2>
         </div>
-        <p>
-          مسار عملي يحافظ على الدليل الهندسي ومصدر القاعدة في كل خطوة.
-        </p>
       </div>
       <div className="flow-grid">
         {steps.map((step, index) => (
@@ -270,18 +262,12 @@ function Dashboard({
       <main className="dashboard">
         <section className="hero">
           <div className="hero__content">
-            <span className="eyebrow eyebrow--light">
-              فحص هندسي استباقي، مدعوم بالدليل
-            </span>
             <h1>
               اعرف ملاحظات مخططك
               <br />
               <em>قبل تقديم الطلب.</em>
             </h1>
-            <p>
-              جواز الامتثال يربط بيانات BIM بقواعد قابلة للتتبع، ثم يعرض
-              الملاحظات داخل نموذج ثلاثي الأبعاد ويقترح خطوة المعالجة.
-            </p>
+            <p>افحص نموذج BIM بقواعد واضحة، وشاهد كل ملاحظة في مكانها.</p>
             <div className="hero__actions">
               <button type="button" className="button button--light" onClick={onStart}>
                 ابدأ فحصًا جديدًا
@@ -293,16 +279,8 @@ function Dashboard({
                 onClick={() => onDemo(recentActivityId)}
               >
                 <PanelTop size={18} />
-                استكشف النموذج التفاعلي
+                جرّب نموذجًا جاهزًا
               </button>
-            </div>
-            <div className="hero__trust">
-              <span>
-                <Check size={15} /> نتائج مرتبطة بعناصر النموذج
-              </span>
-              <span>
-                <Check size={15} /> حالات واضحة: مطابق، ملاحظة، غير مكتمل
-              </span>
             </div>
           </div>
 
@@ -361,20 +339,6 @@ function Dashboard({
                 </aside>
               </div>
             </div>
-            <div className="hero__float hero__float--top">
-              <ShieldCheck size={19} />
-              <span>
-                <strong>10 قواعد</strong>
-                <small>DEMO-MULTI-2026.2</small>
-              </span>
-            </div>
-            <div className="hero__float hero__float--bottom">
-              <FileCheck2 size={19} />
-              <span>
-                <strong>الدليل محفوظ</strong>
-                <small>GUID + القياس + المصدر</small>
-              </span>
-            </div>
           </div>
         </section>
 
@@ -386,10 +350,6 @@ function Dashboard({
               <span className="eyebrow">نماذج قطاعية جاهزة</span>
               <h2 id="example-heading">اختبر الفكرة على أكثر من نشاط</h2>
             </div>
-            <p>
-              لكل نشاط توزيع هندسي وتجهيزات وقواعد عرض مرتبطة بعناصره داخل
-              النموذج ثلاثي الأبعاد.
-            </p>
           </div>
           <div className="activity-grid">
             {activityExamples.map((example) => (
@@ -403,14 +363,12 @@ function Dashboard({
                 <span className="activity-card__icon">
                   {activityIcon(example.id, 22)}
                 </span>
+                {/* "نموذج IFC دلالي" / "10 قواعد" / "عرض ثلاثي الأبعاد
+                    تفاعلي" were identical on all four cards, so they told the
+                    reader nothing. Only what differs stays. */}
                 <span className="activity-card__copy">
-                  <small>نموذج IFC دلالي</small>
                   <strong>{example.label}</strong>
                   <span>{example.description}</span>
-                </span>
-                <span className="activity-card__meta">
-                  <b>10 قواعد</b>
-                  <em>عرض ثلاثي الأبعاد تفاعلي</em>
                 </span>
                 <ArrowUpLeft size={18} />
               </button>
@@ -423,11 +381,8 @@ function Dashboard({
             <div className="section-heading section-heading--compact">
               <div>
                 <span className="eyebrow">مساحة العمل</span>
-                <h2>مرحبًا، مكتب المسار الهندسي</h2>
+                <h2>آخر مشروع</h2>
               </div>
-              <button type="button" className="text-button" onClick={onStart}>
-                عرض كل المشاريع <ArrowUpLeft size={15} />
-              </button>
             </div>
 
             <button type="button" className="recent-project" onClick={onOpenRecent}>
@@ -475,35 +430,13 @@ function Dashboard({
               </div>
             </button>
           </div>
-
-          <aside className="quick-start">
-            <div className="quick-start__icon">
-              {activityIcon(recentActivityId, 23)}
-            </div>
-            <h3>ابدأ من نموذج جاهز</h3>
-            <p>
-              جرّب الرحلة الكاملة على أربعة أنشطة معدّة مسبقًا، مع ملاحظات
-              مقصودة يمكن استكشافها داخل النموذج.
-            </p>
-            <button
-              type="button"
-              className="button button--primary"
-              onClick={() => onDemo(recentActivityId)}
-            >
-              تشغيل العرض التجريبي
-              <ArrowLeft size={17} />
-            </button>
-            <button type="button" className="text-button" onClick={onStart}>
-              أو أدخل بيانات مشروعك
-            </button>
-          </aside>
         </section>
 
         <FlowDiagram />
       </main>
       <footer className="site-footer">
         <BrandMark compact />
-        <p>نموذج إثبات مفهوم — لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
+        <p>نموذج إثبات مفهوم. لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
         <span dir="ltr">DEMO-MULTI-2026.2</span>
       </footer>
     </>
@@ -556,8 +489,9 @@ function WizardShell({
         <WizardProgress current={current} />
       </div>
       <main className="wizard-container">
+        {/* The progress bar above already names the step and its number, so
+            the "الخطوة X من 4" label was saying it a third time. */}
         <div className="wizard-heading">
-          <span className="eyebrow">الخطوة {current} من 4</span>
           <h1>{title}</h1>
           <p>{description}</p>
         </div>
@@ -607,7 +541,7 @@ function FacilityForm({
     <WizardShell
       current={1}
       title="عرّف مشروعك"
-      description="هذه البيانات تحدد نطاق الفحص وحزمة القواعد التي ستطبق على النموذج."
+      description="تحدد هذه البيانات نطاق الفحص وحزمة القواعد المطبّقة."
       onHome={onHome}
       onNew={onNew}
     >
@@ -619,10 +553,7 @@ function FacilityForm({
               حزمة الفحص المختارة:{" "}
               {activityExamples.find((example) => example.id === activityId)?.label}
             </strong>
-            <small>
-              تتوفر نماذج مترابطة للمطاعم والمقاهي والعيادات والصالونات، ويمكنك
-              تعديل البيانات قبل المتابعة.
-            </small>
+            <small>يمكنك تعديل البيانات قبل المتابعة.</small>
           </span>
         </div>
 
@@ -632,7 +563,7 @@ function FacilityForm({
             <input
               value={value.projectName}
               onChange={(event) => update("projectName", event.target.value)}
-              placeholder="مثال: مطعم النخيل — فرع الياسمين"
+              placeholder="مثال: مطعم النخيل، فرع الياسمين"
               aria-invalid={attempted && !value.projectName.trim()}
             />
             {attempted && !value.projectName.trim() && (
@@ -883,7 +814,7 @@ function ModelUpload({
     <WizardShell
       current={2}
       title="أضف النموذج الهندسي"
-      description={`استخدم أحد نموذجي اختبار ${activityExamples.find((item) => item.id === activityId)?.label ?? ""} للحصول على تجربة ثلاثية كاملة، أو تحقّق من ملف IFC خاص بك.`}
+      description="ارفع ملف IFC، أو اختر أحد نموذجي الاختبار."
       onHome={onHome}
       onNew={onNew}
     >
@@ -905,7 +836,6 @@ function ModelUpload({
               <UploadCloud size={26} />
             </span>
             <h3>اسحب ملف IFC إلى هنا</h3>
-            <p>أو اختر ملفًا من جهازك • الحد الأقصى 50 MB</p>
             <label className="button button--outline">
               اختيار ملف
               <input
@@ -916,10 +846,7 @@ function ModelUpload({
                 }
               />
             </label>
-            <small>
-              لا تدّعي النسخة التجريبية تحليل ملفات عشوائية؛ المسار الكامل متاح
-              لملفي الاختبار فقط.
-            </small>
+            <small>الحد الأقصى 50 MB. الفحص الكامل متاح لملفي الاختبار فقط.</small>
           </div>
 
           {error && (
@@ -934,14 +861,12 @@ function ModelUpload({
 
           <div className="fixture-heading">
             <div>
-              <span className="eyebrow">نماذج اختبار جاهزة</span>
               <h3>
                 {activityIcon(activityId, 18)}
-                اختر حالة نموذج{" "}
-                {activityExamples.find((item) => item.id === activityId)?.label}
+                نماذج اختبار جاهزة
               </h3>
             </div>
-            <span>IFC4 • نموذج دلالي</span>
+            <span>IFC4</span>
           </div>
 
           <div className="fixture-grid">
@@ -960,7 +885,7 @@ function ModelUpload({
               </span>
               <span className="fixture-card__copy">
                 <strong>
-                  {activityExamples.find((item) => item.id === activityId)?.label} —
+                  {activityExamples.find((item) => item.id === activityId)?.label}:
                   يحتاج معالجة
                 </strong>
                 <small>7 مطابق • 2 ملاحظة • 1 غير مكتمل</small>
@@ -985,7 +910,7 @@ function ModelUpload({
               </span>
               <span className="fixture-card__copy">
                 <strong>
-                  {activityExamples.find((item) => item.id === activityId)?.label} —
+                  {activityExamples.find((item) => item.id === activityId)?.label}:
                   مستوفٍ لقواعد العرض
                 </strong>
                 <small>10 مطابق • لا توجد حالات معلقة</small>
@@ -1055,8 +980,7 @@ function ModelUpload({
           </dl>
           <div className="model-summary__note">
             <Info size={15} />
-            النموذج ثلاثي الأبعاد في هذه النسخة مبني دلاليًا ويرتبط بمعرفات
-            ثابتة لاختبار الفكرة بدقة.
+            نموذج دلالي مرتبط بمعرفات ثابتة.
           </div>
         </aside>
       </div>
@@ -1142,11 +1066,8 @@ function AnalysisScreen({
 
         <div className="analysis-card__content">
           <span className="eyebrow">فحص حزمة {activity?.label}</span>
-          <h1>{complete ? "اكتمل الفحص بنجاح" : "نفحص النموذج الآن…"}</h1>
-          <p>
-            ينفذ محرك القواعد حسابات محددة ويربط كل نتيجة بالدليل والعنصر
-            الهندسي.
-          </p>
+          <h1>{complete ? "اكتمل الفحص" : "جارٍ فحص النموذج…"}</h1>
+          <p>كل نتيجة مرتبطة بدليلها وبعنصرها في النموذج.</p>
 
           <div className="analysis-progress">
             <div className="analysis-progress__track">
@@ -1342,7 +1263,7 @@ function FindingDetail({
         <div>
           <dt>المعرف</dt>
           <dd>
-            <code dir="ltr">{finding.elementGuid ?? "—"}</code>
+            <code dir="ltr">{finding.elementGuid ?? "N/A"}</code>
             {finding.elementGuid && (
               <button type="button" onClick={onCopy} title="نسخ المعرف">
                 <Clipboard size={13} />
@@ -1670,7 +1591,7 @@ function Report({
       .join("");
     const documentHtml = `<!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><title>تقرير جاهزية — ${escapeHtml(facility.projectName)}</title>
+<head><meta charset="utf-8"><title>تقرير جاهزية: ${escapeHtml(facility.projectName)}</title>
 <style>
 body{font-family:Tahoma,Arial,sans-serif;color:#17231f;margin:42px;line-height:1.7}
 h1{color:#0b5d48;margin-bottom:4px}.meta{color:#637069}.summary{display:flex;gap:12px;margin:24px 0}

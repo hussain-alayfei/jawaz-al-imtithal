@@ -1,5 +1,7 @@
 import { Check } from "lucide-react";
 
+/* Mark plus wordmark. The tagline that used to sit under the name is gone:
+   a logo should not have to explain the product every time it appears. */
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`brand ${compact ? "brand--compact" : ""}`}>
@@ -10,9 +12,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
       </span>
       <span className="brand__copy">
         <strong>جواز الامتثال</strong>
-        {!compact && <small>الفحص الاستباقي للمخططات</small>}
       </span>
     </div>
   );
 }
-

@@ -74,7 +74,7 @@ export const activityIds: ActivityId[] = [
 
 const facilityDefaults: Record<ActivityId, FacilityDetails> = {
   restaurant: {
-    projectName: "مطعم النخيل — فرع الياسمين",
+    projectName: "مطعم النخيل، فرع الياسمين",
     activity: "مطعم",
     city: "الرياض",
     district: "حي الياسمين",
@@ -85,7 +85,7 @@ const facilityDefaults: Record<ActivityId, FacilityDetails> = {
     capacity: 72,
   },
   cafe: {
-    projectName: "مقهى السدر — فرع الملقا",
+    projectName: "مقهى السدر، فرع الملقا",
     activity: "مقهى",
     city: "الرياض",
     district: "حي الملقا",
@@ -96,7 +96,7 @@ const facilityDefaults: Record<ActivityId, FacilityDetails> = {
     capacity: 42,
   },
   clinic: {
-    projectName: "عيادات واحة الصحة — فرع النرجس",
+    projectName: "عيادات واحة الصحة، فرع النرجس",
     activity: "عيادة خارجية",
     city: "الرياض",
     district: "حي النرجس",
@@ -107,7 +107,7 @@ const facilityDefaults: Record<ActivityId, FacilityDetails> = {
     capacity: 36,
   },
   salon: {
-    projectName: "صالون لمسة — فرع الروضة",
+    projectName: "صالون لمسة، فرع الروضة",
     activity: "صالون تجميل",
     city: "جدة",
     district: "حي الروضة",
@@ -234,7 +234,7 @@ export const activityExamples: ActivityExample[] = [
     id: "restaurant",
     label: "مطعم",
     description: "صالة طعام ومطبخ وخدمات ومسارات خروج مترابطة.",
-    rulePack: "حزمة قواعد نشاط المطاعم — مرجع تجريبي",
+    rulePack: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     ruleVersion: "DEMO-REST-2026.1",
     facility: { ...facilityDefaults.restaurant },
     sampleUrls: {
@@ -246,7 +246,7 @@ export const activityExamples: ActivityExample[] = [
     id: "cafe",
     label: "مقهى",
     description: "منطقة جلوس وبار تحضير وتخزين وتجهيزات سباكة.",
-    rulePack: "حزمة قواعد نشاط المقاهي — مرجع تجريبي",
+    rulePack: "حزمة قواعد نشاط المقاهي (مرجع تجريبي)",
     ruleVersion: "DEMO-CAFE-2026.1",
     facility: { ...facilityDefaults.cafe },
     sampleUrls: {
@@ -258,7 +258,7 @@ export const activityExamples: ActivityExample[] = [
     id: "clinic",
     label: "عيادة خارجية",
     description: "استقبال وغرف فحص وتجهيزات نظافة وخصوصية سريرية.",
-    rulePack: "حزمة قواعد نشاط العيادات — مرجع تجريبي",
+    rulePack: "حزمة قواعد نشاط العيادات (مرجع تجريبي)",
     ruleVersion: "DEMO-CLIN-2026.1",
     facility: { ...facilityDefaults.clinic },
     sampleUrls: {
@@ -270,7 +270,7 @@ export const activityExamples: ActivityExample[] = [
     id: "salon",
     label: "صالون تجميل",
     description: "استقبال ومحطات تصفيف وغسيل وعناية وتخزين تشغيلي.",
-    rulePack: "حزمة قواعد نشاط صالونات التجميل — مرجع تجريبي",
+    rulePack: "حزمة قواعد نشاط صالونات التجميل (مرجع تجريبي)",
     ruleVersion: "DEMO-SALON-2026.1",
     facility: { ...facilityDefaults.salon },
     sampleUrls: {
@@ -321,7 +321,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "اجتاز النموذج فحوص البنية الأساسية، وتم التعرف على الطابق والعناصر والمعرفات الدائمة.",
     recommendation: "لا يلزم إجراء في نطاق هذه القاعدة.",
-    source: "متطلبات جودة النموذج — مرجع تجريبي",
+    source: "متطلبات جودة النموذج (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -358,7 +358,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "تم ربط المساحات الست بفئات المطعم دون وجود أسماء فارغة أو ملتبسة.",
     recommendation: "حافظ على معايير التسمية عند تحديث النموذج.",
-    source: "متطلبات تسليم نموذج BIM — مرجع تجريبي",
+    source: "متطلبات تسليم نموذج BIM (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -378,7 +378,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "تعرف النظام على المطبخ ومنطقة العملاء والتخزين ومنطقة الخدمة كمساحات مستقلة.",
     recommendation: "لا يلزم إجراء في نطاق هذه القاعدة.",
-    source: "حزمة قواعد نشاط المطاعم — مرجع تجريبي",
+    source: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -398,7 +398,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "يحتوي النموذج على دورة مياه مصنفة وتجهيز صحي داخل حدودها.",
     recommendation: "تحتاج الأبعاد التفصيلية إلى مرجع معتمد في النسخة الإنتاجية.",
-    source: "حزمة قواعد نشاط المطاعم — مرجع تجريبي",
+    source: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -418,7 +418,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "أثبت تحليل العلاقات وجود مسار متصل من منطقة الطعام إلى باب خارجي.",
     recommendation: "عالج عرض الباب الموضح في القاعدة المنفصلة.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -438,7 +438,7 @@ const sharedPasses: Finding[] = [
     explanation:
       "لم يرصد النموذج عناصر تكييف أو تمديدات مكشوفة ضمن منطقة الواجهة الرئيسية.",
     recommendation: "يتطلب التحقق الميداني للتأكد من التنفيذ الفعلي.",
-    source: "فحص الواجهة — مرجع تجريبي",
+    source: "فحص الواجهة (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
     version: "DEMO-REST-2026.1",
     effort: "لا يوجد",
@@ -463,7 +463,7 @@ const reviewFindings: Finding[] = [
       "قاس محرك القواعد العرض الصافي لعنصر الباب المرتبط بالمخرج، فوجد أنه أقل من القيمة المضبوطة في حزمة العرض.",
     recommendation:
       "راجع تصميم فتحة الباب وارفع العرض الصافي إلى الحد المعتمد بعد التحقق من المختص.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
     clause: "حد تجريبي بانتظار اعتماد المرجع",
     version: "DEMO-REST-2026.1",
     effort: "تعديل هندسي متوسط",
@@ -484,7 +484,7 @@ const reviewFindings: Finding[] = [
       "المسار متصل، لكن المسافة الحرة بين حاجز الخدمة والطاولة تنخفض عند نقطة محددة عن إعداد قاعدة العرض.",
     recommendation:
       "أعد توزيع الأثاث أو حاجز الخدمة لتوفير عرض مستمر، ثم أعد تصدير النموذج.",
-    source: "حزمة قواعد الوصول الشامل — مرجع تجريبي",
+    source: "حزمة قواعد الوصول الشامل (مرجع تجريبي)",
     clause: "حد تجريبي بانتظار اعتماد المرجع",
     version: "DEMO-REST-2026.1",
     effort: "تعديل بسيط",
@@ -505,7 +505,7 @@ const reviewFindings: Finding[] = [
       "النموذج المعماري يثبت وجود المطبخ، لكنه لا يحتوي على بيانات كافية لاتخاذ حكم على التهوية.",
     recommendation:
       "أرفق نموذج MEP أو أضف المروحة ومجرى الهواء وعلاقة الخدمة بالمطبخ.",
-    source: "حزمة قواعد تهوية المطاعم — مرجع تجريبي",
+    source: "حزمة قواعد تهوية المطاعم (مرجع تجريبي)",
     clause: "تحتاج مراجعة مختص ميكانيكي",
     version: "DEMO-REST-2026.1",
     effort: "استكمال معلومات",
@@ -625,7 +625,7 @@ function createBasePasses({
       expected: "نموذج منظم وقابل للاستخراج",
       explanation:
         "اجتاز النموذج فحوص البنية الأساسية، وتم التعرف على الطابق والعناصر والمعرفات الدائمة.",
-      source: "متطلبات جودة النموذج — مرجع تجريبي",
+      source: "متطلبات جودة النموذج (مرجع تجريبي)",
     }),
     makePass(version, {
       ruleId: "DATA-CORE-001",
@@ -651,13 +651,13 @@ function createBasePasses({
       expected: "اسم وتصنيف لكل IfcSpace",
       explanation: `تم ربط المساحات المصنفة بحزمة ${activityLabel} دون أسماء فارغة أو ملتبسة.`,
       recommendation: "حافظ على معايير التسمية عند تحديث النموذج.",
-      source: `${rulePack} — متطلبات تسليم BIM`,
+      source: `${rulePack}، متطلبات تسليم BIM`,
     }),
   ];
 }
 
 const cafeVersion = "DEMO-CAFE-2026.1";
-const cafePack = "حزمة قواعد نشاط المقاهي — مرجع تجريبي";
+const cafePack = "حزمة قواعد نشاط المقاهي (مرجع تجريبي)";
 const cafePasses: Finding[] = [
   ...createBasePasses({
     version: cafeVersion,
@@ -725,7 +725,7 @@ const cafePasses: Finding[] = [
     explanation:
       "أثبت تحليل العلاقات وجود مسار متصل من منطقة العملاء إلى باب خارجي.",
     recommendation: "عالج عرض الباب الموضح في القاعدة المنفصلة.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
   }),
 ];
 
@@ -744,7 +744,7 @@ const cafeIssues: Finding[] = [
       "تنخفض المسافة الحرة بين حاجز التحضير وأقرب مقعد عن القيمة المضبوطة في حزمة العرض.",
     recommendation:
       "أعد توزيع المقاعد أو حاجز التحضير لتوفير عرض مستمر، ثم أعد تصدير النموذج.",
-    source: "حزمة قواعد الوصول الشامل — مرجع تجريبي",
+    source: "حزمة قواعد الوصول الشامل (مرجع تجريبي)",
     effort: "تعديل بسيط",
   }),
   makeIssue(cafeVersion, "fail", {
@@ -761,7 +761,7 @@ const cafeIssues: Finding[] = [
       "العرض الصافي المسجل لعنصر الباب أقل من القيمة المضبوطة لأغراض العرض.",
     recommendation:
       "راجع فتحة الباب وارفع العرض الصافي بعد التحقق من المختص والمرجع المعتمد.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
     effort: "تعديل هندسي متوسط",
   }),
   makeIssue(cafeVersion, "unknown", {
@@ -778,7 +778,7 @@ const cafeIssues: Finding[] = [
       "يثبت النموذج المعماري وجود منطقة التحضير، لكنه لا يحتوي بيانات كافية لإصدار نتيجة على خدمة الصرف.",
     recommendation:
       "أرفق نموذج السباكة أو أضف المصرف وخط الصرف وعلاقتهما بمنطقة التحضير.",
-    source: "حزمة فحص خدمات المقاهي — مرجع تجريبي",
+    source: "حزمة فحص خدمات المقاهي (مرجع تجريبي)",
   }),
 ];
 
@@ -810,7 +810,7 @@ const cafeReady: Finding[] = [
 ];
 
 const clinicVersion = "DEMO-CLIN-2026.1";
-const clinicPack = "حزمة قواعد نشاط العيادات — مرجع تجريبي";
+const clinicPack = "حزمة قواعد نشاط العيادات (مرجع تجريبي)";
 const clinicPasses: Finding[] = [
   ...createBasePasses({
     version: clinicVersion,
@@ -877,7 +877,7 @@ const clinicPasses: Finding[] = [
     expected: "مسار مستمر إلى باب خارجي",
     explanation:
       "أثبت تحليل العلاقات وجود مسار خروج متصل من المساحات المشغولة إلى الباب الخارجي.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
   }),
 ];
 
@@ -896,7 +896,7 @@ const clinicIssues: Finding[] = [
       "العرض الصافي المسجل لباب غرفة الفحص الثانية أقل من القيمة المضبوطة في حزمة العرض.",
     recommendation:
       "راجع فتحة الباب وارفع العرض الصافي بعد التحقق من المختص والمرجع المعتمد.",
-    source: "حزمة قواعد الوصول الشامل — مرجع تجريبي",
+    source: "حزمة قواعد الوصول الشامل (مرجع تجريبي)",
     effort: "تعديل هندسي متوسط",
   }),
   makeIssue(clinicVersion, "fail", {
@@ -906,14 +906,14 @@ const clinicIssues: Finding[] = [
     category: "التجهيزات",
     elementId: "CLINIC-SINK-EXAM-02",
     elementGuid: "4ClN$SINK$EXAM02",
-    elementName: "نقطة غسل اليدين — غرفة الفحص 2",
+    elementName: "نقطة غسل اليدين، غرفة الفحص 2",
     actual: "لا يوجد حوض مصنف داخل الغرفة في نموذج العرض",
     expected: "حوض مصنف ومرتبط بالغرفة (متطلب تجريبي)",
     explanation:
       "لم يعثر الفحص على عنصر حوض أو علاقة تجهيز داخل حدود غرفة الفحص الثانية.",
     recommendation:
       "أضف حوضًا في الموقع المخصص واربطه بالغرفة وخدمات السباكة، ثم أعد الفحص.",
-    source: "حزمة فحص تجهيزات النظافة — مرجع تجريبي",
+    source: "حزمة فحص تجهيزات النظافة (مرجع تجريبي)",
     effort: "إضافة تجهيز وخدمات",
   }),
   makeIssue(clinicVersion, "unknown", {
@@ -930,7 +930,7 @@ const clinicIssues: Finding[] = [
       "النموذج المعماري يثبت وجود الغرفة، لكنه لا يتضمن بيانات كافية لاتخاذ حكم على خدمتها ميكانيكيًا.",
     recommendation:
       "أرفق نموذج MEP أو أضف عناصر التغذية والراجع وعلاقتها بغرفة الفحص.",
-    source: "حزمة فحص تهوية العيادات — مرجع تجريبي",
+    source: "حزمة فحص تهوية العيادات (مرجع تجريبي)",
   }),
 ];
 
@@ -962,7 +962,7 @@ const clinicReady: Finding[] = [
 ];
 
 const salonVersion = "DEMO-SALON-2026.1";
-const salonPack = "حزمة قواعد نشاط صالونات التجميل — مرجع تجريبي";
+const salonPack = "حزمة قواعد نشاط صالونات التجميل (مرجع تجريبي)";
 const salonPasses: Finding[] = [
   ...createBasePasses({
     version: salonVersion,
@@ -1027,7 +1027,7 @@ const salonPasses: Finding[] = [
     expected: "مسار مستمر إلى باب خارجي",
     explanation:
       "أثبت تحليل العلاقات وجود مسار خروج متصل من المساحات المشغولة إلى الباب الخارجي.",
-    source: "حزمة قواعد مسارات الخروج — مرجع تجريبي",
+    source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
   }),
 ];
 
@@ -1046,7 +1046,7 @@ const salonIssues: Finding[] = [
       "تنخفض المسافة الحرة بين كرسي التصفيف وعربة الخدمة عن القيمة المضبوطة في حزمة العرض.",
     recommendation:
       "أعد توزيع الكراسي وعربات الخدمة لتوفير عرض مستمر، ثم أعد تصدير النموذج.",
-    source: "حزمة قواعد الوصول الشامل — مرجع تجريبي",
+    source: "حزمة قواعد الوصول الشامل (مرجع تجريبي)",
     effort: "تعديل بسيط",
   }),
   makeIssue(salonVersion, "fail", {
@@ -1063,7 +1063,7 @@ const salonIssues: Finding[] = [
       "يصنف نموذج العرض عنصر التخزين كرف مفتوح داخل نطاق تشغيل متاح للحركة.",
     recommendation:
       "استبدل الرف بخزانة مغلقة ومصنفة، ثم راجع متطلبات التخزين المعتمدة مع المختص.",
-    source: "حزمة فحص تشغيل صالونات التجميل — مرجع تجريبي",
+    source: "حزمة فحص تشغيل صالونات التجميل (مرجع تجريبي)",
     effort: "تعديل تجهيز",
   }),
   makeIssue(salonVersion, "unknown", {
@@ -1080,7 +1080,7 @@ const salonIssues: Finding[] = [
       "النموذج المعماري يثبت وجود المنطقة، لكنه لا يتضمن بيانات كافية لاتخاذ حكم على خدمتها ميكانيكيًا.",
     recommendation:
       "أرفق نموذج MEP أو أضف عنصر السحب والمجرى وعلاقتهما بمنطقة الأظافر.",
-    source: "حزمة فحص تهوية صالونات التجميل — مرجع تجريبي",
+    source: "حزمة فحص تهوية صالونات التجميل (مرجع تجريبي)",
   }),
 ];
 

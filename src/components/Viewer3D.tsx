@@ -415,7 +415,7 @@ const elementLabels: Record<string, string> = {
   "CLINIC-SPACE-WC": "دورة مياه العيادة",
   "CLINIC-D-EXAM-01": "باب غرفة الكشف ١",
   "CLINIC-D-EXAM-02": "باب غرفة الكشف ٢",
-  "CLINIC-SINK-EXAM-02": "نقطة غسل اليدين — غرفة الكشف ٢",
+  "CLINIC-SINK-EXAM-02": "نقطة غسل اليدين، غرفة الكشف ٢",
   "CLINIC-VENT-EXAM-02": "نقطة تهوية غرفة الكشف ٢",
   "SALON-SPACE-STYLING": "منطقة التصفيف",
   "SALON-SPACE-TREATMENT": "غرفة العناية",
@@ -1698,7 +1698,7 @@ function ClinicFitout({
       />
       <SinkStation
         id="CLINIC-SINK-EXAM-02"
-        name="نقطة غسل اليدين — غرفة الفحص ٢"
+        name="نقطة غسل اليدين، غرفة الفحص ٢"
         position={[6.65, 0, -1.45]}
         width={0.78}
         common={common}
