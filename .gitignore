@@ -41,8 +41,12 @@ Thumbs.db
 # Uploaded or generated BIM artifacts
 uploads/
 reports/
+artifacts/
 *.ifc
 *.ifczip
 *.bcf
 *.bcfzip
 
+# Versioned, intentionally small demo fixtures
+!public/samples/
+!public/samples/*.ifc

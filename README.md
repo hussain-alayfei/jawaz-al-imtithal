@@ -77,6 +77,34 @@ Suggested components for later implementation:
 
 ## Status
 
-Repository initialized for future implementation. No application code has been
-added yet.
+Functional proof-of-concept implemented with an Arabic-first RTL interface,
+deterministic restaurant rule fixtures, a live interactive 3D model,
+model-linked findings, and printable/downloadable readiness reports.
 
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the local URL printed by Vite.
+
+Verification commands:
+
+```bash
+npm test
+npm run build
+npm run test:e2e
+```
+
+The end-to-end test uses the installed Chrome browser and saves review
+screenshots under `artifacts/e2e/`.
+
+## Prototype note
+
+The bundled restaurant is a deterministic semantic 3D fixture linked to stable
+IFC-like identifiers. The two small IFC files under `public/samples/` exercise
+the upload and validation flow. Arbitrary IFC geometry parsing is intentionally
+not claimed in this version; integrating `web-ifc` against verified production
+models is a later phase.
