@@ -52,3 +52,5 @@ artifacts/
 !test-fixtures/
 !test-fixtures/ifc/
 !test-fixtures/ifc/**/*.ifc
+
+.vercel

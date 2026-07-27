@@ -1429,9 +1429,8 @@ function FindingCard({
           <code dir="ltr">{finding.ruleId}</code>
         </span>
         <strong>{finding.shortTitle}</strong>
-        <span className="finding-card__evidence">
-          <small>المرصود</small>
-          <b>{finding.actual}</b>
+        <span className="finding-card__evidence" title={finding.actual}>
+          {finding.actual}
         </span>
         {selected && (
           <span
@@ -1444,24 +1443,63 @@ function FindingCard({
           </span>
         )}
       </span>
-      <ChevronLeft size={17} className="finding-card__arrow" />
+      <ChevronLeft size={17} className="finding-card__arrow" aria-hidden />
     </button>
   );
 }
 
 function FindingDetail({
   finding,
-  onClose,
+  onBack,
   onFocus,
   onCopy,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+  positionLabel,
 }: {
   finding: Finding;
-  onClose: () => void;
+  onBack: () => void;
   onFocus: () => void;
   onCopy: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
+  positionLabel?: string;
 }) {
   return (
     <div className={`finding-detail finding-detail--${finding.status}`}>
+      <div className="finding-detail__toolbar">
+        <button type="button" className="finding-detail__back" onClick={onBack}>
+          <ArrowRight size={15} />
+          العودة للقائمة
+        </button>
+        {positionLabel && (
+          <span className="finding-detail__position">{positionLabel}</span>
+        )}
+        <div className="finding-detail__nav">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onPrev}
+            disabled={!hasPrev}
+            aria-label="النتيجة السابقة"
+          >
+            <ArrowRight size={15} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onNext}
+            disabled={!hasNext}
+            aria-label="النتيجة التالية"
+          >
+            <ArrowLeft size={15} />
+          </button>
+        </div>
+      </div>
       <div className="finding-detail__head">
         <span className="finding-detail__icon">{statusIcon(finding.status, 19)}</span>
         <div>
@@ -1471,17 +1509,13 @@ function FindingDetail({
           </span>
           <h3>{finding.title}</h3>
         </div>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="إغلاق">
-          <X size={18} />
-        </button>
       </div>
       <div className="comparison">
-        <div>
+        <div className="comparison__item comparison__item--actual">
           <span>القيمة المرصودة</span>
           <strong>{finding.actual}</strong>
         </div>
-        <ArrowLeft size={17} />
-        <div>
+        <div className="comparison__item comparison__item--expected">
           <span>المتوقع</span>
           <strong>{finding.expected}</strong>
         </div>
@@ -1581,12 +1615,14 @@ function Workspace({
   const [selectedElement, setSelectedElement] = useState<string | undefined>(
     firstUnresolved?.elementId,
   );
+  const [findingsView, setFindingsView] = useState<"list" | "detail">("list");
   const [mobileTab, setMobileTab] = useState<"model" | "findings">("model");
 
   useEffect(() => {
     const unresolved = findings.find((finding) => finding.status !== "pass");
     setSelectedRule(unresolved?.ruleId);
     setSelectedElement(unresolved?.elementId);
+    setFindingsView("list");
     setFilter(
       findings.some((finding) => finding.status !== "pass") ? "action" : "all",
     );
@@ -1599,6 +1635,9 @@ function Workspace({
       ? findings
       : findings.filter((finding) => finding.status === filter);
   const selectedFinding = findings.find((finding) => finding.ruleId === selectedRule);
+  const selectedIndex = visibleFindings.findIndex(
+    (finding) => finding.ruleId === selectedRule,
+  );
   const findingMarkers = useMemo(() => {
     let unresolvedOrdinal = 0;
     return findings.flatMap((finding) => {
@@ -1617,9 +1656,13 @@ function Workspace({
     });
   }, [findings]);
 
-  const selectFinding = (finding: Finding) => {
+  const selectFinding = (finding: Finding, openDetail = true) => {
     setSelectedRule(finding.ruleId);
     setSelectedElement(finding.elementId);
+    if (openDetail) {
+      setFindingsView("detail");
+      setMobileTab("findings");
+    }
   };
 
   const selectElement = (elementId: string) => {
@@ -1635,6 +1678,13 @@ function Workspace({
           finding.elementId === elementId && finding.status !== "pass",
       ) ?? findings.find((finding) => finding.elementId === elementId);
     setSelectedRule(linked?.ruleId);
+    if (linked) setFindingsView("detail");
+  };
+
+  const goToVisibleFinding = (index: number) => {
+    const next = visibleFindings[index];
+    if (!next) return;
+    selectFinding(next);
   };
 
   const copyGuid = async () => {
@@ -1725,6 +1775,8 @@ function Workspace({
               onSelectFinding={(ruleId, elementId) => {
                 setSelectedRule(ruleId);
                 setSelectedElement(elementId);
+                setFindingsView("detail");
+                setMobileTab("findings");
               }}
             />
           </Suspense>
@@ -1743,86 +1795,109 @@ function Workspace({
             <span className="findings-count">{findings.length} قواعد</span>
           </div>
 
-          <div className="finding-filters">
-            {(
-              [
-                ["action", "يتطلب إجراء"],
-                ["all", "الكل"],
-                ["fail", "الملاحظات"],
-                ["unknown", "غير مكتمل"],
-                ["pass", "مطابق"],
-              ] as [ResultFilter, string][]
-            ).map(([key, label]) => {
-              const count =
-                key === "action"
-                  ? findings.filter((finding) => finding.status !== "pass").length
-                  : key === "all"
-                  ? findings.length
-                  : findings.filter((finding) => finding.status === key).length;
-              return (
-                <button
-                  type="button"
-                  className={`finding-filter finding-filter--${key} ${
-                    filter === key ? "is-active" : ""
-                  }`}
-                  onClick={() => {
-                    setFilter(key);
-                    const nextFindings =
-                      key === "action"
-                        ? findings.filter((finding) => finding.status !== "pass")
-                        : key === "all"
-                        ? findings
-                        : findings.filter((finding) => finding.status === key);
-                    const currentSelection = nextFindings.find(
-                      (finding) => finding.ruleId === selectedRule,
-                    );
-                    const nextSelection =
-                      currentSelection ??
-                      nextFindings.find((finding) => finding.status !== "pass") ??
-                      nextFindings[0];
-                    setSelectedRule(nextSelection?.ruleId);
-                    setSelectedElement(nextSelection?.elementId);
-                  }}
-                  key={key}
-                >
-                  {label} <span>{count}</span>
-                </button>
-              );
-            })}
-          </div>
+          {findingsView === "list" && (
+            <div className="finding-filters">
+              {(
+                [
+                  ["action", "يتطلب إجراء"],
+                  ["all", "الكل"],
+                  ["fail", "الملاحظات"],
+                  ["unknown", "غير مكتمل"],
+                  ["pass", "مطابق"],
+                ] as [ResultFilter, string][]
+              ).map(([key, label]) => {
+                const count =
+                  key === "action"
+                    ? findings.filter((finding) => finding.status !== "pass").length
+                    : key === "all"
+                    ? findings.length
+                    : findings.filter((finding) => finding.status === key).length;
+                return (
+                  <button
+                    type="button"
+                    className={`finding-filter finding-filter--${key} ${
+                      filter === key ? "is-active" : ""
+                    }`}
+                    onClick={() => {
+                      setFilter(key);
+                      const nextFindings =
+                        key === "action"
+                          ? findings.filter((finding) => finding.status !== "pass")
+                          : key === "all"
+                          ? findings
+                          : findings.filter((finding) => finding.status === key);
+                      const currentSelection = nextFindings.find(
+                        (finding) => finding.ruleId === selectedRule,
+                      );
+                      const nextSelection =
+                        currentSelection ??
+                        nextFindings.find((finding) => finding.status !== "pass") ??
+                        nextFindings[0];
+                      setSelectedRule(nextSelection?.ruleId);
+                      setSelectedElement(nextSelection?.elementId);
+                    }}
+                    key={key}
+                  >
+                    {label} <span>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-          <div className="findings-panel__scroll">
-            <section className="findings-browser" aria-label="قائمة نتائج الفحص">
-              <div className="findings-list__head">
-                <span>اختر نتيجة لعرض تفاصيلها وربطها بالنموذج</span>
-                <small>{visibleFindings.length} ظاهرة</small>
-              </div>
-              <div className="findings-list">
-                {visibleFindings.map((finding) => (
-                  <FindingCard
-                    key={finding.ruleId}
-                    finding={finding}
-                    selected={finding.ruleId === selectedRule}
-                    onClick={() => selectFinding(finding)}
-                  />
-                ))}
-                {visibleFindings.length === 0 && (
-                  <div className="empty-findings">
-                    <CheckCircle2 size={27} />
-                    <strong>لا توجد نتائج في هذا التصنيف</strong>
-                    <p>اختر تصنيفًا آخر لعرض بقية القواعد.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-            <section className="finding-detail-pane" aria-label="تفاصيل النتيجة المحددة">
-              {selectedFinding ? (
+          <div
+            className={`findings-panel__scroll ${
+              findingsView === "detail" ? "findings-panel__scroll--detail" : ""
+            }`}
+          >
+            {findingsView === "list" ? (
+              <section className="findings-browser" aria-label="قائمة نتائج الفحص">
+                <div className="findings-list__head">
+                  <span>اختر نتيجة لعرض تفاصيلها وربطها بالنموذج</span>
+                  <small>{visibleFindings.length} ظاهرة</small>
+                </div>
+                <div className="findings-list">
+                  {visibleFindings.map((finding) => (
+                    <FindingCard
+                      key={finding.ruleId}
+                      finding={finding}
+                      selected={finding.ruleId === selectedRule}
+                      onClick={() => selectFinding(finding)}
+                    />
+                  ))}
+                  {visibleFindings.length === 0 && (
+                    <div className="empty-findings">
+                      <CheckCircle2 size={27} />
+                      <strong>لا توجد نتائج في هذا التصنيف</strong>
+                      <p>اختر تصنيفًا آخر لعرض بقية القواعد.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            ) : selectedFinding ? (
+              <section className="finding-detail-pane" aria-label="تفاصيل النتيجة المحددة">
                 <FindingDetail
                   finding={selectedFinding}
-                  onClose={() => {
-                    setSelectedRule(undefined);
-                    setSelectedElement(undefined);
-                  }}
+                  onBack={() => setFindingsView("list")}
+                  onPrev={
+                    selectedIndex > 0
+                      ? () => goToVisibleFinding(selectedIndex - 1)
+                      : undefined
+                  }
+                  onNext={
+                    selectedIndex >= 0 && selectedIndex < visibleFindings.length - 1
+                      ? () => goToVisibleFinding(selectedIndex + 1)
+                      : undefined
+                  }
+                  hasPrev={selectedIndex > 0}
+                  hasNext={
+                    selectedIndex >= 0 && selectedIndex < visibleFindings.length - 1
+                  }
+                  positionLabel={
+                    selectedIndex >= 0
+                      ? `${selectedIndex + 1} / ${visibleFindings.length}`
+                      : undefined
+                  }
                   onFocus={() => {
                     setSelectedElement(undefined);
                     window.setTimeout(
@@ -1833,14 +1908,23 @@ function Workspace({
                   }}
                   onCopy={() => void copyGuid()}
                 />
-              ) : (
+              </section>
+            ) : (
+              <section className="finding-detail-pane" aria-label="تفاصيل النتيجة المحددة">
                 <div className="finding-detail-empty">
                   <Search size={22} />
                   <strong>اختر نتيجة من القائمة</strong>
                   <p>ستظهر تفاصيل الدليل والإجراء المقترح هنا.</p>
+                  <button
+                    type="button"
+                    className="button button--outline button--small"
+                    onClick={() => setFindingsView("list")}
+                  >
+                    العودة للقائمة
+                  </button>
                 </div>
-              )}
-            </section>
+              </section>
+            )}
           </div>
 
           <div className="findings-panel__footer">

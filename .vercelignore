@@ -1,0 +1,8 @@
+node_modules
+dist
+artifacts
+coverage
+*.log
+
+# QA fixtures are read by local tests only. They must never reach the site.
+test-fixtures
