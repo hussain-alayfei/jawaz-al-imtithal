@@ -1,0 +1,17 @@
+{
+  "activityId": "restaurant",
+  "scenario": "review",
+  "schema": "IFC4",
+  "spaces": 6,
+  "doors": 7,
+  "elements": 148,
+  "passed": 7,
+  "failed": 2,
+  "unknown": 1,
+  "score": 78,
+  "unresolvedRuleIds": [
+    "DOOR-WIDTH-001",
+    "ACCESS-ROUTE-001",
+    "KITCHEN-VENT-001"
+  ]
+}

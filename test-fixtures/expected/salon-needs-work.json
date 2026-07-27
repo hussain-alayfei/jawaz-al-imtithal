@@ -1,0 +1,17 @@
+{
+  "activityId": "salon",
+  "scenario": "review",
+  "schema": "IFC4",
+  "spaces": 7,
+  "doors": 6,
+  "elements": 162,
+  "passed": 7,
+  "failed": 2,
+  "unknown": 1,
+  "score": 78,
+  "unresolvedRuleIds": [
+    "SALON-AISLE-001",
+    "SALON-CHEM-STORE-001",
+    "SALON-VENT-001"
+  ]
+}

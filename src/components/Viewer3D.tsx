@@ -87,6 +87,10 @@ interface RoomDefinition {
   position: [number, number];
   size: [number, number];
   color: string;
+  fragments?: Array<{
+    position: [number, number];
+    size: [number, number];
+  }>;
 }
 
 interface CameraTarget {
@@ -98,6 +102,31 @@ const statusColors: Record<ResultStatus, string> = {
   pass: "#16835d",
   fail: "#d8523c",
   unknown: "#d18a24",
+};
+
+const activityPalettes: Record<
+  ActivityId,
+  {
+    partition: string;
+    accent: string;
+  }
+> = {
+  restaurant: {
+    partition: "#ddd4c7",
+    accent: "#6f969a",
+  },
+  cafe: {
+    partition: "#ddd4c7",
+    accent: "#6e739d",
+  },
+  clinic: {
+    partition: "#d8d7d0",
+    accent: "#7894c5",
+  },
+  salon: {
+    partition: "#ded3d5",
+    accent: "#b17d9b",
+  },
 };
 
 const activityTitles: Record<ActivityId, string> = {
@@ -112,148 +141,160 @@ const activityRooms: Record<ActivityId, RoomDefinition[]> = {
     {
       id: "SPACE-DINING",
       name: "صالة الطعام",
-      position: [-3.15, 0],
-      size: [9.15, 10.35],
-      color: "#d7e8df",
+      position: [-3.1, 1.53],
+      size: [9.5, 7.65],
+      color: "#c49b72",
+      fragments: [
+        { position: [-3.1, 1.53], size: [9.5, 7.65] },
+        { position: [-3.83, -3.91], size: [8.05, 2.89] },
+      ],
     },
     {
       id: "SPACE-KITCHEN",
       name: "المطبخ التجاري",
-      position: [4.8, 1.35],
-      size: [5.65, 5.75],
-      color: "#e9dfcf",
+      position: [4.84, 1.53],
+      size: [6.02, 7.65],
+      color: "#6f969a",
     },
     {
       id: "SPACE-STORAGE",
       name: "المخزن الجاف",
-      position: [5.8, -3.85],
-      size: [3.55, 2.65],
-      color: "#e2ddd0",
+      position: [5.74, -3.91],
+      size: [4.22, 2.89],
+      color: "#9b806a",
     },
     {
       id: "SPACE-WC",
       name: "دورة المياه المهيأة",
-      position: [1.9, -3.85],
-      size: [3.2, 2.65],
-      color: "#d6e6e8",
+      position: [1.84, -3.91],
+      size: [3.27, 2.89],
+      color: "#70a7b8",
     },
   ],
   cafe: [
     {
       id: "CAFE-SPACE-SEATING",
       name: "منطقة الجلوس",
-      position: [-3.55, 0.15],
-      size: [8.25, 10.05],
-      color: "#e2eadc",
+      position: [-3.98, 1.44],
+      size: [7.75, 7.83],
+      color: "#b9855e",
+      fragments: [
+        { position: [-3.98, 1.44], size: [7.75, 7.83] },
+        { position: [-3.93, -4.01], size: [7.85, 2.69] },
+      ],
     },
     {
       id: "CAFE-SPACE-BAR",
       name: "منطقة تحضير القهوة",
-      position: [1.15, 1],
-      size: [1.55, 7.35],
-      color: "#eadbc9",
+      position: [0.94, 1.1],
+      size: [1.98, 7],
+      color: "#6e739d",
     },
     {
       id: "SPACE-BACK-OF-HOUSE",
       name: "التحضير والغسيل",
-      position: [5.05, 1.2],
-      size: [5.35, 6.05],
-      color: "#d9e1df",
+      position: [4.99, 1.43],
+      size: [5.72, 7.85],
+      color: "#7899a2",
     },
     {
       id: "SPACE-STORAGE",
       name: "المخزن",
-      position: [5.65, -3.9],
-      size: [3.7, 2.55],
-      color: "#ded8ca",
+      position: [5.62, -4.01],
+      size: [4.47, 2.69],
+      color: "#8f735c",
     },
     {
       id: "CAFE-SPACE-WC",
       name: "دورة المياه المهيأة",
-      position: [1.65, -3.9],
-      size: [3.25, 2.55],
-      color: "#d6e6e8",
+      position: [1.61, -4.01],
+      size: [3.22, 2.69],
+      color: "#6ea4ae",
     },
   ],
   clinic: [
     {
       id: "CLINIC-SPACE-WAITING",
       name: "الاستقبال والانتظار",
-      position: [-4.85, 2.05],
-      size: [5.55, 6.25],
-      color: "#dce9e4",
+      position: [-4.76, 1.44],
+      size: [6.19, 7.82],
+      color: "#6699aa",
     },
     {
       id: "SPACE-CORRIDOR",
       name: "الممر السريري",
-      position: [-0.65, 0],
-      size: [1.75, 10.2],
-      color: "#e9e5d9",
+      position: [-0.62, 0],
+      size: [1.77, 10.7],
+      color: "#95b6c2",
     },
     {
       id: "CLINIC-SPACE-EXAM-01",
       name: "غرفة الكشف ١",
-      position: [4.2, 2.75],
-      size: [6.55, 4.25],
-      color: "#d9e5ec",
+      position: [4.14, 2.99],
+      size: [7.42, 4.72],
+      color: "#7894c5",
     },
     {
       id: "CLINIC-SPACE-EXAM-02",
       name: "غرفة الكشف ٢",
-      position: [4.2, -1.75],
-      size: [6.55, 4.15],
-      color: "#dce6ed",
+      position: [4.14, -2.44],
+      size: [7.42, 5.82],
+      color: "#968dc1",
     },
     {
       id: "CLINIC-SPACE-WC",
       name: "دورة مياه مهيأة",
-      position: [-4.85, -3.9],
-      size: [5.5, 2.55],
-      color: "#d5e5e8",
+      position: [-4.76, -3.99],
+      size: [6.19, 2.72],
+      color: "#6fa8b4",
     },
   ],
   salon: [
     {
       id: "SPACE-RECEPTION",
       name: "الاستقبال والانتظار",
-      position: [-5.25, 3.25],
-      size: [5.15, 4.15],
-      color: "#eee1d9",
+      position: [-2.84, 4.1],
+      size: [10.02, 2.5],
+      color: "#c28f79",
     },
     {
       id: "SALON-SPACE-STYLING",
       name: "منطقة التصفيف",
-      position: [-2.15, -0.75],
-      size: [8.65, 6.95],
-      color: "#eadfe8",
+      position: [-2.84, -0.3],
+      size: [10.02, 6.14],
+      color: "#b17d9b",
+      fragments: [
+        { position: [-2.84, -0.3], size: [10.02, 6.14] },
+        { position: [-3.87, -4.44], size: [7.97, 1.82] },
+      ],
     },
     {
       id: "SPACE-WASH",
       name: "منطقة الغسيل",
-      position: [4.9, 2.65],
-      size: [5.25, 4.45],
-      color: "#d8e7e8",
+      position: [5.09, 2.94],
+      size: [5.52, 4.82],
+      color: "#6fa4aa",
     },
     {
       id: "SALON-SPACE-TREATMENT",
       name: "العناية والأظافر",
-      position: [4.9, -1.35],
-      size: [5.25, 3.35],
-      color: "#e4ddea",
+      position: [5.09, -1.5],
+      size: [5.52, 3.74],
+      color: "#9582b4",
     },
     {
       id: "SALON-SPACE-CHEMICAL",
       name: "خزانة المواد والتهوية",
-      position: [5.85, -4.35],
-      size: [3.35, 1.95],
-      color: "#e8ddcf",
+      position: [5.74, -4.44],
+      size: [4.22, 1.82],
+      color: "#98765e",
     },
     {
       id: "SALON-SPACE-WC",
       name: "دورة المياه المهيأة",
-      position: [1.75, -4.25],
-      size: [3.25, 2.15],
-      color: "#d7e5e7",
+      position: [1.8, -4.44],
+      size: [3.35, 1.82],
+      color: "#72a8b8",
     },
   ],
 };
@@ -261,39 +302,49 @@ const activityRooms: Record<ActivityId, RoomDefinition[]> = {
 const activityRoutePoints: Record<ActivityId, Vec3[]> = {
   restaurant: [
     [-4.4, 0.11, 5.05],
-    [-1.2, 0.11, 2.75],
-    [-1.2, 0.11, 0.25],
-    [2.15, 0.11, 0.25],
-    [6.9, 0.11, 1.8],
+    [-1.48, 0.11, 3.35],
+    [-1.48, 0.11, -1.25],
+    [1.75, 0.11, -1.25],
+    [5.4, 0.11, -1.65],
+    [5.4, 0.11, 1.7],
+    [7.78, 0.11, 1.82],
   ],
   cafe: [
     [-4.4, 0.11, 5.05],
-    [-1.15, 0.11, 2.9],
-    [-1.15, 0.11, -0.25],
-    [2.2, 0.11, -0.25],
-    [6.9, 0.11, 1.8],
+    [-0.43, 0.11, 2.9],
+    [-0.43, 0.11, -1.95],
+    [2.55, 0.11, -1.95],
+    [3.6, 0.11, -1.95],
+    [3.6, 0.11, 2.15],
+    [7, 0.11, 2.15],
+    [7.78, 0.11, 1.82],
   ],
   clinic: [
     [-4.4, 0.11, 5.05],
-    [-0.65, 0.11, 3.4],
-    [-0.65, 0.11, -3.65],
-    [2.1, 0.11, -3.65],
-    [6.9, 0.11, 1.8],
+    [-4, 0.11, 3.45],
+    [-1.58, 0.11, 3.45],
+    [-0.65, 0.11, 2.75],
+    [0.35, 0.11, 2.75],
+    [1.05, 0.11, 1.2],
+    [6.55, 0.11, 1.2],
+    [7.78, 0.11, 1.82],
   ],
   salon: [
     [-4.4, 0.11, 5.05],
-    [-1.25, 0.11, 2.7],
-    [-1.25, 0.11, -1.5],
-    [2.25, 0.11, -1.5],
-    [6.9, 0.11, 1.8],
+    [-2.92, 0.11, 3.2],
+    [-2.92, 0.11, -0.8],
+    [1.4, 0.11, -0.8],
+    [1.4, 0.11, 1.6],
+    [2.25, 0.11, 1.6],
+    [7.78, 0.11, 1.82],
   ],
 };
 
 const activityRouteCenters: Record<ActivityId, [number, number]> = {
-  restaurant: [-1.2, 1.15],
-  cafe: [-1.15, 1.15],
+  restaurant: [-1.48, 1.15],
+  cafe: [-0.43, 1.15],
   clinic: [-0.65, 0],
-  salon: [-1.25, 0.2],
+  salon: [-2.92, 0.2],
 };
 
 const activityExitIds: Record<ActivityId, string> = {
@@ -696,6 +747,7 @@ function DoorAssembly({
   orientation,
   common,
   marker,
+  kind = "glass",
 }: {
   id: string;
   name: string;
@@ -704,10 +756,12 @@ function DoorAssembly({
   orientation: "front" | "side";
   common: CommonPartProps;
   marker?: { status: ResultStatus; label: string };
+  kind?: "glass" | "solid";
 }) {
   const front = orientation === "front";
   const frameColor = "#2e3b39";
-  const glassColor = "#82aaa3";
+  const panelColor = kind === "glass" ? "#82aaa3" : "#92745e";
+  const panelOpacity = kind === "glass" ? 0.58 : 1;
 
   return (
     <group position={position}>
@@ -738,10 +792,10 @@ function DoorAssembly({
         name={name}
         position={[0, 1.16, 0]}
         size={front ? [width, 2.22, 0.065] : [0.065, 2.22, width]}
-        color={glassColor}
-        opacity={0.58}
-        metalness={0.12}
-        roughness={0.14}
+        color={panelColor}
+        opacity={panelOpacity}
+        metalness={kind === "glass" ? 0.12 : 0.03}
+        roughness={kind === "glass" ? 0.14 : 0.6}
         shellPart
         marker={marker}
       />
@@ -758,6 +812,105 @@ function DoorAssembly({
         metalness={0.8}
         roughness={0.2}
       />
+    </group>
+  );
+}
+
+function PartitionWall({
+  id,
+  name,
+  axis,
+  fixed,
+  start,
+  end,
+  openings = [],
+  color,
+  accent,
+  common,
+}: {
+  id: string;
+  name: string;
+  axis: "x" | "z";
+  fixed: number;
+  start: number;
+  end: number;
+  openings?: Array<{ center: number; width: number }>;
+  color: string;
+  accent: string;
+  common: CommonPartProps;
+}) {
+  const wallHeight = 3.1;
+  const openingHeight = 2.4;
+  const thickness = 0.16;
+  const sortedOpenings = openings
+    .map((opening) => ({
+      start: Math.max(start, opening.center - opening.width / 2),
+      end: Math.min(end, opening.center + opening.width / 2),
+      center: opening.center,
+      width: opening.width,
+    }))
+    .filter((opening) => opening.end > opening.start)
+    .sort((a, b) => a.start - b.start);
+
+  const segments: Array<{ start: number; end: number }> = [];
+  let cursor = start;
+  sortedOpenings.forEach((opening) => {
+    if (opening.start > cursor) {
+      segments.push({ start: cursor, end: opening.start });
+    }
+    cursor = Math.max(cursor, opening.end);
+  });
+  if (cursor < end) segments.push({ start: cursor, end });
+
+  const positionFor = (center: number, y: number): Vec3 =>
+    axis === "x" ? [center, y, fixed] : [fixed, y, center];
+  const sizeFor = (length: number, height: number): Vec3 =>
+    axis === "x"
+      ? [length, height, thickness]
+      : [thickness, height, length];
+
+  return (
+    <group>
+      {segments.map((segment, index) => {
+        const length = segment.end - segment.start;
+        const center = (segment.start + segment.end) / 2;
+        return (
+          <group key={`${segment.start}-${segment.end}`}>
+            <Part
+              {...common}
+              id={`${id}-SEG-${index + 1}`}
+              name={name}
+              position={positionFor(center, wallHeight / 2)}
+              size={sizeFor(length, wallHeight)}
+              color={color}
+              roughness={0.88}
+              shellPart
+            />
+            <DetailBox
+              position={positionFor(center, 0.085)}
+              size={sizeFor(length, 0.17)}
+              color={accent}
+              roughness={0.66}
+            />
+          </group>
+        );
+      })}
+      {sortedOpenings.map((opening, index) => (
+        <Part
+          key={`${opening.center}-${opening.width}`}
+          {...common}
+          id={`${id}-LINTEL-${index + 1}`}
+          name={`${name}، عتب الفتحة`}
+          position={positionFor(
+            opening.center,
+            openingHeight + (wallHeight - openingHeight) / 2,
+          )}
+          size={sizeFor(opening.end - opening.start, wallHeight - openingHeight)}
+          color={color}
+          roughness={0.88}
+          shellPart
+        />
+      ))}
     </group>
   );
 }
@@ -786,26 +939,26 @@ function Storefront({
         name="الواجهة الزجاجية الرئيسية"
         position={[0, 2.86, 5.48]}
         size={[15.5, 0.48, 0.24]}
-        color="#dedbd2"
+        color="#ddd4c7"
         roughness={0.88}
         shellPart
       />
       <DetailBox
         position={[0, 0.11, 5.48]}
         size={[15.5, 0.22, 0.24]}
-        color="#8d9691"
+        color="#7d8883"
         metalness={0.35}
         roughness={0.42}
       />
       <DetailBox
         position={[-7.72, 1.52, 5.48]}
         size={[0.56, 3.06, 0.28]}
-        color="#e5e1d8"
+        color="#f1ece2"
       />
       <DetailBox
         position={[7.72, 1.52, 5.48]}
         size={[0.56, 3.06, 0.28]}
-        color="#e5e1d8"
+        color="#f1ece2"
       />
       {bays.map(({ x, width }, index) => (
         <group key={x}>
@@ -871,7 +1024,7 @@ function SharedShell({
         name="البلاطة الخرسانية"
         position={[0, -0.18 + floorDrop, 0]}
         size={[16.3, 0.36, 11.3]}
-        color="#aaa69e"
+        color="#9b968d"
         roughness={0.98}
         receiveShadow
         castShadow={false}
@@ -883,7 +1036,7 @@ function SharedShell({
         name="تشطيب الأرضية"
         position={[0, 0.005, 0]}
         size={[15.85, 0.045, 10.85]}
-        color="#d7d1c5"
+        color="#c9c2b6"
         roughness={0.82}
         receiveShadow
         castShadow={false}
@@ -895,7 +1048,7 @@ function SharedShell({
         name="الجدار الخلفي"
         position={[0, 1.55, -5.5 - spread]}
         size={[16.2, 3.1, 0.24]}
-        color="#e9e5dc"
+        color="#f1ece2"
         roughness={0.92}
         shellPart
       />
@@ -905,7 +1058,7 @@ function SharedShell({
         name="الجدار الجانبي"
         position={[-8 - spread, 1.55, 0]}
         size={[0.24, 3.1, 11.2]}
-        color="#e9e5dc"
+        color="#f1ece2"
         roughness={0.92}
         shellPart
       />
@@ -915,7 +1068,7 @@ function SharedShell({
         name="الجدار الجانبي"
         position={[8 + spread, 1.55, -2.05]}
         size={[0.24, 3.1, 6.7]}
-        color="#e9e5dc"
+        color="#f1ece2"
         roughness={0.92}
         shellPart
       />
@@ -925,7 +1078,7 @@ function SharedShell({
         name="الجدار الجانبي"
         position={[8 + spread, 1.55, 4.13]}
         size={[0.24, 3.1, 2.75]}
-        color="#e9e5dc"
+        color="#f1ece2"
         roughness={0.92}
         shellPart
       />
@@ -942,7 +1095,7 @@ function SharedShell({
           name="عمود إنشائي"
           position={position as Vec3}
           size={[0.42, 3.1, 0.42]}
-          color="#c7c2b8"
+          color="#afa69a"
           roughness={0.94}
           shellPart
         />
@@ -975,92 +1128,323 @@ function ActivityPartitions({
   exploded: boolean;
 }) {
   const y = exploded ? 0.28 : 0;
-  const wall = (
+  const palette = activityPalettes[activityId];
+  const partition = (
     id: string,
     name: string,
-    position: Vec3,
-    size: Vec3,
+    axis: "x" | "z",
+    fixed: number,
+    start: number,
+    end: number,
+    openings: Array<{ center: number; width: number }> = [],
   ) => (
-    <Part
+    <PartitionWall
       key={id}
-      {...common}
       id={id}
       name={name}
-      position={[position[0], position[1] + y, position[2]]}
-      size={size}
-      color="#e5e1d8"
-      roughness={0.92}
-      shellPart
+      axis={axis}
+      fixed={fixed}
+      start={start}
+      end={end}
+      openings={openings}
+      color={palette.partition}
+      accent={palette.accent}
+      common={common}
     />
   );
 
   if (activityId === "clinic") {
     const secondDoorWidth = scenario === "review" ? 0.78 : 0.95;
     return (
-      <>
-        {wall("WALL-CLINIC-COR-L", "فاصل الممر", [-1.58, 1.55, -0.5], [0.16, 3.1, 9.8])}
-        {wall("WALL-CLINIC-COR-R", "فاصل غرف الكشف", [0.35, 1.55, -0.5], [0.16, 3.1, 9.8])}
-        {wall("WALL-CONSULT-01", "فاصل غرف الكشف", [4.15, 1.55, 0.55], [7.45, 3.1, 0.16])}
-        {wall("WALL-WAIT-WC", "فاصل الانتظار", [-4.8, 1.55, -2.55], [6.25, 3.1, 0.16])}
+      <group position={[0, y, 0]}>
+        {partition(
+          "WALL-CLINIC-COR-L",
+          "فاصل الممر",
+          "z",
+          -1.58,
+          -5.35,
+          5.35,
+          [
+            { center: 3.45, width: 1.05 },
+            { center: -3.9, width: 1 },
+          ],
+        )}
+        {partition(
+          "WALL-CLINIC-COR-R",
+          "فاصل غرف الكشف",
+          "z",
+          0.35,
+          -5.35,
+          5.35,
+          [
+            { center: 2.75, width: 0.95 },
+            { center: -1.75, width: secondDoorWidth },
+          ],
+        )}
+        {partition(
+          "WALL-CONSULT-01",
+          "فاصل غرف الكشف",
+          "x",
+          0.55,
+          0.35,
+          7.85,
+        )}
+        {partition(
+          "WALL-WAIT-WC",
+          "فاصل الانتظار ودورة المياه",
+          "x",
+          -2.55,
+          -7.85,
+          -1.58,
+        )}
+        <DoorAssembly
+          id="CLINIC-D-CORRIDOR-01"
+          name="باب الممر السريري"
+          position={[-1.58, 0, 3.45]}
+          width={1.05}
+          orientation="side"
+          common={common}
+          kind="solid"
+        />
         <DoorAssembly
           id="CLINIC-D-EXAM-01"
           name="باب غرفة الفحص ١"
-          position={[0.37, y, 2.75]}
+          position={[0.35, 0, 2.75]}
           width={0.95}
           orientation="side"
           common={common}
+          kind="solid"
         />
         <DoorAssembly
           id="CLINIC-D-EXAM-02"
           name="باب غرفة الفحص ٢"
-          position={[0.37, y, -1.75]}
+          position={[0.35, 0, -1.75]}
           width={secondDoorWidth}
           orientation="side"
           common={common}
+          kind="solid"
           marker={
             scenario === "review"
               ? { status: "fail", label: "1" }
               : undefined
           }
         />
-      </>
+        <DoorAssembly
+          id="CLINIC-D-WC-01"
+          name="باب دورة المياه المهيأة"
+          position={[-1.58, 0, -3.9]}
+          width={1}
+          orientation="side"
+          common={common}
+          kind="solid"
+        />
+      </group>
     );
   }
 
   if (activityId === "salon") {
     return (
-      <>
-        {wall("WALL-SALON-WET", "فاصل المنطقة الرطبة", [2.25, 1.55, 2.65], [0.16, 3.1, 5.5])}
-        {wall("WALL-SALON-TREAT", "فاصل منطقة العناية", [5.05, 1.55, 0.45], [5.55, 3.1, 0.16])}
-        {wall("WALL-SALON-CHEM", "فاصل المواد", [4.2, 1.55, -3.45], [7.45, 3.1, 0.16])}
+      <group position={[0, y, 0]}>
+        {partition(
+          "WALL-SALON-WET",
+          "فاصل المنطقة الرطبة",
+          "z",
+          2.25,
+          -0.1,
+          5.35,
+          [{ center: 1.6, width: 1.05 }],
+        )}
+        {partition(
+          "WALL-SALON-TREAT",
+          "فاصل منطقة العناية",
+          "x",
+          0.45,
+          2.25,
+          7.85,
+          [{ center: 3.45, width: 0.95 }],
+        )}
+        {partition(
+          "WALL-SALON-CHEM",
+          "فاصل المواد ودورة المياه",
+          "x",
+          -3.45,
+          0.12,
+          7.85,
+          [
+            { center: 1.4, width: 0.95 },
+            { center: 5.6, width: 0.95 },
+          ],
+        )}
+        {partition(
+          "WALL-SALON-WC-CHEM",
+          "فاصل خزانة المواد",
+          "z",
+          3.55,
+          -5.35,
+          -3.45,
+        )}
+        <DoorAssembly
+          id="SALON-D-WASH-01"
+          name="باب منطقة الغسيل"
+          position={[2.25, 0, 1.6]}
+          width={1.05}
+          orientation="side"
+          common={common}
+          kind="solid"
+        />
         <DoorAssembly
           id="SALON-D-TREATMENT-01"
           name="باب غرفة العناية"
-          position={[3.45, y, 0.45]}
+          position={[3.45, 0, 0.45]}
           width={0.95}
           orientation="front"
           common={common}
+          kind="solid"
         />
-      </>
+        <DoorAssembly
+          id="SALON-D-WC-01"
+          name="باب دورة المياه المهيأة"
+          position={[1.4, 0, -3.45]}
+          width={0.95}
+          orientation="front"
+          common={common}
+          kind="solid"
+        />
+        <DoorAssembly
+          id="SALON-D-CHEMICAL-01"
+          name="باب خزانة المواد"
+          position={[5.6, 0, -3.45]}
+          width={0.95}
+          orientation="front"
+          common={common}
+          kind="solid"
+        />
+      </group>
     );
   }
 
   if (activityId === "cafe") {
     return (
-      <>
-        {wall("WALL-CAFE-BOH", "فاصل التحضير", [2.05, 1.55, 1.25], [0.16, 3.1, 7.1])}
-        {wall("WALL-CAFE-SERVICE", "فاصل الخدمات", [4.9, 1.55, -2.58], [5.75, 3.1, 0.16])}
-        {wall("WALL-CAFE-WC", "فاصل دورة المياه", [3.3, 1.55, -4], [0.16, 3.1, 2.65])}
-      </>
+      <group position={[0, y, 0]}>
+        {partition(
+          "WALL-CAFE-BOH",
+          "فاصل التحضير",
+          "z",
+          2.05,
+          -2.5,
+          5.35,
+          [{ center: -1.95, width: 1.05 }],
+        )}
+        {partition(
+          "WALL-CAFE-SERVICE",
+          "فاصل الخدمات",
+          "x",
+          -2.58,
+          0,
+          7.85,
+          [
+            { center: 1.5, width: 1 },
+            { center: 5.6, width: 1 },
+          ],
+        )}
+        {partition(
+          "WALL-CAFE-WC",
+          "فاصل دورة المياه",
+          "z",
+          3.3,
+          -5.35,
+          -2.58,
+        )}
+        <DoorAssembly
+          id="CAFE-D-BOH-01"
+          name="باب منطقة التحضير"
+          position={[2.05, 0, -1.95]}
+          width={1.05}
+          orientation="side"
+          common={common}
+          kind="solid"
+        />
+        <DoorAssembly
+          id="CAFE-D-WC-01"
+          name="باب دورة المياه المهيأة"
+          position={[1.5, 0, -2.58]}
+          width={1}
+          orientation="front"
+          common={common}
+          kind="solid"
+        />
+        <DoorAssembly
+          id="CAFE-D-STORAGE-01"
+          name="باب المخزن"
+          position={[5.6, 0, -2.58]}
+          width={1}
+          orientation="front"
+          common={common}
+          kind="solid"
+        />
+      </group>
     );
   }
 
   return (
-    <>
-      {wall("WALL-KITCHEN", "فاصل المطبخ", [1.75, 1.55, 1.45], [0.16, 3.1, 5.85])}
-      {wall("WALL-SERVICE", "فاصل الخدمات", [4.85, 1.55, -2.38], [6.25, 3.1, 0.16])}
-      {wall("WALL-WC", "فاصل دورة المياه", [3.55, 1.55, -3.92], [0.16, 3.1, 3])}
-    </>
+    <group position={[0, y, 0]}>
+      {partition(
+        "WALL-KITCHEN",
+        "فاصل المطبخ",
+        "z",
+        1.75,
+        -2.3,
+        5.35,
+        [{ center: -1.25, width: 1.05 }],
+      )}
+      {partition(
+        "WALL-SERVICE",
+        "فاصل الخدمات",
+        "x",
+        -2.38,
+        0.2,
+        7.85,
+        [
+          { center: 1.2, width: 1 },
+          { center: 5.1, width: 1 },
+        ],
+      )}
+      {partition(
+        "WALL-WC",
+        "فاصل دورة المياه",
+        "z",
+        3.55,
+        -5.35,
+        -2.38,
+      )}
+      <DoorAssembly
+        id="D-KITCHEN-01"
+        name="باب المطبخ"
+        position={[1.75, 0, -1.25]}
+        width={1.05}
+        orientation="side"
+        common={common}
+        kind="solid"
+      />
+      <DoorAssembly
+        id="D-WC-01"
+        name="باب دورة المياه المهيأة"
+        position={[1.2, 0, -2.38]}
+        width={1}
+        orientation="front"
+        common={common}
+        kind="solid"
+      />
+      <DoorAssembly
+        id="D-STORAGE-01"
+        name="باب المخزن"
+        position={[5.1, 0, -2.38]}
+        width={1}
+        orientation="front"
+        common={common}
+        kind="solid"
+      />
+    </group>
   );
 }
 
@@ -1146,6 +1530,138 @@ function DiningSet({
           )}
         </group>
       ))}
+    </group>
+  );
+}
+
+function CafeTableSet({
+  id,
+  position,
+  common,
+}: {
+  id: string;
+  position: Vec3;
+  common: CommonPartProps;
+}) {
+  return (
+    <group position={position}>
+      <Part
+        {...common}
+        id={id}
+        name="طاولة مقهى دائرية بمقعدين"
+        position={[0, 0.39, 0]}
+        size={[0.1, 0.72, 0.1]}
+        color="#334342"
+        metalness={0.42}
+        roughness={0.36}
+      />
+      <DetailCylinder
+        position={[0, 0.76, 0]}
+        radius={0.55}
+        height={0.1}
+        color="#a8754f"
+        roughness={0.52}
+      />
+      <DetailBox
+        position={[0, 0.07, 0]}
+        size={[0.5, 0.06, 0.5]}
+        color="#334342"
+        metalness={0.42}
+        roughness={0.36}
+      />
+      {[-0.92, 0.92].map((x, index) => (
+        <group
+          key={x}
+          position={[x, 0, 0]}
+          rotation={[0, index === 0 ? Math.PI / 2 : -Math.PI / 2, 0]}
+        >
+          <DetailBox
+            position={[0, 0.47, 0]}
+            size={[0.46, 0.12, 0.46]}
+            color="#59638f"
+            roughness={0.65}
+          />
+          <DetailBox
+            position={[0, 0.77, 0.18]}
+            size={[0.46, 0.5, 0.09]}
+            color="#59638f"
+            roughness={0.65}
+          />
+          {[-0.17, 0.17].flatMap((chairX) =>
+            [-0.15, 0.15].map((chairZ) => (
+              <DetailBox
+                key={`${chairX}-${chairZ}`}
+                position={[chairX, 0.22, chairZ]}
+                size={[0.045, 0.44, 0.045]}
+                color="#344342"
+                metalness={0.25}
+                roughness={0.4}
+              />
+            )),
+          )}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function ManicureStation({
+  id,
+  position,
+  common,
+}: {
+  id: string;
+  position: Vec3;
+  common: CommonPartProps;
+}) {
+  return (
+    <group position={position}>
+      <Part
+        {...common}
+        id={id}
+        name="طاولة عناية بالأظافر مع شفط موضعي"
+        position={[0, 0.76, 0]}
+        size={[1.25, 0.11, 0.66]}
+        color="#9a6f89"
+        roughness={0.52}
+      />
+      {[-0.48, 0.48].map((x) => (
+        <DetailBox
+          key={x}
+          position={[x, 0.38, 0]}
+          size={[0.08, 0.72, 0.48]}
+          color="#4f454d"
+          roughness={0.52}
+        />
+      ))}
+      {[-0.72, 0.72].map((z, index) => (
+        <group
+          key={z}
+          position={[0, 0, z]}
+          rotation={[0, index === 0 ? 0 : Math.PI, 0]}
+        >
+          <DetailBox
+            position={[0, 0.49, 0]}
+            size={[0.55, 0.13, 0.48]}
+            color="#765d70"
+            roughness={0.62}
+          />
+          <DetailBox
+            position={[0, 0.82, 0.18]}
+            size={[0.55, 0.54, 0.1]}
+            color="#765d70"
+            roughness={0.62}
+          />
+        </group>
+      ))}
+      <DetailCylinder
+        position={[0, 0.84, 0]}
+        radius={0.14}
+        height={0.04}
+        color="#55474f"
+        metalness={0.3}
+        roughness={0.35}
+      />
     </group>
   );
 }
@@ -1307,10 +1823,12 @@ function WaitingBench({
   id,
   position,
   common,
+  color = "#54766d",
 }: {
   id: string;
   position: Vec3;
   common: CommonPartProps;
+  color?: string;
 }) {
   return (
     <group position={position}>
@@ -1320,13 +1838,13 @@ function WaitingBench({
         name="مقاعد الانتظار"
         position={[0, 0.5, 0]}
         size={[1.65, 0.16, 0.55]}
-        color="#54766d"
+        color={color}
         roughness={0.68}
       />
       <DetailBox
         position={[0, 0.86, 0.23]}
         size={[1.65, 0.62, 0.1]}
-        color="#54766d"
+        color={color}
         roughness={0.68}
       />
       {[-0.7, 0, 0.7].map((x) => (
@@ -1441,9 +1959,15 @@ function WashBasin({
   );
 }
 
-function RestroomFixture({ common }: { common: CommonPartProps }) {
+function RestroomFixture({
+  common,
+  position = [1.35, 0, -4.55],
+}: {
+  common: CommonPartProps;
+  position?: Vec3;
+}) {
   return (
-    <group position={[1.35, 0, -4.55]}>
+    <group position={position}>
       <Part
         {...common}
         id="WC-FIXTURE-01"
@@ -1477,8 +2001,10 @@ function RestroomFixture({ common }: { common: CommonPartProps }) {
 
 function RestaurantFitout({
   common,
+  scenario,
 }: {
   common: CommonPartProps;
+  scenario: Scenario;
 }) {
   const tables: Vec3[] = [
     [-5.45, 0, -2.65],
@@ -1501,22 +2027,22 @@ function RestaurantFitout({
       <Counter
         id="FURN-SERVICE-COUNTER"
         name="كاونتر الخدمة"
-        position={[0.2, 0, 1.15]}
+        position={[scenario === "review" ? -0.375 : -0.155, 0, 1.15]}
         size={[1.45, 1.08, 3.45]}
         common={common}
       />
-      <group position={[6.75, 0, 0.55]}>
+      <group position={[6.75, 0, -0.5]}>
         <Part
           {...common}
           id="EQ-RANGE-01"
           name="خط الطهي التجاري"
           position={[0, 0.49, 0]}
-          size={[1.25, 0.98, 3.7]}
+          size={[1.25, 0.98, 2.4]}
           color="#929d9b"
           metalness={0.72}
           roughness={0.24}
         />
-        {[-1.25, -0.4, 0.45, 1.3].map((z) => (
+        {[-0.75, -0.25, 0.25, 0.75].map((z) => (
           <DetailCylinder
             key={z}
             position={[-0.24, 1, z]}
@@ -1564,34 +2090,40 @@ function RestaurantFitout({
   );
 }
 
-function CafeFitout({ common }: { common: CommonPartProps }) {
+function CafeFitout({
+  common,
+  scenario,
+}: {
+  common: CommonPartProps;
+  scenario: Scenario;
+}) {
+  const counterX = scenario === "review" ? 0.66 : 0.86;
   const tables: Vec3[] = [
     [-5.6, 0, -2.5],
     [-3.25, 0, -2.5],
     [-5.6, 0, 0.3],
+    [-1.97, 0, 0.3],
     [-3.25, 0, 2.65],
   ];
   return (
     <>
       {tables.map((position, index) => (
-        <DiningSet
+        <CafeTableSet
           key={index}
           id={`CAFE-TABLE-${index + 1}`}
-          name={`طاولة مقهى ${index + 1}`}
           position={position}
           common={common}
-          compact
         />
       ))}
       <Counter
         id="COUNTER-SERVICE-01"
         name="كاونتر تحضير وطلب القهوة"
-        position={[0.95, 0, 0.9]}
-        size={[1.4, 1.08, 6.5]}
+        position={[counterX, 0, 1]}
+        size={[1.4, 1.08, 5.2]}
         color="#8a5f43"
         common={common}
       />
-      <group position={[1, 1.13, 1.3]}>
+      <group position={[counterX, 1.13, 1.3]}>
         <Part
           {...common}
           id="EQ-ESPRESSO-01"
@@ -1623,10 +2155,10 @@ function CafeFitout({ common }: { common: CommonPartProps }) {
         {...common}
         id="EQ-DISPLAY-01"
         name="واجهة عرض المخبوزات"
-        position={[-0.05, 0.82, 3.65]}
-        size={[1.35, 1.4, 1.15]}
+        position={[counterX, 1.5, 3.1]}
+        size={[1.1, 0.7, 0.75]}
         color="#a8c5c0"
-        opacity={0.48}
+        opacity={0.58}
         metalness={0.08}
         roughness={0.12}
       />
@@ -1680,11 +2212,13 @@ function ClinicFitout({
         id="FURN-WAITING-01"
         position={[-6.15, 0, 2.75]}
         common={common}
+        color="#477a86"
       />
       <WaitingBench
         id="FURN-WAITING-02"
         position={[-6.15, 0, 0.85]}
         common={common}
+        color="#477a86"
       />
       <ExamBed
         id="EQ-EXAM-BED-01"
@@ -1696,18 +2230,27 @@ function ClinicFitout({
         position={[4.45, 0, -1.65]}
         common={common}
       />
-      <SinkStation
-        id="CLINIC-SINK-EXAM-02"
-        name="نقطة غسل اليدين، غرفة الفحص ٢"
-        position={[6.65, 0, -1.45]}
-        width={0.78}
-        common={common}
-        marker={
-          scenario === "review"
-            ? { status: "fail", label: "2" }
-            : undefined
-        }
-      />
+      {scenario === "review" ? (
+        <Part
+          {...common}
+          id="CLINIC-SINK-EXAM-02"
+          name="موضع نقطة غسل اليدين غير الممثلة"
+          position={[6.65, 0.46, -1.45]}
+          size={[0.78, 0.86, 0.66]}
+          color="#d8b0a8"
+          opacity={0.24}
+          castShadow={false}
+          marker={{ status: "fail", label: "2" }}
+        />
+      ) : (
+        <SinkStation
+          id="CLINIC-SINK-EXAM-02"
+          name="نقطة غسل اليدين، غرفة الفحص ٢"
+          position={[6.65, 0, -1.45]}
+          width={0.78}
+          common={common}
+        />
+      )}
       <Part
         {...common}
         id="CAB-CLINICAL-01"
@@ -1726,7 +2269,17 @@ function ClinicFitout({
         color="#d8b14d"
         roughness={0.5}
       />
-      <RestroomFixture common={common} />
+      <Part
+        {...common}
+        id="FURN-PRIVACY-SCREEN-01"
+        name="حاجز خصوصية سريري"
+        position={[2.05, 1.08, 3.9]}
+        size={[0.08, 1.75, 1.4]}
+        color="#b8ced3"
+        opacity={0.82}
+        roughness={0.58}
+      />
+      <RestroomFixture common={common} position={[-5.25, 0, -4.2]} />
     </>
   );
 }
@@ -1752,12 +2305,13 @@ function SalonFitout({
         id="FURN-WAITING-01"
         position={[-5.5, 0, 4.35]}
         common={common}
+        color="#7b5c70"
       />
       {[
         [-3.75, 0, 1.05],
-        [-1.15, 0, 1.05],
+        [scenario === "review" ? -2.09 : -1.85, 0, 1.05],
         [-3.75, 0, -2],
-        [-1.15, 0, -2],
+        [scenario === "review" ? -2.09 : -1.85, 0, -2],
       ].map((position, index) => (
         <StylingStation
           key={index}
@@ -1776,12 +2330,10 @@ function SalonFitout({
         position={[6.25, 0, 3.2]}
         common={common}
       />
-      <DiningSet
+      <ManicureStation
         id="EQ-MANICURE-01"
-        name="طاولة العناية بالأظافر"
         position={[4.8, 0, -1.05]}
         common={common}
-        compact
       />
       <Part
         {...common}
@@ -1793,24 +2345,64 @@ function SalonFitout({
         metalness={0.25}
         roughness={0.38}
       />
-      <Part
-        {...common}
-        id="SALON-STORAGE-CHEM-01"
-        name={
-          scenario === "review"
-            ? "رف مواد تشغيل مفتوح"
-            : "خزانة مواد تشغيل مغلقة"
-        }
-        position={[6.55, 1.1, -4.7]}
-        size={[1.45, 2.2, 0.62]}
-        color={scenario === "review" ? "#c0845b" : "#8b765f"}
-        roughness={0.55}
-        marker={
-          scenario === "review"
-            ? { status: "fail", label: "2" }
-            : undefined
-        }
-      />
+      {scenario === "review" ? (
+        <group position={[6.55, 0, -4.7]}>
+          <Part
+            {...common}
+            id="SALON-STORAGE-CHEM-01"
+            name="رف مواد تشغيل مفتوح"
+            position={[-0.68, 1.1, 0]}
+            size={[0.09, 2.2, 0.62]}
+            color="#9b6f58"
+            roughness={0.55}
+            marker={{ status: "fail", label: "2" }}
+          />
+          <DetailBox
+            position={[0.68, 1.1, 0]}
+            size={[0.09, 2.2, 0.62]}
+            color="#9b6f58"
+            roughness={0.55}
+          />
+          {[0.18, 0.78, 1.38, 2.02].map((shelfY) => (
+            <DetailBox
+              key={shelfY}
+              position={[0, shelfY, 0]}
+              size={[1.45, 0.08, 0.62]}
+              color="#b38a6d"
+              roughness={0.58}
+            />
+          ))}
+        </group>
+      ) : (
+        <group position={[6.55, 0, -4.7]}>
+          <Part
+            {...common}
+            id="SALON-STORAGE-CHEM-01"
+            name="خزانة مواد تشغيل مغلقة"
+            position={[0, 1.1, 0]}
+            size={[1.45, 2.2, 0.62]}
+            color="#8b765f"
+            roughness={0.55}
+          />
+          <DetailBox
+            position={[0, 1.12, 0.325]}
+            size={[0.035, 2.02, 0.025]}
+            color="#443d38"
+            roughness={0.4}
+          />
+          {[-0.12, 0.12].map((x) => (
+            <DetailCylinder
+              key={x}
+              position={[x, 1.12, 0.36]}
+              radius={0.022}
+              height={0.24}
+              color="#c5ad82"
+              metalness={0.65}
+              roughness={0.25}
+            />
+          ))}
+        </group>
+      )}
       <RestroomFixture common={common} />
     </>
   );
@@ -1825,14 +2417,16 @@ function ActivityFitout({
   scenario: Scenario;
   common: CommonPartProps;
 }) {
-  if (activityId === "cafe") return <CafeFitout common={common} />;
+  if (activityId === "cafe") {
+    return <CafeFitout common={common} scenario={scenario} />;
+  }
   if (activityId === "clinic") {
     return <ClinicFitout common={common} scenario={scenario} />;
   }
   if (activityId === "salon") {
     return <SalonFitout common={common} scenario={scenario} />;
   }
-  return <RestaurantFitout common={common} />;
+  return <RestaurantFitout common={common} scenario={scenario} />;
 }
 
 function ActivityMep({
@@ -1947,13 +2541,12 @@ function ActivityMep({
         {...common}
         id="MEP-HOOD-01"
         name="شفاط المطبخ التجاري"
-        position={[6.65, 2.2, 0.55]}
-        size={[1.58, 0.38, 3.55]}
+        position={[6.65, 2.2, -0.5]}
+        size={[1.58, 0.38, 2.6]}
         color={review ? "#c4a064" : "#748783"}
         metalness={0.62}
         roughness={0.24}
         opacity={review ? 0.48 : 1}
-        marker={review ? { status: "unknown", label: "3" } : undefined}
       />
       {!review && (
         <>
@@ -1996,31 +2589,46 @@ function RoomZones({
 }) {
   return (
     <>
-      {activityRooms[activityId].map((room) => (
-        <group key={room.id}>
-          <Part
-            {...common}
-            id={room.id}
-            name={room.name}
-            position={[room.position[0], 0.038, room.position[1]]}
-            size={[room.size[0], 0.035, room.size[1]]}
-            color={room.color}
-            opacity={0.58}
-            castShadow={false}
-            marker={
-              scenario === "review" && room.id === "CAFE-SPACE-BAR"
-                ? { status: "unknown", label: "3" }
-                : undefined
-            }
-          />
-          {labels && (
-            <RoomLabel
-              position={[room.position[0], 0.18, room.position[1]]}
-              name={room.name}
-            />
-          )}
-        </group>
-      ))}
+      {activityRooms[activityId].map((room) => {
+        const footprints = room.fragments ?? [
+          { position: room.position, size: room.size },
+        ];
+        const marker =
+          scenario === "review" &&
+          ((activityId === "restaurant" && room.id === "SPACE-KITCHEN") ||
+            (activityId === "cafe" && room.id === "CAFE-SPACE-BAR"))
+            ? { status: "unknown" as const, label: "3" }
+            : undefined;
+
+        return (
+          <group key={room.id}>
+            {footprints.map((footprint, index) => (
+              <Part
+                key={`${room.id}-${index}`}
+                {...common}
+                id={room.id}
+                name={room.name}
+                position={[
+                  footprint.position[0],
+                  0.038,
+                  footprint.position[1],
+                ]}
+                size={[footprint.size[0], 0.035, footprint.size[1]]}
+                color={room.color}
+                opacity={0.86}
+                castShadow={false}
+                marker={index === 0 ? marker : undefined}
+              />
+            ))}
+            {labels && (
+              <RoomLabel
+                position={[room.position[0], 0.18, room.position[1]]}
+                name={room.name}
+              />
+            )}
+          </group>
+        );
+      })}
     </>
   );
 }
@@ -2044,8 +2652,21 @@ function RouteOverlay({
     clinic: 1.2,
     salon: 0.74,
   };
-  const width = routeHasReviewIssue ? reviewWidths[activityId] : 0.98;
-  const [centerX, centerZ] = activityRouteCenters[activityId];
+  const width =
+    activityId === "clinic"
+      ? 1.77
+      : routeHasReviewIssue
+        ? reviewWidths[activityId]
+        : 0.98;
+  const [reviewCenterX, centerZ] = activityRouteCenters[activityId];
+  const centerX =
+    !review && activityId === "restaurant"
+      ? -1.37
+      : !review && activityId === "cafe"
+        ? -0.33
+        : !review && activityId === "salon"
+          ? -2.8
+          : reviewCenterX;
   const color = routeHasReviewIssue ? statusColors.fail : statusColors.pass;
   const routePoints = activityRoutePoints[activityId];
 
@@ -2164,13 +2785,18 @@ function CameraRig({
   const goalPosition = useRef(new THREE.Vector3(14.5, 13.5, 16));
   const goalTarget = useRef(new THREE.Vector3(0, 0.55, 0));
   const moving = useRef(true);
+  const previousSelectedElement = useRef<string | undefined>(undefined);
+  const previousFocusNonce = useRef(-1);
 
   useEffect(() => {
     const selectedTarget = selectedElement
       ? localElementTargets[selectedElement] ?? elementTargets[selectedElement]
       : undefined;
+    const selectedChanged =
+      selectedElement !== previousSelectedElement.current;
+    const focusRequested = focusNonce !== previousFocusNonce.current;
 
-    if (selectedTarget) {
+    if (selectedTarget && (selectedChanged || focusRequested)) {
       goalPosition.current.set(...selectedTarget.camera);
       goalTarget.current.set(...selectedTarget.target);
     } else if (preset === "top") {
@@ -2186,6 +2812,8 @@ function CameraRig({
       goalPosition.current.set(14.5, 13.5, 16);
       goalTarget.current.set(0, 0.55, 0);
     }
+    previousSelectedElement.current = selectedElement;
+    previousFocusNonce.current = focusNonce;
     moving.current = true;
   }, [camera, focusNonce, preset, selectedElement]);
 
@@ -2251,13 +2879,13 @@ function FacilityScene({
 
   return (
     <>
-      <color attach="background" args={["#e8eeea"]} />
-      <fog attach="fog" args={["#e8eeea", 28, 54]} />
-      <ambientLight intensity={0.48} />
-      <hemisphereLight args={["#f7fff9", "#9d9486", 0.82]} />
+      <color attach="background" args={["#dfe9e6"]} />
+      <fog attach="fog" args={["#dfe9e6", 28, 54]} />
+      <ambientLight intensity={0.3} />
+      <hemisphereLight args={["#f7fff9", "#948b7e", 0.56]} />
       <directionalLight
         position={[9, 15, 10]}
-        intensity={2.55}
+        intensity={2}
         castShadow
         shadow-mapSize-width={1536}
         shadow-mapSize-height={1536}
@@ -2269,7 +2897,7 @@ function FacilityScene({
         shadow-camera-far={38}
         shadow-bias={-0.00018}
       />
-      <directionalLight position={[-8, 7, -6]} intensity={0.55} color="#b9d4cf" />
+      <directionalLight position={[-8, 7, -6]} intensity={0.36} color="#b9d4cf" />
 
       {layers.shell && (
         <>
@@ -2340,7 +2968,7 @@ function FacilityScene({
       />
       <ContactShadows
         position={[0, -0.36 - (exploded ? 0.5 : 0), 0]}
-        opacity={0.38}
+        opacity={0.46}
         scale={29}
         blur={2.25}
         far={12}
@@ -2404,17 +3032,16 @@ export function Viewer3D({
     (nextPreset: ViewPreset) => {
       setPreset(nextPreset);
       setIsolate(false);
-      onSelectElement("");
-      setFocusNonce((value) => value + 1);
     },
-    [onSelectElement],
+    [],
   );
 
   const resetView = useCallback(() => {
     setGhost(false);
     setExploded(false);
+    onSelectElement("");
     selectPreset("iso");
-  }, [selectPreset]);
+  }, [onSelectElement, selectPreset]);
 
   useEffect(() => {
     if (!selectedElement) setIsolate(false);
@@ -2489,7 +3116,7 @@ export function Viewer3D({
           }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.05;
+            gl.toneMappingExposure = 0.97;
             gl.outputColorSpace = THREE.SRGBColorSpace;
           }}
           onPointerMissed={() => onSelectElement("")}
@@ -2550,8 +3177,8 @@ export function Viewer3D({
           type="button"
           className={preset === "walk" ? "is-active" : ""}
           onClick={() => selectPreset("walk")}
-          title="جولة داخلية"
-          aria-label="جولة داخلية"
+          title="منظور داخلي"
+          aria-label="منظور داخلي"
           data-testid="viewer-preset-walk"
         >
           <Footprints size={18} />
@@ -2696,7 +3323,7 @@ export function Viewer3D({
 
       <div className="viewer__meta">
         <span className="viewer__live-dot" />
-        نموذج {activityTitles[activityId]} دلالي مباشر
+        مشهد {activityTitles[activityId]} دلالي توضيحي
         <span>•</span>
         الطابق الأرضي
       </div>

@@ -1,110 +1,115 @@
 # جواز الامتثال | Compliance Passport
 
-مساعد رقمي للفحص الاستباقي للمخططات الهندسية قبل رفع طلب الرخصة.
+جواز الامتثال هو نموذج أولي عربي لفحص ملف IFC دلالي قبل تقديم طلب
+الرخصة. يقرأ النظام حقائق محددة من الملف، ويشغّل عليها قواعد حتمية قابلة
+للاختبار، ثم يربط النتائج بعناصر النموذج ويُعد تقرير جاهزية.
 
-Compliance Passport is a pre-submission engineering compliance checker. It
-reads structured BIM/IFC models, applies traceable rules, identifies issues in
-their model locations, and produces an actionable readiness report.
+> الفحص استباقي فقط. لا يصدر النظام موافقة أو شهادة أو ترخيصًا رسميًا، ولا
+> يحل محل مراجعة البلدية أو المكتب الهندسي أو الجهة المختصة.
 
-> This product supports applicants and engineering offices. It does not issue
-> official approvals or replace review by a municipality, engineering office,
-> or other competent authority.
+التحليل الكامل للتفريغ الصوتي، ومتطلبات المنتج، والفجوات، وخارطة الطريق
+موجود في [`docs/product-analysis-ar.md`](docs/product-analysis-ar.md).
 
-## Product goal
+## ما الذي يعمل فعليًا؟
 
-Reduce avoidable submission rework by detecting automatically verifiable
-issues before an application is submitted.
+عند رفع ملف متوافق مع عقد الاختبار `JAWAZ-IFC-1.0`، تنفّذ الواجهة المراحل
+الست التالية من بيانات الملف نفسه:
 
-The intended flow is:
+1. **التحقق من بنية ملف IFC:** التحقق من غلاف STEP، ومخطط IFC المدعوم،
+   وسجلات EXPRESS، وعدم تكرار المعرّفات أو وجود مراجع مكسورة، ثم حساب
+   بصمة `SHA-256` للملف.
+2. **استخراج المساحات والعناصر:** استخراج `IfcProject` والطوابق والمساحات
+   والأبواب والعناصر ومجموعات الخصائص، وحساب الأعداد الفعلية.
+3. **فحص اكتمال البيانات:** التحقق من بيانات المنشأة، والنشاط، والوحدات،
+   والإصدار الدلالي، واكتمال جرد العناصر المطلوبة.
+4. **تطبيق قواعد النشاط:** تشغيل عشر قواعد حتمية خاصة بالنشاط على القيم
+   المستخرجة؛ لا تُختار النتيجة من اسم الملف أو من علامة جاهزة داخله.
+5. **ربط النتائج بعناصر النموذج:** التحقق من أن معرّفات GUID وعناصر STEP
+   المرتبطة بالنتائج موجودة فعلًا في الملف.
+6. **إعداد تقرير الجاهزية:** إنشاء ملخص من نتيجة التشغيل نفسها، متضمنًا
+   بصمة الملف وإصدار حزمة القواعد والأدلة والأعداد.
 
-1. Select the establishment activity and enter its basic information.
-2. Upload a structured BIM model in IFC format.
-3. Validate the model's quality and required information.
-4. Apply versioned compliance rules.
-5. Review passed, failed, and needs-review results.
-6. Locate each issue in a 3D model viewer.
-7. Export a report containing the rule source and suggested action.
+تتوقف العملية عند المرحلة التي تفشل، ويظهر سبب قابل للتشخيص بدل إكمال
+شريط تقدم تمثيلي.
 
-## Prototype scope
+## نطاق النسخة الحالية بصراحة
 
-- Four activity examples: restaurant, café, outpatient clinic, and beauty salon
-- Two prepared IFC fixtures per activity (`review` and `ready`)
-- Ten deterministic demonstration rules per activity
-- Activity-specific, interactive 3D fit-outs with architectural construction
-- Rule results linked to IFC GUIDs
-- Three result states: `pass`, `fail`, and `unknown`
-- Activity-aware readiness reports
+- تقبل النسخة الحالية ملفات IFC4 الدلالية التي تتبع عقد البيانات المحدد
+  للاختبار. وهي لا تدّعي دعم كل ملفات IFC الصادرة من جميع البرامج الهندسية.
+- تشمل أمثلة لأربعة أنشطة: مطعم، ومقهى، وعيادة خارجية، وصالون تجميل.
+- قواعد الأنشطة والحدود الرقمية في هذه النسخة تجريبية لإثبات آلية النظام.
+  يجب ربط كل قاعدة لاحقًا بوثيقة رسمية، ورقم بند، وإصدار، وتاريخ سريان،
+  واعتماد مختص.
+- الحالات الثلاث للنتيجة هي: مطابق ضمن نطاق القاعدة، وملاحظة مثبتة،
+  ومعلومات غير مكتملة. غياب الدليل لا يتحول إلى نجاح.
+- المشهد ثلاثي الأبعاد الحالي **مشهد توضيحي تفاعلي** خاص بكل نشاط، وليس
+  هندسة مولّدة من ملف IFC المرفوع. الربط الدلالي يحدد العنصر التوضيحي
+  المقابل، لكنه لا يدّعي عرض هندسة الملف الأصلية.
+- لا تحوّل النسخة الحالية ملفات PDF أو DWG أو المخططات الثنائية إلى نموذج
+  ثلاثي الأبعاد. هذا مسار تطوير مستقل، أما نطاق MVP فهو ملف IFC دلالي صالح
+  صادر من المكتب الهندسي.
+- لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية، ولا إشعار تلقائي للبلدية،
+  ولا تقدير معتمد لزمن إصدار الرخصة.
+- النتائج تخص التصميم المرفوع (`As-Designed`) ولا تثبت التنفيذ الفعلي في
+  الموقع (`As-Built`).
 
-Examples of prototype checks include required spaces, room metadata, door
-width, accessible routes, sanitary facilities, exits, and required ventilation
-information. Exact thresholds must come from approved source documents and be
-reviewed by a qualified domain expert.
+## دور GPT والذكاء الاصطناعي
 
-## Technical direction
+لا يستخدم النظام GPT لاتخاذ قرار المطابقة، ولا يحتاج إلى مفتاح OpenAI
+لتشغيل الفحص الحالي. التحقق والاستخراج والقواعد والربط حتمية، لذلك تعطي
+البايتات والمدخلات نفسها النتيجة نفسها.
 
-The system should be deterministic at its core:
+يمكن إضافة نموذج لغوي لاحقًا لشرح النتيجة بلغة أبسط أو البحث في مصادر
+معتمدة، لكن لا يجوز أن يستبدل محرك القواعد، أو يخترع بندًا، أو يحوّل حالة
+«معلومات غير مكتملة» إلى نجاح. وأي مفتاح API مستقبلي يجب أن يبقى في خادم
+آمن، لا داخل تطبيق المتصفح.
 
-```text
-IFC/BIM model
-    -> model quality checks
-    -> structured building data
-    -> versioned rule engine
-    -> evidence-backed findings
-    -> 3D viewer and report
-```
+## التشغيل محليًا
 
-Suggested components for later implementation:
-
-- Web application: React / Next.js
-- IFC viewer: `web-ifc` or That Open Engine
-- IFC processing: Python with IfcOpenShell
-- Rules: versioned, testable rule definitions
-- Findings: JSON results linked to IFC GUIDs
-- AI assistance: explanation and retrieval from approved sources, not the
-  final compliance decision
-
-## Important boundaries
-
-- Start with IFC/BIM rather than arbitrary PDFs.
-- The 3D viewer is the presentation layer; structured data and the rule engine
-  are the product core.
-- A drawing represents the design (`as-designed`), not proof of actual
-  construction (`as-built`).
-- Unknown or insufficient evidence must result in `needs_review`, never an
-  invented pass.
-- Every finding must retain its rule source, version, evidence, and model
-  location.
-
-## Status
-
-Functional proof-of-concept implemented with an Arabic-first RTL interface,
-deterministic multi-sector rule fixtures, a live interactive 3D model,
-model-linked findings, and printable/downloadable readiness reports.
-
-## Run locally
+المتطلبات: Node.js حديث و`npm`.
 
 ```bash
 npm install
+npm run fixtures:generate
+npm test
 npm run dev
 ```
 
-Then open the local URL printed by Vite.
-
-Verification commands:
+افتح عنوان Vite المحلي الظاهر في الطرفية. أوامر التحقق الأخرى:
 
 ```bash
-npm test
 npm run build
 npm run test:e2e
 ```
 
-The end-to-end test uses the installed Chrome browser and saves review
-screenshots under `artifacts/e2e/`.
+- `npm run fixtures:generate` يعيد إنشاء ملفات IFC الحتمية وملفات النتائج
+  المتوقعة.
+- `npm test` يشغّل اختبارات الوحدة وخط المعالجة وحالات الرفض.
+- `npm run build` يتحقق من TypeScript وينتج حزمة الإنتاج.
+- `npm run test:e2e` يختبر التدفق في المتصفح ويحفظ اللقطات تحت
+  `artifacts/e2e/`.
 
-## Prototype note
+## ملفات الاختبار
 
-The bundled sector examples are deterministic semantic 3D fixtures linked to
-stable IFC-like identifiers. The small IFC files under `public/samples/`
-exercise the upload and validation flow for every activity and state.
-Arbitrary IFC geometry parsing is intentionally not claimed in this version;
-integrating `web-ifc` against verified production models is a later phase.
+كل ملفات الرفع اليدوي موجودة في [`test-fixtures/`](test-fixtures/README.md).
+يتضمن المجلد ثمانية ملفات صالحة، وسبعة ملفات أخطاء مقصودة، وملفات JSON
+تحدد النتائج المتوقعة.
+
+هذا المجلد خارج `public/`: لا ينسخه Vite إلى حزمة الموقع، ولا تعرض الواجهة
+روابط لتنزيل ملفاته. تُستخدم الملفات محليًا من منتقي الملفات ومن اختبارات
+Vitest فقط. يجب ألا تُنقل ملفات الاختبار إلى `public/`.
+
+## البنية التقنية المختصرة
+
+```text
+Semantic IFC bytes
+    -> STEP/IFC validation + SHA-256
+    -> semantic entity/property extraction
+    -> completeness contract
+    -> deterministic, versioned rules
+    -> GUID/STEP evidence linking
+    -> readiness report
+```
+
+العارض ثلاثي الأبعاد طبقة توضيحية، أما حقائق IFC ومحرك القواعد وسجل الأدلة
+فهي نواة الفحص.

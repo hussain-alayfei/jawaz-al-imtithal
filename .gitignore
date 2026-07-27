@@ -47,6 +47,8 @@ artifacts/
 *.bcf
 *.bcfzip
 
-# Versioned, intentionally small demo fixtures
-!public/samples/
-!public/samples/*.ifc
+# Versioned, intentionally small QA fixtures. They live outside public/ and
+# are not copied into the deployed bundle.
+!test-fixtures/
+!test-fixtures/ifc/
+!test-fixtures/ifc/**/*.ifc

@@ -36,6 +36,7 @@ export interface Finding {
   shortTitle: string;
   category: string;
   elementId?: string;
+  elementStepId?: number;
   elementGuid?: string;
   elementName?: string;
   actual: string;
@@ -62,7 +63,6 @@ export interface ActivityExample {
   rulePack: string;
   ruleVersion: string;
   facility: FacilityDetails;
-  sampleUrls: Record<Scenario, string>;
 }
 
 export const activityIds: ActivityId[] = [
@@ -119,116 +119,6 @@ const facilityDefaults: Record<ActivityId, FacilityDetails> = {
   },
 };
 
-const metadataByActivity: Record<
-  ActivityId,
-  Record<Scenario, ModelMetadata>
-> = {
-  restaurant: {
-    review: {
-      activityId: "restaurant",
-      fileName: "restaurant-review.ifc",
-      size: "2.8 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 6,
-      doors: 7,
-      elements: 148,
-      scenario: "review",
-    },
-    ready: {
-      activityId: "restaurant",
-      fileName: "restaurant-ready.ifc",
-      size: "3.1 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 6,
-      doors: 7,
-      elements: 156,
-      scenario: "ready",
-    },
-  },
-  cafe: {
-    review: {
-      activityId: "cafe",
-      fileName: "cafe-review.ifc",
-      size: "2.4 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 6,
-      doors: 5,
-      elements: 132,
-      scenario: "review",
-    },
-    ready: {
-      activityId: "cafe",
-      fileName: "cafe-ready.ifc",
-      size: "2.7 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 6,
-      doors: 5,
-      elements: 141,
-      scenario: "ready",
-    },
-  },
-  clinic: {
-    review: {
-      activityId: "clinic",
-      fileName: "clinic-review.ifc",
-      size: "3.6 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 8,
-      doors: 9,
-      elements: 204,
-      scenario: "review",
-    },
-    ready: {
-      activityId: "clinic",
-      fileName: "clinic-ready.ifc",
-      size: "3.9 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 8,
-      doors: 9,
-      elements: 216,
-      scenario: "ready",
-    },
-  },
-  salon: {
-    review: {
-      activityId: "salon",
-      fileName: "salon-review.ifc",
-      size: "2.9 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 7,
-      doors: 6,
-      elements: 162,
-      scenario: "review",
-    },
-    ready: {
-      activityId: "salon",
-      fileName: "salon-ready.ifc",
-      size: "3.2 MB",
-      schema: "IFC4",
-      units: "متر",
-      storeys: 1,
-      spaces: 7,
-      doors: 6,
-      elements: 174,
-      scenario: "ready",
-    },
-  },
-};
-
 export const activityExamples: ActivityExample[] = [
   {
     id: "restaurant",
@@ -237,10 +127,6 @@ export const activityExamples: ActivityExample[] = [
     rulePack: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     ruleVersion: "DEMO-REST-2026.1",
     facility: { ...facilityDefaults.restaurant },
-    sampleUrls: {
-      review: "/samples/restaurant-review.ifc",
-      ready: "/samples/restaurant-ready.ifc",
-    },
   },
   {
     id: "cafe",
@@ -249,10 +135,6 @@ export const activityExamples: ActivityExample[] = [
     rulePack: "حزمة قواعد نشاط المقاهي (مرجع تجريبي)",
     ruleVersion: "DEMO-CAFE-2026.1",
     facility: { ...facilityDefaults.cafe },
-    sampleUrls: {
-      review: "/samples/cafe-review.ifc",
-      ready: "/samples/cafe-ready.ifc",
-    },
   },
   {
     id: "clinic",
@@ -261,10 +143,6 @@ export const activityExamples: ActivityExample[] = [
     rulePack: "حزمة قواعد نشاط العيادات (مرجع تجريبي)",
     ruleVersion: "DEMO-CLIN-2026.1",
     facility: { ...facilityDefaults.clinic },
-    sampleUrls: {
-      review: "/samples/clinic-review.ifc",
-      ready: "/samples/clinic-ready.ifc",
-    },
   },
   {
     id: "salon",
@@ -273,10 +151,6 @@ export const activityExamples: ActivityExample[] = [
     rulePack: "حزمة قواعد نشاط صالونات التجميل (مرجع تجريبي)",
     ruleVersion: "DEMO-SALON-2026.1",
     facility: { ...facilityDefaults.salon },
-    sampleUrls: {
-      review: "/samples/salon-review.ifc",
-      ready: "/samples/salon-ready.ifc",
-    },
   },
 ];
 
@@ -295,18 +169,7 @@ export const getDefaultFacility = (activityId: ActivityId): FacilityDetails => (
   ...facilityDefaults[activityId],
 });
 
-export const getModelMetadata = (
-  activityId: ActivityId,
-  scenario: Scenario,
-): ModelMetadata => ({ ...metadataByActivity[activityId][scenario] });
-
 export const defaultFacility = getDefaultFacility("restaurant");
-
-// Backward-compatible restaurant metadata for older consumers.
-export const modelMetadata: Record<Scenario, ModelMetadata> = {
-  review: getModelMetadata("restaurant", "review"),
-  ready: getModelMetadata("restaurant", "ready"),
-};
 
 const sharedPasses: Finding[] = [
   {
@@ -1141,7 +1004,7 @@ export const getFindings = (
 
 export const calculateSummary = (
   findings: Finding[],
-  scenario?: Scenario,
+  _scenario?: Scenario,
 ): Summary => {
   const passed = findings.filter((item) => item.status === "pass").length;
   const failed = findings.filter((item) => item.status === "fail").length;
@@ -1151,7 +1014,9 @@ export const calculateSummary = (
     passed,
     failed,
     unknown,
-    score: scenario === "review" ? 78 : failed === 0 && unknown === 0 ? 100 : passed * 10,
+    score: findings.length
+      ? Math.round(((passed + unknown * 0.75) / findings.length) * 100)
+      : 0,
   };
 };
 

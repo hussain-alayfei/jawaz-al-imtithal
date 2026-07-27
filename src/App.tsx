@@ -51,8 +51,6 @@ import {
   getActivityIdFromLabel,
   getAnalysisStages,
   getDefaultFacility,
-  getFindings,
-  getModelMetadata,
   modelDisclaimer,
   primaryDisclaimer,
   statusLabels,
@@ -60,11 +58,18 @@ import {
   type ActivityId,
   type FacilityDetails,
   type Finding,
-  type ModelMetadata,
   type ResultFilter,
   type ResultStatus,
   type Scenario,
 } from "./data";
+import {
+  runIfcCompliance,
+  type ComplianceRun,
+  type IfcUpload,
+  type PipelineEvent,
+  type StageId,
+  type StageState,
+} from "./ifc";
 
 const Viewer3D = lazy(() =>
   import("./components/Viewer3D").then((module) => ({
@@ -84,7 +89,6 @@ const STORAGE_KEY = "jawaz-compliance-demo";
 
 function loadStoredState(): {
   facility: FacilityDetails;
-  scenario: Scenario;
   activityId: ActivityId;
 } {
   try {
@@ -97,7 +101,6 @@ function loadStoredState(): {
       const activityDefaults = getDefaultFacility(activityId);
       return {
         facility: { ...activityDefaults, ...parsed.facility, activity: activityDefaults.activity },
-        scenario: parsed.scenario === "ready" ? "ready" : "review",
         activityId,
       };
     }
@@ -106,7 +109,6 @@ function loadStoredState(): {
   }
   return {
     facility: defaultFacility,
-    scenario: "review",
     activityId: "restaurant",
   };
 }
@@ -245,17 +247,17 @@ function FlowDiagram() {
 }
 
 function Dashboard({
-  facility,
+  run,
   onStart,
   onDemo,
   onOpenRecent,
 }: {
-  facility: FacilityDetails;
+  run?: ComplianceRun;
   onStart: () => void;
   onDemo: (activityId?: ActivityId) => void;
   onOpenRecent: () => void;
 }) {
-  const recentActivityId = getActivityIdFromLabel(facility.activity);
+  const recentActivityId = run?.activityId ?? "restaurant";
 
   return (
     <>
@@ -290,7 +292,7 @@ function Dashboard({
                 <span />
                 <span />
                 <span />
-                <small>restaurant-review.ifc</small>
+                <small>semantic-model.ifc</small>
               </div>
               <div className="mini-window__body">
                 <div className="mini-plan">
@@ -376,7 +378,7 @@ function Dashboard({
           </div>
         </section>
 
-        <section className="dashboard-grid">
+        {run && <section className="dashboard-grid">
           <div className="dashboard-main">
             <div className="section-heading section-heading--compact">
               <div>
@@ -393,36 +395,39 @@ function Dashboard({
                   <span />
                 </span>
                 <span className="recent-project__status">
-                  <i /> يحتاج معالجة
+                  <i />{" "}
+                  {run.summary.score === 100
+                    ? "مستوفٍ لقواعد العرض"
+                    : "يحتاج معالجة"}
                 </span>
               </div>
               <div className="recent-project__content">
                 <div>
-                  <span className="project-type">{facility.activity} • IFC</span>
-                  <h3>{facility.projectName}</h3>
+                  <span className="project-type">{run.facility.activity} • IFC</span>
+                  <h3>{run.facility.projectName}</h3>
                   <p>
                     <MapPin size={14} />
-                    {facility.city}، {facility.district}
+                    {run.facility.city}، {run.facility.district}
                     <span>•</span>
-                    {facility.area} م²
+                    {run.facility.area} م²
                   </p>
                 </div>
                 <div className="recent-project__metrics">
                   <span>
-                    <strong>78%</strong>
+                    <strong>{run.summary.score}%</strong>
                     مؤشر الجاهزية
                   </span>
                   <span className="metric-fail">
-                    <strong>2</strong>
+                    <strong>{run.summary.failed}</strong>
                     ملاحظات
                   </span>
                   <span className="metric-unknown">
-                    <strong>1</strong>
+                    <strong>{run.summary.unknown}</strong>
                     غير مكتمل
                   </span>
                 </div>
                 <div className="recent-project__footer">
-                  <span>آخر فحص: اليوم، 10:42 ص</span>
+                  <span>آخر فحص: {formatDate(new Date(run.processedAt))}</span>
                   <span className="open-project">
                     فتح مساحة الفحص <ArrowLeft size={15} />
                   </span>
@@ -430,7 +435,7 @@ function Dashboard({
               </div>
             </button>
           </div>
-        </section>
+        </section>}
 
         <FlowDiagram />
       </main>
@@ -709,22 +714,16 @@ function FacilityForm({
 
 function ModelUpload({
   activityId,
-  scenario,
-  metadata,
-  onActivity,
-  onScenario,
-  onMetadata,
+  upload,
+  onUpload,
   onContinue,
   onBack,
   onHome,
   onNew,
 }: {
   activityId: ActivityId;
-  scenario: Scenario;
-  metadata: ModelMetadata;
-  onActivity: (activityId: ActivityId) => void;
-  onScenario: (scenario: Scenario) => void;
-  onMetadata: (metadata: ModelMetadata) => void;
+  upload?: IfcUpload;
+  onUpload: (upload: IfcUpload) => void;
   onContinue: () => void;
   onBack: () => void;
   onHome: () => void;
@@ -732,19 +731,10 @@ function ModelUpload({
 }) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
-  const [validated, setValidated] = useState(true);
-
-  const chooseScenario = (nextScenario: Scenario) => {
-    onScenario(nextScenario);
-    onMetadata(getModelMetadata(activityId, nextScenario));
-    setError("");
-    setValidated(true);
-  };
 
   const processFile = async (file?: File) => {
     if (!file) return;
     setError("");
-    setValidated(false);
 
     if (!file.name.toLowerCase().endsWith(".ifc")) {
       setError("الملف غير مدعوم. اختر ملفًا بامتداد .ifc");
@@ -763,45 +753,17 @@ function ModelUpload({
       setError("تعذر قراءة الملف. جرّب نسخة أخرى.");
       return;
     }
-
-    if (!text.includes("ISO-10303-21") || !text.includes("FILE_SCHEMA")) {
-      setError("لم يتم العثور على ترويسة IFC صالحة في الملف.");
+    if (!text.trim()) {
+      setError("الملف فارغ ولا يحتوي بيانات قابلة للمعالجة.");
       return;
     }
 
-    const scenarioMarker = text.match(/JAWAZ_SCENARIO=(review|ready)/i)?.[1] as
-      | Scenario
-      | undefined;
-    const activityMarker = text.match(
-      /JAWAZ_ACTIVITY=(restaurant|cafe|clinic|salon)/i,
-    )?.[1] as ActivityId | undefined;
-
-    if (!scenarioMarker || !activityMarker) {
-      setError(
-        "تم التحقق من ترويسة IFC، لكن الفحص الكامل يعمل على نماذج الاختبار الدلالية الثمانية فقط. استخدم أحد الملفين المرتبطين بالنشاط أدناه.",
-      );
-      return;
-    }
-
-    const spaces = (text.match(/IFCSPACE\s*\(/gi) ?? []).length || 6;
-    const doors = (text.match(/IFCDOOR\s*\(/gi) ?? []).length || 7;
-    const fixtureMetadata = getModelMetadata(activityMarker, scenarioMarker);
-    const nextMetadata: ModelMetadata = {
-      ...fixtureMetadata,
-      fileName: file.name,
-      size: `${Math.max(file.size / 1024, 1).toFixed(1)} KB`,
-      spaces,
-      doors,
-      elements:
-        (text.match(/^#\d+=/gim) ?? []).length || fixtureMetadata.elements,
-      scenario: scenarioMarker,
-      activityId: activityMarker,
-    };
-
-    onActivity(activityMarker);
-    onScenario(scenarioMarker);
-    onMetadata(nextMetadata);
-    setValidated(true);
+    onUpload({
+      name: file.name,
+      size: file.size,
+      text,
+      lastModified: file.lastModified,
+    });
   };
 
   const drop = (event: DragEvent<HTMLDivElement>) => {
@@ -814,7 +776,7 @@ function ModelUpload({
     <WizardShell
       current={2}
       title="أضف النموذج الهندسي"
-      description="ارفع ملف IFC، أو اختر أحد نموذجي الاختبار."
+      description="ارفع ملف IFC دلاليًا؛ سيجري التحقق والاستخراج وتطبيق القواعد من محتواه."
       onHome={onHome}
       onNew={onNew}
     >
@@ -846,7 +808,7 @@ function ModelUpload({
                 }
               />
             </label>
-            <small>الحد الأقصى 50 MB. الفحص الكامل متاح لملفي الاختبار فقط.</small>
+            <small>الحد الأقصى 50 MB. لا تبدأ أي نتيجة قبل قراءة الملف فعليًا.</small>
           </div>
 
           {error && (
@@ -859,74 +821,15 @@ function ModelUpload({
             </div>
           )}
 
-          <div className="fixture-heading">
+          <div className="upload-contract">
+            <ShieldCheck size={19} />
             <div>
-              <h3>
-                {activityIcon(activityId, 18)}
-                نماذج اختبار جاهزة
-              </h3>
+              <strong>معالجة قابلة للتحقق</strong>
+              <p>
+                يقرأ المحرك سجلات STEP وخصائص IFC والعلاقات، ثم يستخرج الأدلة
+                ويحسب النتيجة. لا يعتمد على اسم الملف أو علامة نتيجة مخفية.
+              </p>
             </div>
-            <span>IFC4</span>
-          </div>
-
-          <div className="fixture-grid">
-            <button
-              type="button"
-              className={`fixture-card ${scenario === "review" ? "is-selected" : ""}`}
-              onClick={() => chooseScenario("review")}
-            >
-              <span className="fixture-card__check">
-                {scenario === "review" && <Check size={14} />}
-              </span>
-              <span className="fixture-card__preview fixture-card__preview--review">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span className="fixture-card__copy">
-                <strong>
-                  {activityExamples.find((item) => item.id === activityId)?.label}:
-                  يحتاج معالجة
-                </strong>
-                <small>7 مطابق • 2 ملاحظة • 1 غير مكتمل</small>
-              </span>
-              <span className="fixture-card__tag fixture-card__tag--fail">
-                مناسب للعرض
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className={`fixture-card ${scenario === "ready" ? "is-selected" : ""}`}
-              onClick={() => chooseScenario("ready")}
-            >
-              <span className="fixture-card__check">
-                {scenario === "ready" && <Check size={14} />}
-              </span>
-              <span className="fixture-card__preview fixture-card__preview--ready">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span className="fixture-card__copy">
-                <strong>
-                  {activityExamples.find((item) => item.id === activityId)?.label}:
-                  مستوفٍ لقواعد العرض
-                </strong>
-                <small>10 مطابق • لا توجد حالات معلقة</small>
-              </span>
-              <span className="fixture-card__tag fixture-card__tag--pass">جاهز</span>
-            </button>
-          </div>
-
-          <div className="sample-downloads">
-            <span>هل تريد اختبار الرفع بنفسك؟</span>
-            <a href={`/samples/${activityId}-review.ifc`} download>
-              <Download size={14} /> تحميل ملف يحتاج معالجة
-            </a>
-            <a href={`/samples/${activityId}-ready.ifc`} download>
-              <Download size={14} /> تحميل الملف الجاهز
-            </a>
           </div>
         </section>
 
@@ -936,12 +839,18 @@ function ModelUpload({
               <FileBox size={22} />
             </span>
             <div>
-              <strong dir="ltr">{metadata.fileName}</strong>
-              <small>{metadata.size}</small>
+              <strong dir="ltr">{upload?.name ?? "لم يُحدد ملف بعد"}</strong>
+              <small>
+                {upload
+                  ? `${Math.max(upload.size / 1024, 0.1).toFixed(1)} KB`
+                  : "اختر ملف IFC للمتابعة"}
+              </small>
             </div>
-            <span className="quality-badge">
-              <CheckCircle2 size={14} /> صالح للفحص
-            </span>
+            {upload && (
+              <span className="quality-badge">
+                <CheckCircle2 size={14} /> جاهز للمعالجة
+              </span>
+            )}
           </div>
           <div className="model-summary__preview">
             <div className="isometric-model">
@@ -954,33 +863,33 @@ function ModelUpload({
           </div>
           <dl className="model-properties">
             <div>
-              <dt>المخطط</dt>
-              <dd dir="ltr">{metadata.schema}</dd>
+              <dt>الحزمة المختارة</dt>
+              <dd>{activityExamples.find((item) => item.id === activityId)?.label}</dd>
             </div>
             <div>
-              <dt>الوحدات</dt>
-              <dd>{metadata.units}</dd>
+              <dt>نوع الملف</dt>
+              <dd dir="ltr">IFC / STEP</dd>
             </div>
             <div>
-              <dt>الطوابق</dt>
-              <dd>{metadata.storeys}</dd>
+              <dt>التحقق البنيوي</dt>
+              <dd>{upload ? "يبدأ في المرحلة 1" : "بانتظار الملف"}</dd>
             </div>
             <div>
-              <dt>المساحات</dt>
-              <dd>{metadata.spaces}</dd>
+              <dt>استخراج المساحات</dt>
+              <dd>{upload ? "يبدأ في المرحلة 2" : "بانتظار الملف"}</dd>
             </div>
             <div>
-              <dt>الأبواب</dt>
-              <dd>{metadata.doors}</dd>
+              <dt>تطبيق القواعد</dt>
+              <dd>{upload ? "من أدلة النموذج" : "بانتظار الملف"}</dd>
             </div>
             <div>
-              <dt>العناصر</dt>
-              <dd>{metadata.elements}</dd>
+              <dt>حد الحجم</dt>
+              <dd dir="ltr">50 MB</dd>
             </div>
           </dl>
           <div className="model-summary__note">
             <Info size={15} />
-            نموذج دلالي مرتبط بمعرفات ثابتة.
+            لن نعرض أعدادًا أو حالة امتثال قبل اكتمال المعالجة.
           </div>
         </aside>
       </div>
@@ -993,7 +902,7 @@ function ModelUpload({
           type="button"
           className="button button--primary"
           onClick={onContinue}
-          disabled={!validated || Boolean(error)}
+          disabled={!upload || Boolean(error)}
         >
           تأكيد النموذج وبدء الفحص
           <ArrowLeft size={17} />
@@ -1004,45 +913,104 @@ function ModelUpload({
   );
 }
 
+const analysisStageIds: StageId[] = [
+  "validate",
+  "extract",
+  "completeness",
+  "rules",
+  "link",
+  "report",
+];
+
+type AnalysisStageView = {
+  id: StageId;
+  label: string;
+  state: StageState;
+  detail?: string;
+  errorCode?: string;
+};
+
 function AnalysisScreen({
   activityId,
-  metadata,
-  scenario,
-  onComplete,
+  facility,
+  upload,
+  onProcessed,
+  onOpenResults,
   onCancel,
 }: {
   activityId: ActivityId;
-  metadata: ModelMetadata;
-  scenario: Scenario;
-  onComplete: () => void;
+  facility: FacilityDetails;
+  upload: IfcUpload;
+  onProcessed: (run: ComplianceRun) => void;
+  onOpenResults: () => void;
   onCancel: () => void;
 }) {
-  const [stage, setStage] = useState(0);
-  const analysisStages = useMemo(() => getAnalysisStages(activityId), [activityId]);
+  const labels = useMemo(() => getAnalysisStages(activityId), [activityId]);
+  const [stages, setStages] = useState<AnalysisStageView[]>(() =>
+    analysisStageIds.map((id, index) => ({
+      id,
+      label: getAnalysisStages(activityId)[index],
+      state: "pending",
+    })),
+  );
+  const [completedRun, setCompletedRun] = useState<ComplianceRun>();
+  const [failure, setFailure] = useState("");
   const activity = activityExamples.find((item) => item.id === activityId);
 
   useEffect(() => {
-    setStage(0);
-    const timer = window.setInterval(() => {
-      setStage((current) => {
-        if (current >= analysisStages.length) {
-          window.clearInterval(timer);
-          return current;
-        }
-        return current + 1;
+    const controller = new AbortController();
+    setCompletedRun(undefined);
+    setFailure("");
+    setStages(
+      analysisStageIds.map((id, index) => ({
+        id,
+        label: labels[index],
+        state: "pending",
+      })),
+    );
+
+    const handleEvent = (event: PipelineEvent) => {
+      if (controller.signal.aborted) return;
+      setStages((current) =>
+        current.map((item) =>
+          item.id === event.id
+            ? {
+                ...item,
+                state: event.state,
+                detail: event.detail,
+                errorCode: event.errorCode,
+              }
+            : item,
+        ),
+      );
+      if (event.state === "failed") setFailure(event.detail ?? "تعذر إكمال الفحص.");
+    };
+
+    void runIfcCompliance({
+      activityId,
+      facility,
+      upload,
+      signal: controller.signal,
+      onEvent: handleEvent,
+    })
+      .then((run) => {
+        if (controller.signal.aborted) return;
+        setCompletedRun(run);
+        onProcessed(run);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setFailure(error instanceof Error ? error.message : "تعذر إكمال الفحص.");
       });
-    }, 620);
-    return () => window.clearInterval(timer);
-  }, [activityId, analysisStages.length, scenario]);
 
-  const complete = stage >= analysisStages.length;
-  const progress = Math.min(100, Math.round((stage / analysisStages.length) * 100));
+    return () => controller.abort();
+    // The facility and callbacks are snapshots for this immutable processing run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activityId, upload]);
 
-  useEffect(() => {
-    if (!complete) return;
-    const timeout = window.setTimeout(onComplete, 900);
-    return () => window.clearTimeout(timeout);
-  }, [complete, onComplete]);
+  const completedCount = stages.filter((stage) => stage.state === "completed").length;
+  const complete = Boolean(completedRun);
+  const progress = Math.round((completedCount / stages.length) * 100);
 
   return (
     <div className="analysis-page">
@@ -1060,14 +1028,20 @@ function AnalysisScreen({
             </div>
           </div>
           <span className="analysis-file" dir="ltr">
-            <FileBox size={16} /> {metadata.fileName}
+            <FileBox size={16} /> {upload.name}
           </span>
         </div>
 
         <div className="analysis-card__content">
           <span className="eyebrow">فحص حزمة {activity?.label}</span>
-          <h1>{complete ? "اكتمل الفحص" : "جارٍ فحص النموذج…"}</h1>
-          <p>كل نتيجة مرتبطة بدليلها وبعنصرها في النموذج.</p>
+          <h1>
+            {failure ? "توقف الفحص عند دليل غير صالح" : complete ? "اكتمل الفحص" : "جارٍ فحص النموذج…"}
+          </h1>
+          <p>
+            {failure
+              ? failure
+              : "كل مرحلة تنفذ عملية فعلية وتحتفظ بدليلها في تقرير الجاهزية."}
+          </p>
 
           <div className="analysis-progress">
             <div className="analysis-progress__track">
@@ -1077,43 +1051,52 @@ function AnalysisScreen({
           </div>
 
           <div className="analysis-stages">
-            {analysisStages.map((label, index) => {
-              const done = index < stage;
-              const active = index === stage && !complete;
+            {stages.map((stage, index) => {
+              const done = stage.state === "completed";
+              const active = stage.state === "running";
+              const failed = stage.state === "failed";
               return (
                 <div
                   className={`analysis-stage ${done ? "is-done" : ""} ${
                     active ? "is-active" : ""
-                  }`}
-                  key={label}
+                  } ${failed ? "is-failed" : ""}`}
+                  key={stage.id}
                 >
                   <span>
                     {done ? (
                       <Check size={15} />
+                    ) : failed ? (
+                      <X size={15} />
                     ) : active ? (
                       <LoaderCircle size={15} className="spin" />
                     ) : (
                       index + 1
                     )}
                   </span>
-                  <p>{label}</p>
-                  {done && index === 1 && (
-                    <small>
-                      {metadata.spaces} مساحات • {metadata.doors} أبواب •{" "}
-                      {metadata.elements} عنصرًا
-                    </small>
-                  )}
-                  {done && index === 3 && (
-                    <small dir="ltr">{activity?.ruleVersion} • 10 rules</small>
+                  <p>{stage.label}</p>
+                  {stage.detail && <small>{stage.detail}</small>}
+                  {failed && stage.errorCode && (
+                    <code dir="ltr">{stage.errorCode}</code>
                   )}
                 </div>
               );
             })}
           </div>
 
-          <button type="button" className="text-button" onClick={onCancel}>
-            إلغاء والعودة إلى النموذج
-          </button>
+          {complete ? (
+            <button
+              type="button"
+              className="button button--primary button--full"
+              onClick={onOpenResults}
+            >
+              عرض نتائج الفحص
+              <ArrowLeft size={17} />
+            </button>
+          ) : (
+            <button type="button" className="text-button" onClick={onCancel}>
+              {failure ? "العودة واختيار ملف آخر" : "إلغاء والعودة إلى النموذج"}
+            </button>
+          )}
         </div>
       </main>
     </div>
@@ -1143,7 +1126,7 @@ function SummaryStrip({
         <span>
           <strong>مؤشر الجاهزية</strong>
           <small>
-            {summary.failed
+            {summary.failed || summary.unknown
               ? "يحتاج معالجة قبل التقديم"
               : "مستوفٍ لقواعد العرض"}
           </small>
@@ -1272,6 +1255,12 @@ function FindingDetail({
           </dd>
         </div>
         <div>
+          <dt>مرجع STEP</dt>
+          <dd dir="ltr">
+            {finding.elementStepId ? `#${finding.elementStepId}` : "N/A"}
+          </dd>
+        </div>
+        <div>
           <dt>المصدر</dt>
           <dd>{finding.source}</dd>
         </div>
@@ -1295,30 +1284,21 @@ function FindingDetail({
 }
 
 function Workspace({
-  facility,
-  activityId,
-  scenario,
-  metadata,
+  run,
   onReport,
   onRerun,
   onHome,
   onNew,
   notify,
 }: {
-  facility: FacilityDetails;
-  activityId: ActivityId;
-  scenario: Scenario;
-  metadata: ModelMetadata;
+  run: ComplianceRun;
   onReport: () => void;
   onRerun: () => void;
   onHome: () => void;
   onNew: () => void;
   notify: (message: string) => void;
 }) {
-  const findings = useMemo(
-    () => getFindings(scenario, activityId),
-    [activityId, scenario],
-  );
+  const { activityId, facility, findings, scenario } = run;
   const firstUnresolved = findings.find((finding) => finding.status !== "pass");
   const activity = activityExamples.find((item) => item.id === activityId);
   const [filter, setFilter] = useState<ResultFilter>("all");
@@ -1335,7 +1315,7 @@ function Workspace({
     setSelectedRule(unresolved?.ruleId);
     setSelectedElement(unresolved?.elementId);
     setFilter("all");
-  }, [activityId, findings, scenario]);
+  }, [findings]);
 
   const visibleFindings =
     filter === "all"
@@ -1551,29 +1531,22 @@ function escapeHtml(value: unknown) {
 }
 
 function Report({
-  facility,
-  activityId,
-  scenario,
-  metadata,
+  run,
   onBack,
   onHome,
   notify,
 }: {
-  facility: FacilityDetails;
-  activityId: ActivityId;
-  scenario: Scenario;
-  metadata: ModelMetadata;
+  run: ComplianceRun;
   onBack: () => void;
   onHome: () => void;
   notify: (message: string) => void;
 }) {
-  const findings = useMemo(
-    () => getFindings(scenario, activityId),
-    [activityId, scenario],
-  );
+  const { activityId, facility, findings, metadata, scenario, summary } = run;
   const activity = activityExamples.find((item) => item.id === activityId);
-  const summary = calculateSummary(findings, scenario);
-  const generatedAt = useMemo(() => formatDate(), []);
+  const generatedAt = useMemo(
+    () => formatDate(new Date(run.processedAt)),
+    [run.processedAt],
+  );
 
   const downloadReport = () => {
     const rows = findings
@@ -1585,6 +1558,7 @@ function Report({
             <td>${escapeHtml(finding.shortTitle)}</td>
             <td>${escapeHtml(finding.actual)}</td>
             <td>${escapeHtml(finding.expected)}</td>
+            <td>${escapeHtml(finding.elementStepId ? `#${finding.elementStepId}` : "N/A")}</td>
             <td>${escapeHtml(finding.recommendation)}</td>
           </tr>`,
       )
@@ -1604,7 +1578,8 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
 <p class="meta">${escapeHtml(facility.projectName)} • ${escapeHtml(facility.city)} • ${escapeHtml(generatedAt)}</p>
 <div class="summary"><span><strong>${summary.score}</strong>مؤشر الجاهزية</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>ملاحظة</span><span><strong>${summary.unknown}</strong>غير مكتمل</span></div>
 <p>الملف: ${escapeHtml(metadata.fileName)} • ${escapeHtml(metadata.schema)} • ${metadata.elements} عنصرًا</p>
-<table><thead><tr><th>القاعدة</th><th>الحالة</th><th>النتيجة</th><th>المرصود</th><th>المتوقع</th><th>الإجراء المقترح</th></tr></thead><tbody>${rows}</tbody></table>
+<p>بصمة الملف SHA-256: ${escapeHtml(run.file.sha256)}</p>
+<table><thead><tr><th>القاعدة</th><th>الحالة</th><th>النتيجة</th><th>المرصود</th><th>المتوقع</th><th>مرجع STEP</th><th>الإجراء المقترح</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="notice"><strong>تنبيه:</strong> ${escapeHtml(primaryDisclaimer)}<br>${escapeHtml(modelDisclaimer)}</div>
 </body></html>`;
     const blob = new Blob([documentHtml], { type: "text/html;charset=utf-8" });
@@ -1647,7 +1622,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
           <div>
             <span className="prototype-badge">تقرير تجريبي غير رسمي</span>
             <small>رقم التقرير</small>
-            <strong dir="ltr">JCP-2026-0727-001</strong>
+            <strong dir="ltr">JCP-{run.file.sha256.slice(0, 12).toUpperCase()}</strong>
           </div>
         </div>
 
@@ -1739,7 +1714,35 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
               <small>العناصر</small>
               <strong>{metadata.elements}</strong>
             </span>
+            <span>
+              <small>بصمة الملف</small>
+              <strong dir="ltr">{run.file.sha256.slice(0, 16)}…</strong>
+            </span>
           </div>
+        </section>
+
+        <section className="report-audit">
+          <div className="report-section-title">
+            <span>
+              <FileCheck2 size={18} />
+              <strong>سجل المعالجة والأدلة</strong>
+            </span>
+            <small>{run.stages.length} مراحل مكتملة</small>
+          </div>
+          <ol>
+            {run.stages.map((stage) => (
+              <li key={stage.id}>
+                <span>
+                  <Check size={13} />
+                </span>
+                <div>
+                  <strong>{stage.label}</strong>
+                  <small>{stage.detail}</small>
+                </div>
+                <code dir="ltr">{stage.durationMs} ms</code>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="report-results">
@@ -1780,6 +1783,9 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
                   <td>
                     <span>{finding.elementName ?? "على مستوى الملف"}</span>
                     {finding.elementGuid && <code dir="ltr">{finding.elementGuid}</code>}
+                    {finding.elementStepId && (
+                      <small dir="ltr">STEP #{finding.elementStepId}</small>
+                    )}
                   </td>
                   <td>{finding.recommendation}</td>
                 </tr>
@@ -1816,18 +1822,16 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [facility, setFacility] = useState<FacilityDetails>(stored.facility);
   const [activityId, setActivityId] = useState<ActivityId>(stored.activityId);
-  const [scenario, setScenario] = useState<Scenario>(stored.scenario);
-  const [metadata, setMetadata] = useState<ModelMetadata>(
-    getModelMetadata(stored.activityId, stored.scenario),
-  );
+  const [upload, setUpload] = useState<IfcUpload>();
+  const [run, setRun] = useState<ComplianceRun>();
   const [toast, setToast] = useState("");
 
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ facility, activityId, scenario }),
+      JSON.stringify({ facility, activityId }),
     );
-  }, [activityId, facility, scenario]);
+  }, [activityId, facility]);
 
   useEffect(() => {
     if (!toast) return;
@@ -1840,36 +1844,27 @@ export default function App() {
   }, [screen]);
 
   const startNew = () => {
+    setUpload(undefined);
     setScreen("details");
   };
 
   const selectActivity = (nextActivityId: ActivityId) => {
     setActivityId(nextActivityId);
     setFacility(getDefaultFacility(nextActivityId));
-    setMetadata(getModelMetadata(nextActivityId, scenario));
-  };
-
-  const applyUploadedActivity = (nextActivityId: ActivityId) => {
-    setActivityId(nextActivityId);
-    setFacility((current) => ({
-      ...current,
-      activity: getDefaultFacility(nextActivityId).activity,
-    }));
+    setUpload(undefined);
   };
 
   const openDemo = (nextActivityId: ActivityId = "restaurant") => {
     setActivityId(nextActivityId);
     setFacility(getDefaultFacility(nextActivityId));
-    setScenario("review");
-    setMetadata(getModelMetadata(nextActivityId, "review"));
-    setScreen("analysis");
+    setUpload(undefined);
+    setScreen("details");
   };
 
   const resetAll = () => {
     setActivityId("restaurant");
     setFacility(defaultFacility);
-    setScenario("review");
-    setMetadata(getModelMetadata("restaurant", "review"));
+    setUpload(undefined);
     setScreen("details");
   };
 
@@ -1882,12 +1877,13 @@ export default function App() {
             onNew={startNew}
           />
           <Dashboard
-            facility={facility}
+            run={run}
             onStart={startNew}
             onDemo={openDemo}
             onOpenRecent={() => {
-              setScenario("review");
-              setMetadata(getModelMetadata(activityId, "review"));
+              if (!run) return;
+              setActivityId(run.activityId);
+              setFacility(run.facility);
               setScreen("workspace");
             }}
           />
@@ -1909,14 +1905,8 @@ export default function App() {
       {screen === "model" && (
         <ModelUpload
           activityId={activityId}
-          scenario={scenario}
-          metadata={metadata}
-          onActivity={applyUploadedActivity}
-          onScenario={(nextScenario) => {
-            setScenario(nextScenario);
-            setMetadata(getModelMetadata(activityId, nextScenario));
-          }}
-          onMetadata={setMetadata}
+          upload={upload}
+          onUpload={setUpload}
           onContinue={() => setScreen("analysis")}
           onBack={() => setScreen("details")}
           onHome={() => setScreen("dashboard")}
@@ -1924,36 +1914,31 @@ export default function App() {
         />
       )}
 
-      {screen === "analysis" && (
+      {screen === "analysis" && upload && (
         <AnalysisScreen
           activityId={activityId}
-          metadata={metadata}
-          scenario={scenario}
-          onComplete={() => setScreen("workspace")}
+          facility={facility}
+          upload={upload}
+          onProcessed={setRun}
+          onOpenResults={() => setScreen("workspace")}
           onCancel={() => setScreen("model")}
         />
       )}
 
-      {screen === "workspace" && (
+      {screen === "workspace" && run && (
         <Workspace
-          facility={facility}
-          activityId={activityId}
-          scenario={scenario}
-          metadata={metadata}
+          run={run}
           onReport={() => setScreen("report")}
-          onRerun={() => setScreen("analysis")}
+          onRerun={() => setScreen("model")}
           onHome={() => setScreen("dashboard")}
           onNew={resetAll}
           notify={setToast}
         />
       )}
 
-      {screen === "report" && (
+      {screen === "report" && run && (
         <Report
-          facility={facility}
-          activityId={activityId}
-          scenario={scenario}
-          metadata={metadata}
+          run={run}
           onBack={() => setScreen("workspace")}
           onHome={() => setScreen("dashboard")}
           notify={setToast}

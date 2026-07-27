@@ -6,11 +6,10 @@ import {
   getAnalysisStages,
   getDefaultFacility,
   getFindings,
-  getModelMetadata,
 } from "./data";
 import { describe, expect, it } from "vitest";
 
-describe("deterministic compliance fixtures", () => {
+describe("finding template catalog", () => {
   it.each(activityIds)(
     "keeps the %s review fixture at 7 pass, 2 fail, and 1 unknown",
     (activityId) => {
@@ -75,38 +74,21 @@ describe("deterministic compliance fixtures", () => {
     },
   );
 
-  it("exposes complete activity catalog metadata and sample URLs", () => {
+  it("exposes complete activity catalog metadata without public fixture URLs", () => {
     expect(activityExamples.map((example) => example.id)).toEqual(activityIds);
     for (const example of activityExamples) {
       expect(getActivityIdFromLabel(example.label)).toBe(example.id);
       expect(getActivityIdFromLabel(example.id)).toBe(example.id);
       expect(getDefaultFacility(example.id).activity).toBe(example.label);
-      expect(getModelMetadata(example.id, "review")).toMatchObject({
-        activityId: example.id,
-        scenario: "review",
-      });
-      expect(getModelMetadata(example.id, "ready")).toMatchObject({
-        activityId: example.id,
-        scenario: "ready",
-      });
-      expect(example.sampleUrls.review).toBe(
-        `/samples/${example.id === "restaurant" ? "restaurant" : example.id}-review.ifc`,
-      );
-      expect(example.sampleUrls.ready).toBe(
-        `/samples/${example.id === "restaurant" ? "restaurant" : example.id}-ready.ifc`,
-      );
+      expect("sampleUrls" in example).toBe(false);
       expect(getAnalysisStages(example.id)).toHaveLength(6);
     }
   });
 
-  it("returns defensive copies of facility, metadata, and findings", () => {
+  it("returns defensive copies of facility and finding templates", () => {
     const facility = getDefaultFacility("cafe");
     facility.projectName = "changed";
     expect(getDefaultFacility("cafe").projectName).not.toBe("changed");
-
-    const metadata = getModelMetadata("clinic", "review");
-    metadata.elements = 0;
-    expect(getModelMetadata("clinic", "review").elements).toBeGreaterThan(0);
 
     const findings = getFindings("review", "salon");
     findings[0].title = "changed";

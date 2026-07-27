@@ -1,0 +1,13 @@
+{
+  "activityId": "salon",
+  "scenario": "ready",
+  "schema": "IFC4",
+  "spaces": 7,
+  "doors": 6,
+  "elements": 174,
+  "passed": 10,
+  "failed": 0,
+  "unknown": 0,
+  "score": 100,
+  "unresolvedRuleIds": []
+}

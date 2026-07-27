@@ -1,0 +1,17 @@
+{
+  "activityId": "cafe",
+  "scenario": "review",
+  "schema": "IFC4",
+  "spaces": 6,
+  "doors": 5,
+  "elements": 132,
+  "passed": 7,
+  "failed": 2,
+  "unknown": 1,
+  "score": 78,
+  "unresolvedRuleIds": [
+    "CAFE-AISLE-001",
+    "CAFE-EXIT-WIDTH-001",
+    "CAFE-DRAIN-001"
+  ]
+}

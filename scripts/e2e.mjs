@@ -86,12 +86,78 @@ const waitForEnabled = async (locator, context) => {
   throw new Error(`${context} did not become enabled after validation.`);
 };
 
+const uploadAndFinishAnalysis = async (
+  page,
+  activityId,
+  context,
+  uploadScreenshotPath,
+) => {
+  const startAnalysis = page.getByRole("button", {
+    name: /تأكيد النموذج وبدء الفحص/,
+  });
+  await startAnalysis.waitFor({ state: "visible" });
+  if (await startAnalysis.isEnabled()) {
+    throw new Error(`${context} analysis was enabled before selecting a file.`);
+  }
+
+  const fixturePath = path.join(
+    projectDirectory,
+    "test-fixtures",
+    "ifc",
+    activityId,
+    "needs-work.ifc",
+  );
+  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  await page.getByText("needs-work.ifc", { exact: true }).waitFor();
+  if (uploadScreenshotPath) {
+    await page.screenshot({ path: uploadScreenshotPath, fullPage: true });
+  }
+  await waitForEnabled(startAnalysis, `${context} analysis button`);
+  await startAnalysis.click();
+
+  const analysis = page.locator(".analysis-card");
+  await analysis.waitFor({ state: "visible" });
+  const showResults = page.getByRole("button", { name: /عرض نتائج الفحص/ });
+  await showResults.waitFor({ state: "visible", timeout: 15_000 });
+
+  const completedStages = analysis.locator(".analysis-stage.is-done");
+  if ((await completedStages.count()) !== 6) {
+    throw new Error(
+      `${context} did not complete all six real processing stages.`,
+    );
+  }
+  if ((await completedStages.locator("small").count()) !== 6) {
+    throw new Error(`${context} processing stages did not retain their evidence.`);
+  }
+  if (uploadScreenshotPath) {
+    await page.screenshot({
+      path: path.join(
+        path.dirname(uploadScreenshotPath),
+        "02b-analysis-complete.png",
+      ),
+      fullPage: true,
+    });
+  }
+
+  await showResults.click();
+  await page.locator(".workspace-page").waitFor({ state: "visible" });
+};
+
+const openSectorFixture = async (page, activityId, context) => {
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await page.getByTestId(`activity-example-${activityId}`).click();
+  await page.getByRole("heading", { name: "عرّف مشروعك" }).waitFor();
+  await page.getByRole("button", { name: /حفظ ومتابعة إلى النموذج/ }).click();
+  await page.getByRole("heading", { name: "أضف النموذج الهندسي" }).waitFor();
+  await uploadAndFinishAnalysis(page, activityId, context);
+};
+
 const exerciseViewerControls = async (page) => {
   const requiredControls = [
     ["viewer-reset", "إعادة ضبط المشهد"],
     ["viewer-preset-top", "المسقط الأفقي"],
     ["viewer-preset-front", "الواجهة الأمامية"],
-    ["viewer-preset-walk", "جولة داخلية"],
+    ["viewer-preset-walk", "منظور داخلي"],
     ["viewer-ghost", "شفافية الغلاف المعماري"],
     ["viewer-labels-toggle", "إظهار أسماء المساحات"],
     ["viewer-dimensions-toggle", "إظهار القياسات"],
@@ -177,7 +243,7 @@ const exerciseViewerControls = async (page) => {
   const walk = await requireViewerControl(
     page,
     "viewer-preset-walk",
-    "جولة داخلية",
+    "منظور داخلي",
   );
   await walk.click();
   if (!(await walk.getAttribute("class"))?.includes("is-active")) {
@@ -243,24 +309,12 @@ try {
   await page.getByRole("button", { name: /حفظ ومتابعة إلى النموذج/ }).click();
   await page.getByRole("heading", { name: "أضف النموذج الهندسي" }).waitFor();
 
-  const samplePath = path.join(
-    projectDirectory,
-    "public",
-    "samples",
-    "restaurant-review.ifc",
+  await uploadAndFinishAnalysis(
+    page,
+    "restaurant",
+    "Restaurant",
+    path.join(artifactDirectory, "02-model-upload.png"),
   );
-  await page.locator('input[type="file"]').setInputFiles(samplePath);
-  await page.getByText("restaurant-review.ifc", { exact: true }).waitFor();
-  await page.screenshot({
-    path: path.join(artifactDirectory, "02-model-upload.png"),
-    fullPage: true,
-  });
-
-  const startAnalysis = page.getByRole("button", {
-    name: /تأكيد النموذج وبدء الفحص/,
-  });
-  await waitForEnabled(startAnalysis, "The restaurant analysis button");
-  await startAnalysis.click();
   await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
     timeout: 15_000,
   });
@@ -290,13 +344,7 @@ try {
   });
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  const clinicExample = page.getByTestId("activity-example-clinic");
-  await clinicExample.waitFor({ state: "visible" });
-  await clinicExample.click();
-  await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
-    timeout: 15_000,
-  });
+  await openSectorFixture(page, "clinic", "Clinic");
   await page.getByText(/عيادة خارجية/).first().waitFor();
   const clinicCanvas = await ensureUsableCanvas(page, "Clinic");
   await page.screenshot({
@@ -316,11 +364,7 @@ try {
     ["cafe", "مقهى", "08-cafe-workspace.png"],
     ["salon", "صالون تجميل", "09-salon-workspace.png"],
   ]) {
-    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-    await page.getByTestId(`activity-example-${activityId}`).click();
-    await page.getByRole("heading", { name: "نتائج الفحص" }).waitFor({
-      timeout: 15_000,
-    });
+    await openSectorFixture(page, activityId, label);
     await page.getByText(new RegExp(label)).first().waitFor();
     await page
       .locator(`.viewer[data-activity="${activityId}"]`)
@@ -359,7 +403,7 @@ try {
     JSON.stringify(
       {
         ok: true,
-        screenshots: 10,
+        screenshots: 11,
         restaurantCanvas,
         clinicCanvas,
         additionalSectorCanvases,

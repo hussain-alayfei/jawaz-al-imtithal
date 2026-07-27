@@ -1,0 +1,17 @@
+{
+  "activityId": "clinic",
+  "scenario": "review",
+  "schema": "IFC4",
+  "spaces": 8,
+  "doors": 9,
+  "elements": 204,
+  "passed": 7,
+  "failed": 2,
+  "unknown": 1,
+  "score": 78,
+  "unresolvedRuleIds": [
+    "CLINIC-DOOR-001",
+    "CLINIC-HANDWASH-001",
+    "CLINIC-HVAC-001"
+  ]
+}

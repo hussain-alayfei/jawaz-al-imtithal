@@ -1,0 +1,13 @@
+{
+  "activityId": "restaurant",
+  "scenario": "ready",
+  "schema": "IFC4",
+  "spaces": 6,
+  "doors": 7,
+  "elements": 156,
+  "passed": 10,
+  "failed": 0,
+  "unknown": 0,
+  "score": 100,
+  "unresolvedRuleIds": []
+}
