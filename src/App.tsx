@@ -1477,7 +1477,9 @@ function FindingDetail({
           العودة للقائمة
         </button>
         {positionLabel && (
-          <span className="finding-detail__position">{positionLabel}</span>
+          <span className="finding-detail__position" dir="ltr">
+            {positionLabel}
+          </span>
         )}
         <div className="finding-detail__nav">
           <button
@@ -1543,41 +1545,46 @@ function FindingDetail({
           </span>
         </div>
       )}
-      <dl className="evidence-list">
-        <div>
-          <dt>العنصر</dt>
-          <dd>{finding.elementName ?? "نتيجة على مستوى الملف"}</dd>
-        </div>
-        <div>
-          <dt>المعرف</dt>
-          <dd>
-            <code dir="ltr">{finding.elementGuid ?? "N/A"}</code>
-            {finding.elementGuid && (
-              <button type="button" onClick={onCopy} title="نسخ المعرف">
-                <Clipboard size={13} />
-              </button>
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>مرجع STEP</dt>
-          <dd dir="ltr">
-            {finding.elementStepId ? `#${finding.elementStepId}` : "N/A"}
-          </dd>
-        </div>
-        <div>
-          <dt>المصدر</dt>
-          <dd>{finding.source}</dd>
-        </div>
-        <div>
-          <dt>حالة المرجع</dt>
-          <dd>{finding.clause}</dd>
-        </div>
-        <div>
-          <dt>إصدار القاعدة</dt>
-          <dd dir="ltr">{finding.version}</dd>
-        </div>
-      </dl>
+      <div className="finding-source">
+        <Info size={14} />
+        <span>
+          <strong>{finding.source}</strong>
+          <small>
+            إصدار القواعد <span dir="ltr">{finding.version}</span>
+          </small>
+        </span>
+      </div>
+      {finding.elementId && (
+        <details className="finding-evidence">
+          <summary>
+            <Search size={13} />
+            تفاصيل العنصر في النموذج الهندسي
+          </summary>
+          <dl className="evidence-list">
+            <div>
+              <dt>اسم العنصر</dt>
+              <dd>{finding.elementName ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>المعرف الدائم (GUID)</dt>
+              <dd>
+                <code dir="ltr">{finding.elementGuid ?? "—"}</code>
+                {finding.elementGuid && (
+                  <button type="button" onClick={onCopy} title="نسخ المعرف">
+                    <Clipboard size={13} />
+                  </button>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>مرجع الملف (STEP)</dt>
+              <dd dir="ltr">
+                {finding.elementStepId ? `#${finding.elementStepId}` : "—"}
+              </dd>
+            </div>
+          </dl>
+        </details>
+      )}
       {finding.elementId && (
         <button type="button" className="button button--primary button--full" onClick={onFocus}>
           <Search size={16} />
@@ -1785,7 +1792,7 @@ function Workspace({
         <aside
           className={`findings-panel ${
             mobileTab !== "findings" ? "is-mobile-hidden" : ""
-          }`}
+          } ${findingsView === "detail" ? "findings-panel--detail" : ""}`}
         >
           <div className="findings-panel__head">
             <div>
@@ -2052,7 +2059,6 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
         <div className="report-sheet__head">
           <BrandMark />
           <div>
-            <span className="prototype-badge">تقرير تجريبي غير رسمي</span>
             <small>رقم التقرير</small>
             <strong dir="ltr">MYR-{run.file.sha256.slice(0, 12).toUpperCase()}</strong>
           </div>

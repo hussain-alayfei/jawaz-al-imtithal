@@ -241,10 +241,16 @@ describe("real IFC compliance pipeline", () => {
 
     expect(
       below.findings.find((item) => item.ruleId === "DOOR-WIDTH-001"),
-    ).toMatchObject({ status: "fail", actual: "0.90 م من IfcDoor.OverallWidth" });
+    ).toMatchObject({
+      status: "fail",
+      actual: "0.90 م (عرض الباب المقاس من النموذج)",
+    });
     expect(
       boundary.findings.find((item) => item.ruleId === "DOOR-WIDTH-001"),
-    ).toMatchObject({ status: "pass", actual: "0.90 م من IfcDoor.OverallWidth" });
+    ).toMatchObject({
+      status: "pass",
+      actual: "0.90 م (عرض الباب المقاس من النموذج)",
+    });
   });
 
   it("reports a missing exit width as unknown without claiming a measured failure", async () => {
@@ -267,11 +273,11 @@ describe("real IFC compliance pipeline", () => {
 
     expect(finding).toMatchObject({
       status: "unknown",
-      actual: "OverallWidth غير مسجل على باب EXIT",
+      actual: "عرض باب الطوارئ غير مسجل في النموذج",
     });
     expect(finding?.title).toContain("تعذر التحقق");
     expect(finding?.title).not.toContain("أقل");
-    expect(finding?.explanation).toContain("OverallWidth غير مسجل");
+    expect(finding?.explanation).toContain("عرض باب الطوارئ غير مسجل");
   });
 
   it("reports a missing route width as unknown without claiming a narrow route", async () => {
@@ -294,11 +300,11 @@ describe("real IFC compliance pipeline", () => {
 
     expect(finding).toMatchObject({
       status: "unknown",
-      actual: "MinimumClearWidth غير مسجل على ACCESS_ROUTE",
+      actual: "عرض مسار الوصول غير مسجل في النموذج",
     });
     expect(finding?.title).toContain("تعذر التحقق");
     expect(finding?.title).not.toContain("تضيق");
-    expect(finding?.explanation).toContain("MinimumClearWidth غير مسجل");
+    expect(finding?.explanation).toContain("عرض مسار الوصول غير مسجل");
   });
 
   it("does not retain pass prose when a required space role is missing", async () => {
@@ -321,12 +327,12 @@ describe("real IFC compliance pipeline", () => {
 
     expect(finding).toMatchObject({
       status: "fail",
-      actual: "المساحات المطلوبة المفقودة: KITCHEN",
+      actual: "مساحات مطلوبة غير موجودة في النموذج: المطبخ",
     });
     expect(finding?.title).toContain("لم يتحقق");
     expect(finding?.title).not.toContain("موجودة");
     expect(finding?.explanation).toContain(
-      "المساحات المطلوبة المفقودة: KITCHEN",
+      "مساحات مطلوبة غير موجودة في النموذج: المطبخ",
     );
   });
 
@@ -358,7 +364,6 @@ describe("real IFC compliance pipeline", () => {
     );
 
     expect(finding?.status).toBe("fail");
-    expect(finding?.actual).toContain("ServedSpaceGuid=");
     expect(finding?.actual).toContain("لا يطابق");
     expect(finding?.explanation).toContain("لا يطابق");
   });
@@ -394,10 +399,9 @@ describe("real IFC compliance pipeline", () => {
     );
 
     expect(privacy?.status).toBe("fail");
-    expect(privacy?.actual).toContain("ServesSpaceGuid=");
     expect(privacy?.actual).toContain("لا يطابق");
     expect(width?.status).toBe("unknown");
-    expect(width?.actual).toContain("ServesSpaceGuid=");
+    expect(width?.actual).toContain("لا يطابق");
     expect(width?.title).toContain("تعذر التحقق");
   });
 
@@ -486,7 +490,7 @@ describe("real IFC compliance pipeline", () => {
       run.findings.find((finding) => finding.ruleId === "FACADE-MEP-001"),
     ).toMatchObject({
       status: "fail",
-      actual: "بيانات إخفاء خدمات الواجهة غير مكتملة",
+      actual: "بيانات إخفاء خدمات الواجهة الرئيسية غير مكتملة",
     });
     expect(run.summary).toEqual({
       passed: 9,

@@ -217,7 +217,7 @@ const sharedPasses: Finding[] = [
     elementGuid: "2JwZ$DINING$001",
     elementName: "منطقة الطعام",
     actual: "6 من 6 مساحات تحمل اسمًا وتصنيفًا",
-    expected: "اسم وتصنيف لكل IfcSpace",
+    expected: "اسم وتصنيف واضحان لكل مساحة في النموذج",
     explanation:
       "تم ربط المساحات الست بفئات المطعم دون وجود أسماء فارغة أو ملتبسة.",
     recommendation: "حافظ على معايير التسمية عند تحديث النموذج.",
@@ -511,7 +511,7 @@ function createBasePasses({
       elementGuid: spaceElementGuid,
       elementName: spaceElementName,
       actual: `${spaces} من ${spaces} مساحات تحمل اسمًا وتصنيفًا`,
-      expected: "اسم وتصنيف لكل IfcSpace",
+      expected: "اسم وتصنيف واضحان لكل مساحة في النموذج",
       explanation: `تم ربط المساحات المصنفة بحزمة ${activityLabel} دون أسماء فارغة أو ملتبسة.`,
       recommendation: "حافظ على معايير التسمية عند تحديث النموذج.",
       source: `${rulePack}، متطلبات تسليم BIM`,

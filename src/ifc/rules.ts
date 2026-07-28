@@ -33,6 +33,45 @@ const primaryRole: Record<ActivityId, string> = {
   salon: "TREATMENT",
 };
 
+/* Internal role codes never reach the user. Every code extracted from the IFC
+   file is translated through this table before it appears in a finding, so
+   the reader always sees plain Arabic instead of an IFC property token. */
+const roleLabel: Record<string, string> = {
+  DINING: "صالة الطعام",
+  KITCHEN: "المطبخ",
+  STORAGE: "التخزين",
+  SERVICE: "خدمة الضيوف",
+  WC: "دورة المياه",
+  SEATING: "منطقة الجلوس",
+  PREP: "منطقة التحضير",
+  RECEPTION: "الاستقبال",
+  WAITING: "الانتظار",
+  EXAM_1: "غرفة الفحص الأولى",
+  EXAM_2: "غرفة الفحص الثانية",
+  STYLING: "منطقة التصفيف",
+  WASH: "منطقة غسيل الشعر",
+  NAIL: "منطقة الأظافر",
+  TREATMENT: "غرفة العناية",
+  SANITARY_FIXTURE: "التجهيز الصحي",
+  EXIT: "باب الطوارئ",
+  MAIN_FACADE: "الواجهة الرئيسية",
+  ACCESS_ROUTE: "مسار الوصول",
+  KITCHEN_VENTILATION: "نظام تهوية المطبخ",
+  PREP_HANDWASH: "حوض غسل اليدين في التحضير",
+  COUNTER_AISLE: "ممر الكاونتر",
+  PREP_DRAIN: "مصرف منطقة التحضير",
+  EXAM_2_HANDWASH: "حوض غسل اليدين في غرفة الفحص الثانية",
+  EXAM_2_HVAC: "نظام تكييف غرفة الفحص الثانية",
+  HAIR_WASH_STATION: "محطة غسيل الشعر",
+  STYLING_AISLE: "ممر التصفيف",
+  CHEMICAL_STORAGE: "مخزن المواد الكيميائية",
+  NAIL_VENTILATION: "نظام تهوية منطقة الأظافر",
+};
+
+function roleName(code: string): string {
+  return roleLabel[code] ?? code;
+}
+
 function result(
   ruleId: string,
   status: ResultStatus,
@@ -67,14 +106,11 @@ function isLinkedToSpace(
   );
 }
 
-function relationshipMismatch(
-  element: ExtractedIfcEntity,
-  space: ExtractedIfcEntity | undefined,
-  propertyName: "ServedSpaceGuid" | "ServesSpaceGuid",
-  expectedRole: string,
-): string {
-  const recorded = element.properties[propertyName];
-  return `${propertyName}=${typeof recorded === "string" && recorded ? recorded : "N/A"} لا يطابق GUID مساحة ${expectedRole} (${space?.globalId ?? "N/A"})`;
+/* The mismatch is still detected from the real GUID relationship in the IFC
+   file, but the message stays in plain Arabic. The identifiers involved
+   remain visible to whoever expands the technical evidence in the UI. */
+function relationshipMismatch(expectedRole: string): string {
+  return `العنصر مرتبط بمساحة أخرى، ولا يطابق الربط المطلوب بـ${roleName(expectedRole)}.`;
 }
 
 function evaluateBase({
@@ -88,6 +124,9 @@ function evaluateBase({
       Boolean(space.name?.trim()) &&
       typeof space.properties.RoleCode === "string",
   );
+  const classifiedCount = model.spaces.filter(
+    (space) => space.name && space.properties.RoleCode,
+  ).length;
   const roles = new Set(
     model.spaces.map((space) => String(space.properties.RoleCode ?? "")),
   );
@@ -100,7 +139,7 @@ function evaluateBase({
     result(
       "IFC-QUAL-001",
       "pass",
-      `${model.schema}، ${model.records} سجل STEP صالح و${model.elements.length} عنصرًا بمعرف دائم`,
+      `${model.schema}، ${model.records} سجل بيانات صالح و${model.elements.length} عنصرًا بمعرف دائم`,
     ),
     result(
       "DATA-CORE-001",
@@ -113,8 +152,8 @@ function evaluateBase({
       "DATA-SPACE-001",
       allSpacesClassified ? "pass" : "fail",
       allSpacesClassified
-        ? `${model.spaces.length} من ${model.spaces.length} مساحات تحمل اسمًا وRoleCode`
-        : `${model.spaces.filter((space) => space.name && space.properties.RoleCode).length} من ${model.spaces.length} مساحات مصنفة`,
+        ? `جميع مساحات النموذج (${model.spaces.length}) تحمل اسمًا وتصنيفًا واضحين`
+        : `${classifiedCount} من ${model.spaces.length} مساحات مصنفة باسم ونوع واضحين`,
       firstSpace,
     ),
     result(
@@ -123,8 +162,8 @@ function evaluateBase({
         : `${activityId.toUpperCase()}-SPACE-001`,
       missingRoles.length ? "fail" : "pass",
       missingRoles.length
-        ? `المساحات المطلوبة المفقودة: ${missingRoles.join(", ")}`
-        : `تم العثور على الأدوار المطلوبة: ${requiredRoles[activityId].join(", ")}`,
+        ? `مساحات مطلوبة غير موجودة في النموذج: ${missingRoles.map(roleName).join("، ")}`
+        : `جميع المساحات المطلوبة موجودة: ${requiredRoles[activityId].map(roleName).join("، ")}`,
       primarySpace,
     ),
   ];
@@ -159,19 +198,14 @@ function evaluateRestaurant(input: EvaluationInput): RuleEvaluation[] {
       "REST-SAN-001",
       wc && sanitary && sanitaryConnected && sanitaryLinked ? "pass" : "fail",
       !wc
-        ? "مساحة WC غير موجودة"
+        ? "مساحة دورة المياه غير موجودة"
         : !sanitary
-          ? "عنصر SANITARY_FIXTURE غير موجود"
+          ? "التجهيز الصحي غير موجود في النموذج"
           : !sanitaryLinked
-            ? relationshipMismatch(
-                sanitary,
-                wc,
-                "ServedSpaceGuid",
-                "WC",
-              )
-          : sanitaryConnected
-              ? "تجهيز SANITARY_FIXTURE مرتبط بمساحة WC ويحمل HasServiceConnection=true"
-              : "التجهيز الصحي مرتبط بمساحة WC لكن HasServiceConnection=false",
+            ? relationshipMismatch("WC")
+            : sanitaryConnected
+              ? "التجهيز الصحي داخل دورة المياه، واتصال الخدمة (تغذية وصرف) مثبت في النموذج"
+              : "التجهيز الصحي داخل دورة المياه، لكن اتصال الخدمة (تغذية وصرف) غير مثبت في النموذج",
       sanitary ?? wc,
     ),
     result(
@@ -180,20 +214,20 @@ function evaluateRestaurant(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !exit
-        ? "باب EXIT غير موجود"
+        ? "باب الطوارئ غير موجود في النموذج"
         : !exitLinked
-          ? relationshipMismatch(exit, dining, "ServesSpaceGuid", "DINING")
+          ? relationshipMismatch("DINING")
           : exit.properties.ConnectsToExterior === true
-            ? "باب EXIT يحمل ConnectsToExterior=true ويرتبط بمساحة DINING"
-            : "باب EXIT مرتبط بمساحة DINING لكن ConnectsToExterior=false",
+            ? "باب الطوارئ متصل بالحد الخارجي ومرتبط بصالة الطعام"
+            : "باب الطوارئ مرتبط بصالة الطعام، لكنه غير مسجَّل كمتصل بالحد الخارجي",
       exit,
     ),
     result(
       "FACADE-MEP-001",
       facade?.properties.ServicesConcealed === true ? "pass" : "fail",
       facade?.properties.ServicesConcealed === true
-        ? "عنصر MAIN_FACADE مصرح بخلوه من الخدمات المكشوفة"
-        : "بيانات إخفاء خدمات الواجهة غير مكتملة",
+        ? "الواجهة الرئيسية مسجّلة كخالية من الخدمات الميكانيكية والكهربائية المكشوفة"
+        : "بيانات إخفاء خدمات الواجهة الرئيسية غير مكتملة",
       facade,
     ),
     result(
@@ -204,12 +238,12 @@ function evaluateRestaurant(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !exit
-        ? "باب EXIT غير موجود لقياس عرضه"
+        ? "باب الطوارئ غير موجود لقياس عرضه"
         : !exitLinked
-          ? relationshipMismatch(exit, dining, "ServesSpaceGuid", "DINING")
+          ? relationshipMismatch("DINING")
           : width === undefined
-            ? "OverallWidth غير مسجل على باب EXIT"
-            : `${width.toFixed(2)} م من IfcDoor.OverallWidth`,
+            ? "عرض باب الطوارئ غير مسجل في النموذج"
+            : `${width.toFixed(2)} م (عرض الباب المقاس من النموذج)`,
       exit,
     ),
     result(
@@ -220,11 +254,11 @@ function evaluateRestaurant(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !route
-        ? "عنصر ACCESS_ROUTE غير موجود"
+        ? "مسار الوصول غير موجود في النموذج"
         : !routeLinked
-          ? relationshipMismatch(route, dining, "ServedSpaceGuid", "DINING")
+          ? relationshipMismatch("DINING")
           : typeof routeWidth !== "number"
-            ? "MinimumClearWidth غير مسجل على ACCESS_ROUTE"
+            ? "عرض مسار الوصول غير مسجل في النموذج"
             : `${routeWidth.toFixed(2)} م عند أضيق نقطة`,
       route,
     ),
@@ -237,17 +271,12 @@ function evaluateRestaurant(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !ventilation
-        ? "لا يوجد عنصر KITCHEN_VENTILATION مرتبط بالمطبخ"
+        ? "لا يوجد نظام تهوية مرتبط بالمطبخ"
         : !ventilationLinked
-          ? relationshipMismatch(
-              ventilation,
-              kitchen,
-              "ServedSpaceGuid",
-              "KITCHEN",
-            )
+          ? relationshipMismatch("KITCHEN")
           : ventilation.properties.HasServiceConnection === true
-            ? "عنصر KITCHEN_VENTILATION مرتبط بمساحة KITCHEN واتصال الخدمة مثبت"
-            : "عنصر التهوية مرتبط بالمطبخ لكن HasServiceConnection=false",
+            ? "نظام تهوية المطبخ مرتبط بالمطبخ واتصال الخدمة مثبت في النموذج"
+            : "نظام تهوية المطبخ مرتبط بالمطبخ، لكن اتصال الخدمة غير مثبت في النموذج",
       ventilation ?? kitchen,
     ),
   ];
@@ -285,36 +314,26 @@ function evaluateCafe(input: EvaluationInput): RuleEvaluation[] {
       "CAFE-HANDWASH-001",
       handwash && handwashConnected && handwashLinked ? "pass" : "fail",
       !handwash
-        ? "لم يوجد عنصر PREP_HANDWASH في جرد التجهيزات المكتمل"
+        ? "حوض غسل اليدين في منطقة التحضير غير موجود في جرد التجهيزات"
         : !handwashLinked
-          ? relationshipMismatch(
-              handwash,
-              prep,
-              "ServedSpaceGuid",
-              "PREP",
-            )
+          ? relationshipMismatch("PREP")
           : handwashConnected
-            ? "عنصر PREP_HANDWASH مرتبط بمساحة PREP واتصال الخدمة مثبت"
-            : "عنصر PREP_HANDWASH مرتبط بمساحة PREP لكن HasServiceConnection=false",
+            ? "حوض غسل اليدين مرتبط بمنطقة التحضير واتصال الخدمة مثبت في النموذج"
+            : "حوض غسل اليدين مرتبط بمنطقة التحضير، لكن اتصال الخدمة غير مثبت في النموذج",
       handwash ?? prep,
     ),
     result(
       "CAFE-SAN-001",
       wc && sanitary && sanitaryConnected && sanitaryLinked ? "pass" : "fail",
       !wc
-        ? "مساحة WC غير موجودة"
+        ? "مساحة دورة المياه غير موجودة"
         : !sanitary
-          ? "التجهيز الصحي غير موجود"
+          ? "التجهيز الصحي غير موجود في النموذج"
           : !sanitaryLinked
-            ? relationshipMismatch(
-                sanitary,
-                wc,
-                "ServedSpaceGuid",
-                "WC",
-              )
-          : sanitaryConnected
-              ? "التجهيز الصحي مرتبط بمساحة WC واتصال الخدمة مثبت"
-              : "التجهيز الصحي مرتبط بمساحة WC لكن HasServiceConnection=false",
+            ? relationshipMismatch("WC")
+            : sanitaryConnected
+              ? "التجهيز الصحي داخل دورة المياه، واتصال الخدمة مثبت في النموذج"
+              : "التجهيز الصحي داخل دورة المياه، لكن اتصال الخدمة غير مثبت في النموذج",
       sanitary ?? wc,
     ),
     result(
@@ -323,12 +342,12 @@ function evaluateCafe(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !exit
-        ? "باب EXIT غير موجود"
+        ? "باب الطوارئ غير موجود في النموذج"
         : !exitLinked
-          ? relationshipMismatch(exit, seating, "ServesSpaceGuid", "SEATING")
+          ? relationshipMismatch("SEATING")
           : exit.properties.ConnectsToExterior === true
-            ? "باب EXIT يحمل ConnectsToExterior=true ويرتبط بمساحة SEATING"
-            : "باب EXIT مرتبط بمساحة SEATING لكن ConnectsToExterior=false",
+            ? "باب الطوارئ متصل بالحد الخارجي ومرتبط بمنطقة الجلوس"
+            : "باب الطوارئ مرتبط بمنطقة الجلوس، لكنه غير مسجَّل كمتصل بالحد الخارجي",
       exit,
     ),
     result(
@@ -339,11 +358,11 @@ function evaluateCafe(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !route
-        ? "عنصر COUNTER_AISLE غير موجود"
+        ? "ممر الكاونتر غير موجود في النموذج"
         : !routeLinked
-          ? relationshipMismatch(route, prep, "ServedSpaceGuid", "PREP")
+          ? relationshipMismatch("PREP")
           : typeof aisleWidth !== "number"
-            ? "MinimumClearWidth غير مسجل"
+            ? "عرض ممر الكاونتر غير مسجل في النموذج"
             : `${aisleWidth.toFixed(2)} م عند أضيق نقطة`,
       route,
     ),
@@ -355,12 +374,12 @@ function evaluateCafe(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !exit
-        ? "باب EXIT غير موجود لقياس عرضه"
+        ? "باب الطوارئ غير موجود لقياس عرضه"
         : !exitLinked
-          ? relationshipMismatch(exit, seating, "ServesSpaceGuid", "SEATING")
+          ? relationshipMismatch("SEATING")
           : width === undefined
-            ? "OverallWidth غير مسجل"
-            : `${width.toFixed(2)} م من IfcDoor.OverallWidth`,
+            ? "عرض باب الطوارئ غير مسجل في النموذج"
+            : `${width.toFixed(2)} م (عرض الباب المقاس من النموذج)`,
       exit,
     ),
     result(
@@ -371,12 +390,12 @@ function evaluateCafe(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !drain
-        ? "لا يوجد عنصر PREP_DRAIN مرتبط بمنطقة التحضير"
+        ? "مصرف منطقة التحضير غير موجود في النموذج"
         : !drainLinked
-          ? relationshipMismatch(drain, prep, "ServedSpaceGuid", "PREP")
+          ? relationshipMismatch("PREP")
           : drain.properties.HasServiceConnection === true
-            ? "مصرف PREP_DRAIN مرتبط بمساحة PREP واتصال الخدمة مثبت"
-            : "المصرف مرتبط بمساحة PREP لكن HasServiceConnection=false",
+            ? "مصرف منطقة التحضير مرتبط بها واتصال الخدمة مثبت في النموذج"
+            : "مصرف منطقة التحضير مرتبط بها، لكن اتصال الخدمة غير مثبت في النموذج",
       drain ?? prep,
     ),
   ];
@@ -421,38 +440,28 @@ function evaluateClinic(input: EvaluationInput): RuleEvaluation[] {
       "CLINIC-PRIVACY-001",
       privacy ? "pass" : "fail",
       privacy
-        ? "غرفتا EXAM_1 وEXAM_2 مغلقتان وباب EXAM_2 مرتبط بالغرفة الصحيحة"
+        ? "غرفتا الفحص الأولى والثانية مغلقتان، وباب غرفة الفحص الثانية مرتبط بالغرفة الصحيحة"
         : !exam2
-          ? "مساحة EXAM_2 غير موجودة"
+          ? "غرفة الفحص الثانية غير موجودة"
           : exam2.properties.IsEnclosed !== true
-            ? "مساحة EXAM_2 تحمل IsEnclosed=false"
+            ? "غرفة الفحص الثانية غير مسجَّلة كمغلقة بالكامل"
             : !examDoor
-              ? "باب EXAM_2 غير موجود"
-              : relationshipMismatch(
-                  examDoor,
-                  exam2,
-                  "ServesSpaceGuid",
-                  "EXAM_2",
-                ),
+              ? "باب غرفة الفحص الثانية غير موجود"
+              : relationshipMismatch("EXAM_2"),
       privacy ? (examDoor ?? exam2) : (exam2 ?? examDoor),
     ),
     result(
       "CLINIC-SAN-001",
       wc && sanitary && sanitaryConnected && sanitaryLinked ? "pass" : "fail",
       !wc
-        ? "مساحة WC غير موجودة"
+        ? "مساحة دورة المياه غير موجودة"
         : !sanitary
-          ? "التجهيز الصحي غير موجود"
+          ? "التجهيز الصحي غير موجود في النموذج"
           : !sanitaryLinked
-            ? relationshipMismatch(
-                sanitary,
-                wc,
-                "ServedSpaceGuid",
-                "WC",
-              )
-          : sanitaryConnected
-              ? "التجهيز الصحي مرتبط بمساحة WC واتصال الخدمة مثبت"
-              : "التجهيز الصحي مرتبط بمساحة WC لكن HasServiceConnection=false",
+            ? relationshipMismatch("WC")
+            : sanitaryConnected
+              ? "التجهيز الصحي داخل دورة المياه، واتصال الخدمة مثبت في النموذج"
+              : "التجهيز الصحي داخل دورة المياه، لكن اتصال الخدمة غير مثبت في النموذج",
       sanitary ?? wc,
     ),
     result(
@@ -461,17 +470,12 @@ function evaluateClinic(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !exit
-        ? "باب EXIT غير موجود"
+        ? "باب الطوارئ غير موجود في النموذج"
         : !exitLinked
-          ? relationshipMismatch(
-              exit,
-              reception,
-              "ServesSpaceGuid",
-              "RECEPTION",
-            )
+          ? relationshipMismatch("RECEPTION")
           : exit.properties.ConnectsToExterior === true
-            ? "باب EXIT يحمل ConnectsToExterior=true ويرتبط بمساحة RECEPTION"
-            : "باب EXIT مرتبط بمساحة RECEPTION لكن ConnectsToExterior=false",
+            ? "باب الطوارئ متصل بالحد الخارجي ومرتبط بالاستقبال"
+            : "باب الطوارئ مرتبط بالاستقبال، لكنه غير مسجَّل كمتصل بالحد الخارجي",
       exit,
     ),
     result(
@@ -482,17 +486,12 @@ function evaluateClinic(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !examDoor
-        ? "باب EXAM_2 غير موجود لقياس عرضه"
+        ? "باب غرفة الفحص الثانية غير موجود لقياس عرضه"
         : !examDoorLinked
-          ? relationshipMismatch(
-              examDoor,
-              exam2,
-              "ServesSpaceGuid",
-              "EXAM_2",
-            )
+          ? relationshipMismatch("EXAM_2")
           : examWidth === undefined
-            ? "OverallWidth غير مسجل على باب EXAM_2"
-            : `${examWidth.toFixed(2)} م من IfcDoor.OverallWidth`,
+            ? "عرض باب غرفة الفحص الثانية غير مسجل في النموذج"
+            : `${examWidth.toFixed(2)} م (عرض الباب المقاس من النموذج)`,
       examDoor,
     ),
     result(
@@ -503,17 +502,12 @@ function evaluateClinic(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !handwash
-        ? "لم يوجد EXAM_2_HANDWASH في جرد التجهيزات المكتمل"
+        ? "حوض غسل اليدين في غرفة الفحص الثانية غير موجود في جرد التجهيزات"
         : !handwashLinked
-          ? relationshipMismatch(
-              handwash,
-              exam2,
-              "ServedSpaceGuid",
-              "EXAM_2",
-            )
+          ? relationshipMismatch("EXAM_2")
           : handwash.properties.HasServiceConnection === true
-            ? "عنصر EXAM_2_HANDWASH مرتبط بمساحة EXAM_2 واتصال الخدمة مثبت"
-            : "عنصر EXAM_2_HANDWASH مرتبط بالغرفة لكن HasServiceConnection=false",
+            ? "حوض غسل اليدين مرتبط بغرفة الفحص الثانية واتصال الخدمة مثبت في النموذج"
+            : "حوض غسل اليدين مرتبط بالغرفة، لكن اتصال الخدمة غير مثبت في النموذج",
       handwash ?? exam2,
     ),
     result(
@@ -524,17 +518,12 @@ function evaluateClinic(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !hvac
-        ? "لا يوجد عنصر EXAM_2_HVAC مرتبط بالغرفة"
+        ? "لا يوجد نظام تكييف مرتبط بغرفة الفحص الثانية"
         : !hvacLinked
-          ? relationshipMismatch(
-              hvac,
-              exam2,
-              "ServedSpaceGuid",
-              "EXAM_2",
-            )
+          ? relationshipMismatch("EXAM_2")
           : hvac.properties.HasServiceConnection === true
-            ? "عنصر EXAM_2_HVAC مرتبط بمساحة EXAM_2 واتصال الخدمة مثبت"
-            : "عنصر HVAC مرتبط بالغرفة لكن HasServiceConnection=false",
+            ? "نظام التكييف مرتبط بغرفة الفحص الثانية واتصال الخدمة مثبت في النموذج"
+            : "نظام التكييف مرتبط بالغرفة، لكن اتصال الخدمة غير مثبت في النموذج",
       hvac ?? exam2,
     ),
   ];
@@ -588,19 +577,14 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !treatment
-        ? "مساحة TREATMENT غير موجودة"
+        ? "غرفة العناية غير موجودة"
         : treatment.properties.IsEnclosed !== true
-          ? "مساحة TREATMENT تحمل IsEnclosed=false"
+          ? "غرفة العناية غير مسجَّلة كمغلقة بالكامل"
           : !treatmentDoor
-            ? "باب TREATMENT غير موجود"
+            ? "باب غرفة العناية غير موجود"
             : treatmentDoorLinked
-              ? "غرفة TREATMENT مغلقة وبابها مرتبط بالمساحة الصحيحة"
-              : relationshipMismatch(
-                  treatmentDoor,
-                  treatment,
-                  "ServesSpaceGuid",
-                  "TREATMENT",
-                ),
+              ? "غرفة العناية مغلقة، وبابها مرتبط بالمساحة الصحيحة"
+              : relationshipMismatch("TREATMENT"),
       treatment?.properties.IsEnclosed === true
         ? (treatmentDoor ?? treatment)
         : (treatment ?? treatmentDoor),
@@ -608,7 +592,7 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
     result(
       "SALON-WASH-001",
       validWash.length >= 2 ? "pass" : "fail",
-      `${validWash.length} من ${wash.length} وحدات HAIR_WASH_STATION مرتبطة بمساحة WASH واتصال خدمتها مثبت`,
+      `${validWash.length} من ${wash.length} محطات غسيل شعر مرتبطة بمنطقة الغسيل واتصال خدمتها مثبت`,
       wash[0] ?? washSpace,
     ),
     result(
@@ -617,17 +601,12 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
         ? "pass"
         : "fail",
       !exit
-        ? "باب EXIT غير موجود"
+        ? "باب الطوارئ غير موجود في النموذج"
         : !exitLinked
-          ? relationshipMismatch(
-              exit,
-              reception,
-              "ServesSpaceGuid",
-              "RECEPTION",
-            )
+          ? relationshipMismatch("RECEPTION")
           : exit.properties.ConnectsToExterior === true
-            ? "باب EXIT يحمل ConnectsToExterior=true ويرتبط بمساحة RECEPTION"
-            : "باب EXIT مرتبط بمساحة RECEPTION لكن ConnectsToExterior=false",
+            ? "باب الطوارئ متصل بالحد الخارجي ومرتبط بالاستقبال"
+            : "باب الطوارئ مرتبط بالاستقبال، لكنه غير مسجَّل كمتصل بالحد الخارجي",
       exit,
     ),
     result(
@@ -638,11 +617,11 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !route
-        ? "عنصر STYLING_AISLE غير موجود"
+        ? "ممر التصفيف غير موجود في النموذج"
         : !routeLinked
-          ? relationshipMismatch(route, styling, "ServedSpaceGuid", "STYLING")
+          ? relationshipMismatch("STYLING")
           : typeof aisleWidth !== "number"
-            ? "MinimumClearWidth غير مسجل"
+            ? "عرض ممر التصفيف غير مسجل في النموذج"
             : `${aisleWidth.toFixed(2)} م عند أضيق نقطة`,
       route,
     ),
@@ -654,17 +633,12 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !chemical
-        ? "لا يوجد عنصر CHEMICAL_STORAGE"
+        ? "مخزن المواد الكيميائية غير موجود في النموذج"
         : !chemicalLinked
-          ? relationshipMismatch(
-              chemical,
-              storage,
-              "ServedSpaceGuid",
-              "STORAGE",
-            )
+          ? relationshipMismatch("STORAGE")
           : chemical.properties.IsEnclosed === true
-            ? "خزانة CHEMICAL_STORAGE مرتبطة بمساحة STORAGE وتحمل IsEnclosed=true"
-            : "عنصر CHEMICAL_STORAGE مرتبط بمساحة STORAGE لكنه يحمل IsEnclosed=false",
+            ? "مخزن المواد الكيميائية مرتبط بمساحة التخزين ومسجَّل كمغلق بالكامل"
+            : "مخزن المواد الكيميائية مرتبط بمساحة التخزين، لكنه غير مسجَّل كمغلق بالكامل",
       chemical ?? treatment,
     ),
     result(
@@ -676,17 +650,12 @@ function evaluateSalon(input: EvaluationInput): RuleEvaluation[] {
           ? "pass"
           : "fail",
       !ventilation
-        ? "لا يوجد عنصر NAIL_VENTILATION مرتبط بمنطقة الأظافر"
+        ? "لا يوجد نظام تهوية مرتبط بمنطقة الأظافر"
         : !ventilationLinked
-          ? relationshipMismatch(
-              ventilation,
-              nail,
-              "ServedSpaceGuid",
-              "NAIL",
-            )
+          ? relationshipMismatch("NAIL")
           : ventilation.properties.HasServiceConnection === true
-            ? "عنصر NAIL_VENTILATION مرتبط بمساحة NAIL واتصال الخدمة مثبت"
-            : "عنصر التهوية مرتبط بمنطقة الأظافر لكن HasServiceConnection=false",
+            ? "نظام تهوية منطقة الأظافر مرتبط بها واتصال الخدمة مثبت في النموذج"
+            : "نظام تهوية منطقة الأظافر مرتبط بها، لكن اتصال الخدمة غير مثبت في النموذج",
       ventilation ?? nail,
     ),
   ];
@@ -720,49 +689,49 @@ const actionableCopy: Record<
   "REST-SAN-001": {
     title: "اتصال خدمة التجهيز الصحي غير مثبت",
     shortTitle: "توصيل المرفق الصحي",
-    expected: "تجهيز صحي مرتبط بدورة المياه واتصال خدمة مثبت",
+    expected: "تجهيز صحي داخل دورة المياه، مع اتصال خدمة (تغذية وصرف) مثبت",
     explanation:
       "مساحة دورة المياه موجودة، لكن خاصية اتصال خدمة التجهيز الصحي لا تثبت جاهزيته في النموذج.",
     recommendation:
-      "اربط التجهيز الصحي بخدمة السباكة وسجّل HasServiceConnection=true بعد التحقق الهندسي.",
+      "اربط التجهيز الصحي بخدمة السباكة (التغذية والصرف)، ثم صدّر نسخة محدثة من ملف IFC وأعد الفحص.",
     effort: "استكمال نموذج السباكة",
   },
   "EGRESS-001": {
     title: "اتصال مخرج المطعم بالحد الخارجي غير مثبت",
     shortTitle: "اتصال مخرج المطعم",
-    expected: "باب خروج يحمل ConnectsToExterior=true",
+    expected: "باب طوارئ مسجَّل كمتصل بالحد الخارجي للمبنى",
     explanation:
-      "باب الخروج موجود، لكن علاقته الدلالية بالحد الخارجي غير مثبتة في ملف IFC.",
+      "باب الطوارئ موجود، لكن علاقته الدلالية بالحد الخارجي غير مثبتة في ملف IFC.",
     recommendation:
-      "راجع مسار الإخلاء واربط باب EXIT بالحد الخارجي في النموذج قبل إعادة الفحص.",
+      "راجع مسار الإخلاء واربط باب الطوارئ بالحد الخارجي في النموذج قبل إعادة الفحص.",
     effort: "تعديل علاقات النموذج",
   },
   "FACADE-MEP-001": {
     title: "إخفاء خدمات الواجهة غير مثبت",
     shortTitle: "خدمات الواجهة",
-    expected: "عنصر واجهة يحمل ServicesConcealed=true",
+    expected: "عنصر واجهة مسجَّل كخالٍ من الخدمات الميكانيكية والكهربائية المكشوفة",
     explanation:
       "عنصر الواجهة موجود، لكن خصائصه تصرح بأن إخفاء الخدمات الميكانيكية والكهربائية غير محقق.",
     recommendation:
-      "حدّث تصميم الواجهة أو مسارات الخدمات، ثم وثّق النتيجة في خاصية ServicesConcealed.",
-    effort: "تنسيق معماري وMEP",
+      "حدّث تصميم الواجهة أو مسارات الخدمات، ثم وثّق إخفاء الخدمات في نموذج IFC المصحح.",
+    effort: "تنسيق معماري وخدمات",
   },
   "CAFE-HANDWASH-001": {
     title: "اتصال خدمة حوض التحضير غير مثبت",
     shortTitle: "توصيل حوض التحضير",
-    expected: "حوض تحضير مصنف واتصال خدمته مثبت",
+    expected: "حوض غسل يدين مصنف في منطقة التحضير، مع اتصال خدمة مثبت",
     explanation:
-      "حوض PREP_HANDWASH موجود في منطقة التحضير، لكن خاصية اتصال الخدمة مسجلة كغير محققة.",
+      "حوض غسل اليدين موجود في منطقة التحضير، لكن خاصية اتصال الخدمة مسجلة كغير محققة.",
     recommendation:
-      "أكمل ربط الحوض بخدمات التغذية والصرف وحدّث HasServiceConnection في نموذج IFC.",
+      "أكمل ربط الحوض بخدمات التغذية والصرف، وحدّث حالة الاتصال في نموذج IFC.",
     effort: "استكمال نموذج السباكة",
   },
   "CAFE-SAN-001": {
     title: "اتصال خدمة تجهيز دورة المياه غير مثبت",
     shortTitle: "توصيل المرفق الصحي",
-    expected: "تجهيز صحي داخل WC باتصال خدمة مثبت",
+    expected: "تجهيز صحي داخل دورة المياه، مع اتصال خدمة مثبت",
     explanation:
-      "مساحة WC وتجهيزها موجودان، لكن النموذج لا يثبت اتصال التجهيز بالخدمة.",
+      "مساحة دورة المياه وتجهيزها موجودان، لكن النموذج لا يثبت اتصال التجهيز بالخدمة.",
     recommendation:
       "اربط التجهيز الصحي بخدمات السباكة وسجّل الاتصال في مجموعة الخصائص.",
     effort: "استكمال نموذج السباكة",
@@ -770,19 +739,19 @@ const actionableCopy: Record<
   "CAFE-EGRESS-001": {
     title: "اتصال مخرج المقهى بالخارج غير مثبت",
     shortTitle: "اتصال مخرج المقهى",
-    expected: "باب EXIT مرتبط بحد خارجي",
+    expected: "باب طوارئ مرتبط بحد خارجي",
     explanation:
-      "باب المخرج موجود، لكن ConnectsToExterior=false يمنع إثبات اكتمال مسار الخروج.",
+      "باب المخرج موجود، لكن اتصاله بالحد الخارجي غير مثبت في النموذج، مما يمنع إثبات اكتمال مسار الخروج.",
     recommendation:
-      "صحح علاقة باب EXIT بالحد الخارجي بعد مراجعة مسار الإخلاء.",
+      "صحح علاقة باب الطوارئ بالحد الخارجي بعد مراجعة مسار الإخلاء.",
     effort: "تعديل علاقات النموذج",
   },
   "CLINIC-PRIVACY-001": {
     title: "إغلاق غرفة الفحص الثانية غير مثبت",
     shortTitle: "خصوصية غرفة الفحص 2",
-    expected: "غرف الفحص تحمل IsEnclosed=true وترتبط بأبواب مستقلة",
+    expected: "غرف الفحص مغلقة بالكامل ومرتبطة بأبواب مستقلة",
     explanation:
-      "غرفة EXAM_2 مصنفة في الملف، لكن IsEnclosed=false لا يثبت الفصل المطلوب للخصوصية.",
+      "غرفة الفحص الثانية مصنفة في الملف، لكنها غير مسجَّلة كمغلقة بالكامل، ما لا يثبت الفصل المطلوب للخصوصية.",
     recommendation:
       "أكمل حدود الغرفة أو صحح تصنيف الإغلاق بعد مراجعة المخطط المعماري.",
     effort: "تعديل معماري",
@@ -790,7 +759,7 @@ const actionableCopy: Record<
   "CLINIC-SAN-001": {
     title: "اتصال خدمة تجهيز دورة مياه العيادة غير مثبت",
     shortTitle: "توصيل المرفق الصحي",
-    expected: "تجهيز صحي داخل WC باتصال خدمة مثبت",
+    expected: "تجهيز صحي داخل دورة المياه، مع اتصال خدمة مثبت",
     explanation:
       "دورة المياه وتجهيزها موجودان، لكن خاصية اتصال خدمة التجهيز غير محققة.",
     recommendation:
@@ -800,19 +769,19 @@ const actionableCopy: Record<
   "CLINIC-EGRESS-001": {
     title: "اتصال مخرج العيادة بالخارج غير مثبت",
     shortTitle: "اتصال مخرج العيادة",
-    expected: "باب EXIT مرتبط بحد خارجي",
+    expected: "باب طوارئ مرتبط بحد خارجي",
     explanation:
       "باب الخروج موجود، لكن النموذج لا يثبت اتصاله بالحد الخارجي.",
     recommendation:
-      "راجع مسار خروج المرضى والعاملين وصحح ConnectsToExterior لباب EXIT.",
+      "راجع مسار خروج المرضى والعاملين وصحح علاقة باب الطوارئ بالحد الخارجي.",
     effort: "تعديل علاقات النموذج",
   },
   "SALON-PRIVACY-001": {
     title: "إغلاق غرفة العناية غير مثبت",
     shortTitle: "خصوصية غرفة العناية",
-    expected: "غرفة TREATMENT مغلقة ومرتبطة بباب مستقل",
+    expected: "غرفة عناية مغلقة بالكامل ومرتبطة بباب مستقل",
     explanation:
-      "غرفة العناية موجودة وبها باب، لكن IsEnclosed=false لا يثبت اكتمال الفصل.",
+      "غرفة العناية موجودة وبها باب، لكنها غير مسجَّلة كمغلقة بالكامل، ما لا يثبت اكتمال الفصل.",
     recommendation:
       "أكمل حدود غرفة العناية أو صحح خاصية الإغلاق بعد مراجعة التصميم.",
     effort: "تعديل معماري",
@@ -820,21 +789,21 @@ const actionableCopy: Record<
   "SALON-WASH-001": {
     title: "عدد وحدات غسل الشعر أقل من المطلوب في حزمة العرض",
     shortTitle: "وحدة غسل شعر ناقصة",
-    expected: "وحدتا HAIR_WASH_STATION مصنفتان ومرتبطتان بمنطقة الغسيل",
+    expected: "محطتا غسيل شعر على الأقل، مصنفتان ومرتبطتان بمنطقة الغسيل",
     explanation:
-      "استخرج النظام وحدة غسل شعر واحدة فقط من جرد التجهيزات المكتمل.",
+      "استخرج النظام محطة غسيل شعر واحدة فقط من جرد التجهيزات المكتمل.",
     recommendation:
-      "أضف وحدة الغسيل الناقصة واربطها بمنطقة WASH وخدماتها، ثم أعد الفحص.",
+      "أضف المحطة الناقصة واربطها بمنطقة الغسيل وخدماتها، ثم أعد الفحص.",
     effort: "إضافة تجهيز وخدمات",
   },
   "SALON-EGRESS-001": {
     title: "اتصال مخرج الصالون بالخارج غير مثبت",
     shortTitle: "اتصال مخرج الصالون",
-    expected: "باب EXIT مرتبط بحد خارجي",
+    expected: "باب طوارئ مرتبط بحد خارجي",
     explanation:
-      "باب المخرج موجود، لكن ConnectsToExterior=false يمنع إثبات اكتمال مسار الخروج.",
+      "باب المخرج موجود، لكن اتصاله بالحد الخارجي غير مثبت في النموذج، مما يمنع إثبات اكتمال مسار الخروج.",
     recommendation:
-      "راجع مسار الخروج وصحح علاقة باب EXIT بالحد الخارجي في نموذج IFC.",
+      "راجع مسار الخروج وصحح علاقة باب الطوارئ بالحد الخارجي في نموذج IFC.",
     effort: "تعديل علاقات النموذج",
   },
 };
@@ -874,7 +843,7 @@ function presentationFor(
       title: `تعذر التحقق من ${subject}`,
       shortTitle: `${subject}: معلومات غير مكتملة`,
       expected,
-      explanation: `لم تتوفر في ملف IFC بيانات كافية لإصدار حكم على القاعدة ${evaluation.ruleId}. الدليل المستخرج: ${evaluation.actual}.`,
+      explanation: `لم تتوفر في ملف IFC بيانات كافية لإصدار حكم على هذا المتطلب. الدليل المستخرج: ${evaluation.actual}.`,
       recommendation: `أكمل أو صحح البيانات اللازمة لإثبات المتطلب التالي: ${expected}، ثم أعد الفحص.`,
       effort: "استكمال معلومات",
     };
@@ -886,7 +855,7 @@ function presentationFor(
       title: `لم يتحقق متطلب «${subject}»`,
       shortTitle: subject,
       expected,
-      explanation: `سجلت القاعدة ${evaluation.ruleId} ملاحظة مثبتة من بيانات IFC المستخرجة: ${evaluation.actual}.`,
+      explanation: `رصد الفحص الآلي هذه الملاحظة من بيانات IFC المستخرجة: ${evaluation.actual}.`,
       recommendation: `راجع التصميم أو البيانات الدلالية لتحقيق المتطلب التالي: ${expected}، ثم أعد تصدير ملف IFC والفحص.`,
       effort:
         curated?.effort ??
@@ -906,7 +875,7 @@ function presentationFor(
         ? `${subject}: متحقق`
         : template.shortTitle,
     expected,
-    explanation: `تحققت القاعدة ${evaluation.ruleId} من بيانات IFC المستخرجة: ${evaluation.actual}.`,
+    explanation: `تحقق هذا المتطلب من بيانات IFC المستخرجة: ${evaluation.actual}.`,
     recommendation: "لا يلزم إجراء ضمن نطاق هذه القاعدة.",
     effort: "لا يوجد",
   };
