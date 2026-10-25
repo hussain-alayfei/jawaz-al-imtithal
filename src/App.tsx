@@ -45,6 +45,7 @@ import {
   useState,
 } from "react";
 import { BrandMark } from "./components/BrandMark";
+import "./twin-entry.css";
 import {
   activityExamples,
   calculateSummary,
@@ -2430,6 +2431,14 @@ export default function App() {
           onHome={() => setScreen("dashboard")}
           notify={setToast}
         />
+      )}
+
+      {!twinOpen && (screen === "dashboard" || screen === "workspace") && (
+        <button type="button" className="mobile-twin-launch"
+          data-testid="open-digital-twin-mobile"
+          onClick={() => setTwinOpen(true)}>
+          <Building2 size={18} /> استكشاف التوأم الرقمي 3D
+        </button>
       )}
 
       {twinOpen && (
