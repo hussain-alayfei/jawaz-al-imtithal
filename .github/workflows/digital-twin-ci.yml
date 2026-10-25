@@ -25,3 +25,12 @@ jobs:
         run: npm test
       - name: Typecheck and production build
         run: npm run build
+      - name: Browser acceptance and screenshots
+        run: node scripts/twin-visual-check.mjs
+      - name: Attach screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: digital-twin-captures
+          path: artifacts/digital-twin/*.png
+          if-no-files-found: warn
