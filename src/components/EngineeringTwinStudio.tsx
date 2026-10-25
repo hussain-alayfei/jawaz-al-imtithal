@@ -515,7 +515,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               </label>
             ))}
           </div>
-          </section>
+          </section>}
         </aside>
         <main className="twin-studio__viewport" aria-label="المشهد الهندسي ثلاثي الأبعاد">
           <div className="twin-studio__canvas">
