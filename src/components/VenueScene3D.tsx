@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { DetailedServiceNetwork3D, getDetailPoint } from "./DetailedServiceNetwork3D";
-import { InteriorFitout3D } from "./InteriorFitout3D";
+
 import type { ServiceVisibility } from "./EngineeringNetworks3D";
 
 export type VenueKind = "cafe" | "restaurant";
@@ -118,6 +118,116 @@ function Outdoor({kind}:{kind:VenueKind}) {
    </>}
  </group>;
 }
+function VenueChair({x,z,angle=0,color="#6f8275"}:{x:number;z:number;angle?:number;color?:string}){
+ return <group position={[x,0,z]} rotation={[0,angle,0]}>
+   <B p={[0,.55,0]} s={[.58,.15,.56]} c={color}/>
+   <B p={[0,1.0,-.24]} s={[.59,.88,.14]} c={color}/>
+   {[-.22,.22].flatMap(x=>[-.19,.19].map(z=><Cylinder key={x+":"+z} p={[x,.29,z]} h={.53} r={.021} c="#454d48"/>))}
+ </group>;
+}
+function VenueDiningTable({x,z,style="restaurant"}:{x:number;z:number;style?:"cafe"|"restaurant"}){
+ const cafe=style==="cafe";
+ return <group position={[x,0,z]}>
+   {cafe?<Cylinder p={[0,.75,0]} h={.095} r={.57} c="#ad916c"/>:
+    <B p={[0,.75,0]} s={[1.38,.1,.95]} c="#a47f5e"/>}
+   <Cylinder p={[0,.37,0]} h={.72} r={.065} c="#565b54"/>
+   <B p={[0,.045,0]} s={[.51,.07,.42]} c="#565b54"/>
+   <VenueChair x={0} z={-1.0} color={cafe?"#859083":"#8e8170"}/>
+   <VenueChair x={0} z={1.0} angle={Math.PI} color={cafe?"#859083":"#8e8170"}/>
+   {!cafe&&<>
+     <VenueChair x={-.98} z={0} angle={Math.PI/2} color="#8e8170"/>
+     <VenueChair x={.98} z={0} angle={-Math.PI/2} color="#8e8170"/>
+   </>}
+   <Cylinder p={[0,.86,0]} h={.16} r={.055} c="#e5d4b9"/>
+ </group>;
+}
+function EspressoMachine({x,z}: {x:number;z:number}){
+ return <group position={[x,0,z]}>
+   <B p={[0,1.27,0]} s={[1.08,.61,.55]} c="#9aacae" metal={.65}/>
+   <B p={[0,1.53,.28]} s={[.94,.1,.08]} c="#354c4d"/>
+   {[-.28,.28].map(xx=><group key={xx}>
+      <Cylinder p={[xx,1.0,.27]} h={.22} r={.05} c="#323c38"/>
+      <Cylinder p={[xx,.97,.38]} h={.17} r={.12} c="#f2f2e7"/>
+   </group>)}
+   <Cylinder p={[.79,1.25,0]} h={.58} r={.18} c="#424c4b"/>
+   <B p={[.79,1.57,0]} s={[.36,.08,.38]} c="#c2c3b6"/>
+ </group>;
+}
+function VenueCounter({kind,onSelect}:{kind:VenueKind;onSelect:(id:string)=>void}){
+ const cafe=kind==="cafe";
+ const id="VENUE-"+kind+"-counter";
+ return <group onClick={e=>{e.stopPropagation();onSelect(id);}}>
+  <B p={[-4.5,.62,1.4]} s={[4.9,1.18,1.25]} c={cafe?"#826d57":"#7a807d"}/>
+  <B p={[-4.5,1.25,1.4]} s={[5.04,.12,1.38]} c={cafe?"#d3c1a8":"#d6d4ca"}/>
+  <B p={[-4.5,.56,2.05]} s={[4.36,.77,.035]} c={cafe?"#9e826a":"#586963"}/>
+  <B p={[-5.7,1.34,1.18]} s={[.48,.08,.34]} c="#283839"/>
+  <B p={[-5.7,1.67,1.02]} s={[.54,.47,.06]} c="#273d43"/>
+  {cafe&&<><EspressoMachine x={-3.45} z={1.0}/>
+    {[1,2,3,4].map(i=><Cylinder key={i} p={[-2.58+i*.25,1.37,1.66]} h={.21} r={.085} c="#f4e9d8"/>)}
+  </>}
+  {!cafe&&<><B p={[-3.0,1.37,1.34]} s={[.9,.09,.5]} c="#b3a895"/>
+    <Cylinder p={[-3.2,1.6,1.2]} h={.39} r={.13} c="#d8c5a9"/>
+  </>}
+ </group>;
+}
+function WashArea({x,z}:{x:number;z:number}){
+ return <group position={[x,0,z]}>
+   <B p={[0,.52,0]} s={[2.15,1.04,.7]} c="#a6b4b0" metal={.7}/>
+   <B p={[0,1.07,0]} s={[2.26,.07,.78]} c="#d4dedc" metal={.58}/>
+   {[-.55,.55].map(dx=><mesh key={dx} position={[dx,1.115,0]}>
+      <cylinderGeometry args={[.26,.24,.038,18]}/>
+      <meshStandardMaterial color="#79898a" metalness={.7} roughness={.26}/>
+    </mesh>)}
+   {[-.55,.55].map(dx=><group key={dx}>
+     <Cylinder p={[dx,1.31,-.19]} h={.44} r={.033} c="#afb8b3"/>
+     <B p={[dx,1.54,-.08]} s={[.21,.04,.2]} c="#afb8b3" metal={.7}/>
+   </group>)}
+ </group>;
+}
+function KitchenLine({kind,onSelect}:{kind:VenueKind;onSelect:(id:string)=>void}){
+ const cafe=kind==="cafe";
+ return <group onClick={e=>{e.stopPropagation();onSelect("VENUE-"+kind+"-back");}}>
+   <B p={[3.55,.58,-4.5]} s={[5.4,1.12,1.1]} c="#acb8b6" metal={.8}/>
+   <B p={[3.55,1.16,-4.5]} s={[5.5,.09,1.23]} c="#d0d9d7" metal={.7}/>
+   {!cafe&&[-1.4,-.75,-.1,.55,1.2].map(dx=><group key={dx}>
+     <Cylinder p={[3.55+dx,1.24,-4.5]} h={.045} r={.2} c="#303b3a"/>
+     <mesh position={[3.55+dx,1.29,-4.5]} rotation={[-Math.PI/2,0,0]}>
+       <torusGeometry args={[.16,.016,7,18]}/><meshStandardMaterial color="#a4afb0" metalness={.7}/>
+     </mesh>
+   </group>)}
+   {!cafe&&<>
+     <B p={[3.55,3.1,-4.5]} s={[5.5,.52,1.48]} c="#99a8a9" metal={.75}/>
+     <B p={[3.55,3.45,-4.5]} s={[1.1,.5,1.14]} c="#879c9c" metal={.6}/>
+   </>}
+   <WashArea x={3.0} z={-1.65}/>
+   <B p={[5.95,1.17,-2.86]} s={[1.16,2.33,.75]} c="#b5c2c1" metal={.55}/>
+   <B p={[5.95,1.34,-2.47]} s={[.08,.16,.025]} c="#677672"/>
+   <B p={[1.04,.95,-2.7]} s={[1.03,1.87,.65]} c="#b2a58f"/>
+   <B p={[1.04,1.27,-2.34]} s={[.85,.06,.13]} c="#746753"/>
+   {cafe&&<EspressoMachine x={4.0} z={-4.1}/>}
+ </group>;
+}
+function VenueFurniture({kind,onSelect}:{kind:VenueKind;onSelect:(id:string)=>void}){
+ const cafe=kind==="cafe";
+ return <group name={kind+"-realistic-fitout"}>
+   <VenueCounter kind={kind} onSelect={onSelect}/>
+   <group onClick={e=>{e.stopPropagation();onSelect("VENUE-"+kind+"-seating");}}>
+     {(cafe? [[1.65,3.55],[4.85,3.55],[1.65,.8],[4.85,.8]] :
+       [[1.45,3.25],[4.95,3.25],[1.45,.65],[4.95,.65]]).map(([x,z],i)=>
+       <VenueDiningTable key={i} x={x} z={z} style={cafe?"cafe":"restaurant"}/>)}
+     <B p={[6.55,.52,-.15]} s={[.68,.48,2.5]} c={cafe?"#697d67":"#916f5f"}/>
+     <B p={[6.9,.99,-.15]} s={[.17,.88,2.46]} c={cafe?"#697d67":"#916f5f"}/>
+   </group>
+   <group onClick={e=>{e.stopPropagation();onSelect("VENUE-"+kind+"-entrance");}}>
+     <B p={[-5.6,.44,3.95]} s={[1.7,.82,.72]} c={cafe?"#8d9c85":"#918474"}/>
+     <B p={[-5.6,.93,3.68]} s={[1.7,.79,.17]} c={cafe?"#8d9c85":"#918474"}/>
+     <Cylinder p={[-6.9,.44,4.5]} h={.72} r={.28} c="#b8ae98"/>
+     <mesh position={[-6.9,1.2,4.5]}><icosahedronGeometry args={[.66,2]}/><meshStandardMaterial color="#4f8762"/></mesh>
+   </group>
+   <KitchenLine kind={kind} onSelect={onSelect}/>
+ </group>;
+}
+
 function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
  const cafe=kind==="cafe";
  const plaster=cafe?"#e6dccb":"#d8d6d0";
@@ -216,10 +326,8 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
     <directionalLight position={[-12,8,-8]} intensity={.54}/>
     <Outdoor kind={kind}/>
     <RoomShell kind={kind} ghost={ghost}/>
-    {/* Existing furniture primitives, precisely on the standalone venue footprint. */}
-    <InteriorFitout3D activity={kind} floor={0} roomFilter="all"
-      showFurniture={furniture} showLabels={false} showRoomWalls={false}
-      selectedId={selected} onSelect={onSelect}/>
+    {furniture&&<VenueFurniture kind={kind} onSelect={onSelect}/>}
+
     {furniture&&<group>
        <B p={[0,.12,8.1]} s={[7.8,.05,1.85]} c={isCafe?"#ccb99e":"#cfc1ae"}/>
        <Tree x={-6.6} z={-8.5} s={.68}/>
