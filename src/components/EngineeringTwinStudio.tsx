@@ -252,7 +252,13 @@ function NetworkExtensions({ floor, system, flow, exploded, onSelect }: {
 function CameraRig({ preset, selected, floor, nonce }: {
   preset: Preset; selected: Vec3 | null; floor: Floor; nonce: number;
 }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = size.width < 661 ? 58 : size.width < 1000 ? 44 : 38;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size.width]);
   const controls = useRef<any>(null);
   const desired = useRef(new THREE.Vector3(...viewDefaults.iso.position));
   const focus = useRef(new THREE.Vector3(...viewDefaults.iso.target));
@@ -273,8 +279,11 @@ function CameraRig({ preset, selected, floor, nonce }: {
       focus.current.set(...selected);
       desired.current.set(selected[0] + 7, selected[1] + 5.8, selected[2] + 8);
     }
+    if (size.width < 661) {
+      desired.current.sub(focus.current).multiplyScalar(1.42).add(focus.current);
+    }
     active.current = true;
-  }, [preset, selected, floor, nonce]);
+  }, [preset, selected, floor, nonce, size.width]);
   useFrame(() => {
     if (!active.current || !controls.current) return;
     camera.position.lerp(desired.current, 0.12);
