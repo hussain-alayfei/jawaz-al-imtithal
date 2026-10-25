@@ -25,9 +25,10 @@ describe("interior fitout is contextual to the business", () => {
     });
   }
   it("varies equipment by activity", () => {
-    expect(getInteriorItems("restaurant",0).some(x=>x.title.includes("الطبخ"))).toBe(true);
-    expect(getInteriorItems("cafe",0).some(x=>x.title.includes("الإسبريسو"))).toBe(true);
-    expect(getInteriorItems("clinic",0).some(x=>x.title.includes("الفحص"))).toBe(true);
-    expect(getInteriorItems("salon",0).some(x=>x.title.includes("التصفيف"))).toBe(true);
+    const all = (activity: ActivityId) => [0,1,2,3,4].flatMap(level => getInteriorItems(activity,level));
+    expect(all("restaurant").some(x=>x.title.includes("الطبخ"))).toBe(true);
+    expect(all("cafe").some(x=>x.title.includes("الإسبريسو"))).toBe(true);
+    expect(all("clinic").some(x=>x.title.includes("الفحص"))).toBe(true);
+    expect(all("salon").some(x=>x.title.includes("التصفيف"))).toBe(true);
   });
 });
