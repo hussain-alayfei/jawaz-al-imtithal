@@ -1504,11 +1504,11 @@ function FurnitureModel({activity, item, visible}:{
 }
 
 export function InteriorFitout3D({
-  activity, floor, roomFilter, showFurniture, showLabels, showRoomWalls,
+  activity, floor, roomFilter, showFurniture, showLabels, showRoomWalls, ghost = false,
   selectedId, onSelect,
 }:{
   activity:ActivityId; floor:number;roomFilter:RoomFilter;
-  showFurniture:boolean;showLabels:boolean;showRoomWalls:boolean;
+  showFurniture:boolean;showLabels:boolean;showRoomWalls:boolean;ghost?:boolean;
   selectedId:string|null;onSelect:(id:string)=>void;
 }) {
   const rooms = getActivityRooms(activity, floor);
@@ -1553,12 +1553,22 @@ export function InteriorFitout3D({
         {focused && showFurniture && <><Light x={room.x} z={room.z}/><Light x={room.x+1.55} z={room.z-1}/></>}
       </group>;
     })}
-    {showRoomWalls && <group name="partitions">
-      {/* Short paired segments leave doorways visible from above and in cutaway. */}
-      <Cube p={[-.8,1.44,-3.4]} s={[.16,2.72,3.9]} c="#ddd6c8" opacity={.78}/>
-      <Cube p={[-.8,1.44,2.3]} s={[.16,2.72,5.3]} c="#ddd6c8" opacity={.78}/>
-      <Cube p={[-4.8,1.44,-.2]} s={[5.2,2.72,.15]} c="#d6cfc2" opacity={.75}/>
-      <Cube p={[3.8,1.44,-.2]} s={[7.2,2.72,.15]} c="#d6cfc2" opacity={.75}/>
+    {showRoomWalls && <group name={"partitions-level-"+floor}>
+      {(
+        floor===0
+          ? [[[-.8,1.44,-3.4],[.16,2.72,3.9]],[[-4.8,1.44,-.2],[5.2,2.72,.15]]]
+          : floor===1
+          ? [[[-.8,1.44,-3.4],[.16,2.72,4.2]],[[3.8,1.44,-.2],[7.2,2.72,.15]]]
+          : floor===2
+          ? [[[-.8,1.44,-3.65],[.16,2.72,3.8]],[[-.8,1.44,2.2],[.16,2.72,5.3]],[[-4.65,1.44,-.2],[5.5,2.72,.15]],[[4.0,1.44,-.2],[6.9,2.72,.15]]]
+          : floor===3
+          ? [[[-.8,1.44,-3.5],[.16,2.72,4.0]],[[-.8,1.44,2.3],[.16,2.72,5.2]],[[-4.65,1.44,-.2],[5.5,2.72,.15]],[[3.8,1.44,-.2],[7.2,2.72,.15]],[[3.0,1.25,3.4],[.11,2.4,3.6]]]
+          : [[[-.8,1.44,-3.5],[.12,2.72,4.0]],[[-.8,1.44,2.5],[.12,2.72,4.7]],[[-4.5,1.44,-.2],[5.6,2.72,.13]],[[4,1.44,-.2],[6.9,2.72,.13]]]
+      ).map(([pos,dimensions],i)=>
+        <Cube key={i} p={pos as Vec3} s={dimensions as Vec3}
+          c={floor===4?"#adcac6":floor===2?"#ccd7d4":"#d6d0c5"}
+          opacity={ghost?.13:.72}/>)
+      }
     </group>}
   </group>;
 }
