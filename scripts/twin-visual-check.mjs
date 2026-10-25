@@ -62,11 +62,47 @@ try {
     await page.screenshot({path:join(target,size.name+"-cafe.png"),fullPage:false,animations:"disabled"});
     if (await page.locator('[data-testid="venue-inspector-spots"] button').count()!==4)
       failures.push(size.name+": cafe inspection regions missing");
+    if (size.width > 1000) {
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات BIM"}).click();
+      await page.locator('[data-testid="venue-bim-cafe"]').waitFor({state:"visible"});
+      await page.locator('[data-testid="venue-bim-cafe"] [data-file="MEP.ifc"] button').click();
+      await page.locator('[data-testid="venue-bim-cafe"] [data-testid="venue-bim-elements"]').waitFor({state:"visible"});
+      if (await page.locator('[data-testid="venue-bim-cafe"] [data-testid="venue-bim-elements"] button').count()!==15)
+        failures.push(size.name+": cafe MEP file does not expose 15 distinct assets");
+      await page.screenshot({path:join(target,size.name+"-cafe-files.png"),fullPage:false});
+      await page.locator('[data-scene-id="VENUE-cafe-electricity-0"]').click();
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"العناصر والتجهيزات"}).click();
+      if (!(await page.locator(".twin-studio__selection code").textContent())?.includes("VENUE-cafe-electricity-0"))
+        failures.push(size.name+": selected cafe electrical node did not reach 3D inspector");
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"التحليلات"}).click();
+      await page.locator('[data-testid="venue-analysis-cafe"]').waitFor({state:"visible"});
+      if (await page.locator(".venue-analysis__systems article").count()!==6)
+        failures.push(size.name+": cafe engineering dashboard missing six technical systems");
+      await page.screenshot({path:join(target,size.name+"-cafe-analysis.png"),fullPage:false});
+    }
+    if (size.width<=660) {
+      await page.locator('[data-testid="mobile-bim-files"]').click();
+      await page.locator('[data-testid="venue-bim-cafe"]').waitFor({state:"visible"});
+      await page.locator(".twin-studio__mobile-inspector-close").click();
+    }
     await page.locator('[data-scene="restaurant"]').click();
     await page.waitForTimeout(850);
     if (!(await page.locator(".twin-studio__overlay-title strong").textContent())?.includes("مطعم"))
       failures.push(size.name+": restaurant failed to open");
     await page.screenshot({path:join(target,size.name+"-restaurant.png"),fullPage:false,animations:"disabled"});
+    if (size.width>1000) {
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات BIM"}).click();
+      await page.locator('[data-testid="venue-bim-restaurant"]').waitFor({state:"visible"});
+      await page.locator('[data-testid="venue-bim-restaurant"] [data-file="FireSafety.ifc"] button').click();
+      await page.locator('[data-testid="venue-bim-restaurant"] [data-testid="venue-bim-elements"]').waitFor({state:"visible"});
+      if(await page.locator('[data-testid="venue-bim-restaurant"] [data-testid="venue-bim-elements"] button').count()!==3)
+        failures.push(size.name+": restaurant FireSafety.ifc does not expose 3 sprinklers");
+      await page.screenshot({path:join(target,size.name+"-restaurant-files.png"),fullPage:false});
+      await page.locator('[data-scene-id="VENUE-restaurant-fire-2"]').click();
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"العناصر والتجهيزات"}).click();
+      if (!(await page.locator(".twin-studio__selection code").textContent())?.includes("VENUE-restaurant-fire-2"))
+        failures.push(size.name+": fire selection failed to focus scene");
+    }
     await page.locator("[data-testid='venue-scene-switcher'] [data-scene='cafe']").click();
     await page.getByRole("tab",{name:"الأنظمة"}).click();
     await page.locator(".twin-studio__system-list button").filter({hasText:"المياه"}).click();
