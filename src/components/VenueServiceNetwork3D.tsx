@@ -25,7 +25,8 @@ const branch=(system:ServiceKey,p:Vec3):Vec3[]=>{
          system==="fire"?3.72:.14;
  const trunkX=system==="electricity"?-6.7:system==="water"?-3.5:
               system==="fire"?-6.15:p[0];
- return [[trunkX,y,z],[p[0],y,z],[p[0],y,p[2]],p];
+ const raw:Vec3[]=[[trunkX,y,z],[p[0],y,z],[p[0],y,p[2]],p];
+ return raw.filter((point,i)=>i===0||point.some((v,j)=>Math.abs(v-raw[i-1][j])>1e-4));
 };
 const route=(system:ServiceKey):Vec3[]=>{
  const positions=VENUE_SERVICE_POSITIONS[system];
