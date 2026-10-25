@@ -200,7 +200,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
   const { camera, size } = useThree();
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = size.width < 661 ? 58 : size.width < 1000 ? 44 : 38;
+      camera.fov = size.width < 661 ? 45 : size.width < 1000 ? 44 : 38;
       camera.updateProjectionMatrix();
     }
   }, [camera, size.width]);
@@ -225,7 +225,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
       desired.current.set(selected[0] + 7, selected[1] + 5.8, selected[2] + 8);
     }
     if (size.width < 661) {
-      desired.current.sub(focus.current).multiplyScalar(1.42).add(focus.current);
+      desired.current.sub(focus.current).multiplyScalar(1.04).add(focus.current);
     }
     active.current = true;
   }, [preset, selected, floor, nonce, size.width, floorCount]);
