@@ -72,6 +72,21 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
       </div>
     </article>)}
    </div>
+   <article className="bim-library__file bim-library__asset" data-file="FurnitureDemo.gltf">
+     <div className="bim-library__file-head">
+       <span className="bim-library__file-icon" style={{borderColor:"#97d1a9",color:"#97d1a9"}}><FileCode2 size={18}/></span>
+       <span><strong dir="ltr">FurnitureDemo.gltf</strong><small>أثاث ثلاثي الأبعاد (اختياري)</small></span>
+       <b>3D</b>
+     </div>
+     <p>ملف glTF حقيقي يحتوي مجسم خزانة مستقل، ويظهر داخل مشهد الدور الأرضي.</p>
+     <div className="bim-library__file-actions">
+      <button type="button" onClick={()=>onPick({id:"GLTF-1",sceneId:"DEMO-GLTF-CABINET",label:"خزانة أثاث من glTF",
+        type:"glTF mesh",floor:0,position:[5.85,.95,-4.85],description:"قطعة أثاث تجريبية محملة من ملف glTF داخل المشروع"})}>
+        <Layers3 size={13}/> تحديد في 3D
+      </button>
+      <a href="/demo-bim/FurnitureDemo.gltf" download="FurnitureDemo.gltf"><Download size={13}/> تنزيل</a>
+     </div>
+   </article>
    {message && <p role="status" className={"bim-library__status"+(error?" is-error":"")}>
     {error?<XCircle size={14}/>:<CheckCircle2 size={14}/>} {message}
    </p>}
