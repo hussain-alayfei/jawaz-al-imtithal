@@ -53,8 +53,31 @@ try {
     if (!hasCanvas) failures.push(size.name + ": no 3D canvas");
     if (await page.getByText("الطاقة الشمسية", { exact: true }).count())
       failures.push(size.name + ": removed solar energy still appears");
-    if (!await page.locator(".twin-studio__inventory button").count() && size.width > 1000)
-      failures.push(size.name + ": no furniture inventory");
+    if (await page.locator(".twin-studio__floor-list button").count() !== 7)
+      failures.push(size.name + ": five real scene levels and roof are not selectable");
+    if (size.width > 1000) {
+      const mep = page.locator('.bim-library__file[data-file="MEP.ifc"] button');
+      await mep.click();
+      await page.locator("[data-testid='bim-file-elements']").waitFor({state:"visible"});
+      if (!(await page.locator(".bim-library__status").textContent())?.includes("75"))
+        failures.push(size.name + ": MEP demo file not verified");
+      await page.locator(".bim-library__content select").selectOption("4");
+      await page.locator('[data-scene-id="DETAIL-4-electricity-2"]').click();
+      await page.screenshot({path:join(target,size.name+"-ifc-5floor.png"),fullPage:false});
+      await page.locator(".twin-studio__floor-list button").filter({hasText:"كامل المبنى"}).click();
+      await page.locator(".twin-studio__system-list button").filter({hasText:"العمارة والإنشاء"}).click();
+    }
+    if (size.width <= 660) {
+      await page.locator('[data-testid="mobile-bim-files"]').click();
+      await page.locator(".twin-studio__inspector.is-mobile-open").waitFor({state:"visible"});
+      await page.locator(".twin-studio__mobile-inspector-close").click();
+    }
+    if (size.width > 1000) {
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"تفاصيل العناصر"}).click();
+      if (!await page.locator(".twin-studio__inventory button").count())
+        failures.push(size.name + ": no furniture inventory when item inspector is active");
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات IFC التجريبية"}).click();
+    }
     if (size.width > 660) {
       const roomFilters = page.locator(".twin-studio__room-filter button");
       if (await roomFilters.count() !== 5) failures.push(size.name + ": missing room filters");

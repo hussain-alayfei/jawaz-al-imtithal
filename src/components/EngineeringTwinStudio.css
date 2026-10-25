@@ -286,3 +286,71 @@
   .twin-studio__overlay-title { max-width: 153px; }
   .twin-studio__mobile-floors { top: 80px; }
 }
+
+
+/* BIM explorer / readable engineering controls */
+.twin-studio__layout { grid-template-columns: 250px minmax(0,1fr) 350px; }
+.twin-studio__systems,.twin-studio__inspector { background: #142924; }
+.twin-studio__system,.twin-studio__floor-list button,.twin-studio__switch { font-size: 13px; color: #e0ece5; }
+.twin-studio__system:not(.is-active):hover,.twin-studio__floor-list button:not(.is-active):hover { background: #315143; }
+.twin-studio__section-heading { font-size: 13px; color: #e1f4e9; }
+.twin-studio__room-filter button { font-size: 12px; color: #e1ede4; }
+.twin-studio__system.is-active { background: #35644d; }
+.twin-studio__viewport { background: #dce5df; }
+.twin-studio__inspector-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 18px 0; }
+.twin-studio__inspector-tabs button { color: #dcebe3; padding: 12px 7px; border: 1px solid #597265; background: #233e31; font-size: 12px; font-weight: 600; border-radius: 3px; }
+.twin-studio__inspector-tabs button[aria-pressed="true"] { background: #dff0e6; border-color: #dff0e6; color: #1d4933; }
+.bim-library__intro { border: 1px solid #3d6a54; background: #1d4030; padding: 13px; }
+.bim-library__title { display: flex; gap: 8px; align-items: center; font-size: 14px; color: #edfff1; }
+.bim-library__intro p { font-size: 12px; line-height: 1.85; margin: 8px 0; color: #d1e9d7; }
+.bim-library__demo { display: flex; gap: 5px; font-size: 10px; align-items: flex-start; color: #e9d5a4; line-height: 1.65; }
+.bim-library__demo svg { flex: none; }
+.bim-library__loading,.bim-library__status { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 10px; background: #214736; }
+.bim-library__status.is-error { color: #ffaaa0; }
+.bim-library__files { display: grid; gap: 8px; margin-top: 12px; }
+.bim-library__file { background: #1d382f; border: 1px solid #3f5f50; padding: 10px; border-radius: 3px; }
+.bim-library__file.is-loaded { border-color: #96d1a7; background: #244b36; }
+.bim-library__file-head { display: flex; align-items: center; gap: 9px; }
+.bim-library__file-head > span:nth-child(2) { min-width: 0; flex: 1; }
+.bim-library__file-icon { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid; background: #193126; flex: none; }
+.bim-library__file-head strong { font: 11px "IBM Plex Mono", monospace; color: #f2fff9; display: block; }
+.bim-library__file-head small { color: #b1d9c2; font-size: 11px; display: block; }
+.bim-library__file-head b { font: 12px "IBM Plex Mono",monospace; color: #f3e4c1; }
+.bim-library__file p { color: #d1e3d8; font-size: 11px; line-height: 1.6; margin: 8px 0; }
+.bim-library__file-actions { display: flex; gap: 6px; }
+.bim-library__file-actions > button,.bim-library__file-actions > a { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 32px; padding: 6px 9px; font-size: 11px; font-weight: 600; border-radius: 2px; }
+.bim-library__file-actions > button { flex: 1; background: #ccebd6; border: 1px solid #b9dbc5; color: #194a30; }
+.bim-library__file-actions > button:disabled { opacity: .65; cursor: progress; }
+.bim-library__file-actions > a { border: 1px solid #739b83; color: #e8f8ed; }
+.bim-library__content { margin-top: 12px; border: 1px solid #4e7760; background: #1b3b2d; }
+.bim-library__content > header { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #3b6150; }
+.bim-library__content > header > span { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+.bim-library__content > header > b { font: 11px monospace; color: #aedbbd; }
+.bim-library__content > label { display: grid; gap: 6px; padding: 10px; font-size: 11px; color: #c7e4d1; }
+.bim-library__content select { width: 100%; background: #eef8f0; color: #214531; padding: 6px; border-radius: 2px; }
+.bim-library__elements { max-height: 260px; overflow-y: auto; scrollbar-width: thin; }
+.bim-library__elements button { display: flex; gap: 8px; align-items: flex-start; border: 0; border-top: 1px solid #345b46; width: 100%; background: transparent; padding: 10px; color: #e8faed; text-align: right; }
+.bim-library__elements button:hover { background: #315c42; }
+.bim-library__elements button svg { color: #8fc9a2; flex: none; }
+.bim-library__elements button strong { display: block; font-size: 11px; line-height: 1.5; }
+.bim-library__elements button small { display: block; font-size: 10px; color: #afd1b6; direction: ltr; text-align: right; }
+.bim-library__footnote { display: block; padding: 9px; font-size: 10px; color: #c6dccc; line-height: 1.65; }
+.twin-studio__mobile-bim { display: none; }
+@media (max-width: 1340px) {
+ .twin-studio__layout { grid-template-columns: 215px minmax(0,1fr) 302px; }
+}
+@media (max-width: 1000px) {
+ .twin-studio__layout { grid-template-columns: 200px minmax(0,1fr); }
+ .twin-studio__mobile-bim { position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; background: #174a37; color: white; padding: 10px 12px; border: 1px solid #29674b; border-radius: 3px; }
+ .twin-studio__inspector.is-mobile-open { display: block; position: absolute; z-index: 25; left: 0; top: 76px; bottom: 0; width: min(365px,100%); box-shadow: 7px 0 32px #152b2666; }
+}
+@media (max-width: 660px) {
+ .twin-studio__mobile-bim { top: 116px; right: 8px; padding: 7px 9px; font-size: 10px; }
+ .twin-studio__inspector.is-mobile-open { left: 0; right: 0; top: 60px; bottom: 0; width: 100%; }
+ .twin-studio__system,.twin-studio__floor-list button { font-size: 11px; }
+ .twin-studio__viewport-stats { max-width: 260px; }
+}
+
+.twin-studio__mobile-inspector-close { width:100%; background:#dcefe2; border:1px solid #bbd7c5; color:#19452f; padding:10px; font-size:12px; font-weight:700; margin-bottom:12px; }
+.twin-studio__inspector .twin-studio__inspector-hero p,.twin-studio__inspector .twin-studio__guidance p { color:#d4e5d8; }
+.twin-studio__inspector .twin-studio__mini-stats small { color:#c9e0d1; }

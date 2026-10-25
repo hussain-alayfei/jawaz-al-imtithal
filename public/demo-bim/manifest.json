@@ -1,0 +1,1831 @@
+{
+  "version": "MIYAR-DEMO-BIM-2",
+  "title": "مكتبة BIM التجريبية",
+  "disclaimer": "بيانات IFC4 دلالية تجريبية، تمثيل المشهد برمجي؛ لا توجد هندسة IFC حقيقية ولا اعتماد/امتثال.",
+  "files": [
+    {
+      "id": "architectural",
+      "name": "Architectural.ifc",
+      "label": "المعماري والتوزيع",
+      "desc": "20 غرفة، أبواب ونوافذ وتوزيع أدوار",
+      "group": "architecture",
+      "color": "#93a4ac",
+      "count": 20,
+      "elements": [
+        {
+          "id": "A-0-0",
+          "sceneId": "ROOM-0-reception",
+          "label": "الاستقبال · الدور 1",
+          "type": "IfcSpace",
+          "floor": 0,
+          "position": [
+            -4.5,
+            1,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-0-1",
+          "sceneId": "ROOM-0-hall",
+          "label": "الصالة الرئيسية · الدور 1",
+          "type": "IfcSpace",
+          "floor": 0,
+          "position": [
+            3.35,
+            1,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-0-2",
+          "sceneId": "ROOM-0-office",
+          "label": "المكاتب · الدور 1",
+          "type": "IfcSpace",
+          "floor": 0,
+          "position": [
+            -4.5,
+            1,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-0-3",
+          "sceneId": "ROOM-0-service",
+          "label": "الخدمات · الدور 1",
+          "type": "IfcSpace",
+          "floor": 0,
+          "position": [
+            3.35,
+            1,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-1-0",
+          "sceneId": "ROOM-1-reception",
+          "label": "الاستقبال · الدور 2",
+          "type": "IfcSpace",
+          "floor": 1,
+          "position": [
+            -4.5,
+            4.4,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-1-1",
+          "sceneId": "ROOM-1-hall",
+          "label": "الصالة الرئيسية · الدور 2",
+          "type": "IfcSpace",
+          "floor": 1,
+          "position": [
+            3.35,
+            4.4,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-1-2",
+          "sceneId": "ROOM-1-office",
+          "label": "المكاتب · الدور 2",
+          "type": "IfcSpace",
+          "floor": 1,
+          "position": [
+            -4.5,
+            4.4,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-1-3",
+          "sceneId": "ROOM-1-service",
+          "label": "الخدمات · الدور 2",
+          "type": "IfcSpace",
+          "floor": 1,
+          "position": [
+            3.35,
+            4.4,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-2-0",
+          "sceneId": "ROOM-2-reception",
+          "label": "الاستقبال · الدور 3",
+          "type": "IfcSpace",
+          "floor": 2,
+          "position": [
+            -4.5,
+            7.8,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-2-1",
+          "sceneId": "ROOM-2-hall",
+          "label": "الصالة الرئيسية · الدور 3",
+          "type": "IfcSpace",
+          "floor": 2,
+          "position": [
+            3.35,
+            7.8,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-2-2",
+          "sceneId": "ROOM-2-office",
+          "label": "المكاتب · الدور 3",
+          "type": "IfcSpace",
+          "floor": 2,
+          "position": [
+            -4.5,
+            7.8,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-2-3",
+          "sceneId": "ROOM-2-service",
+          "label": "الخدمات · الدور 3",
+          "type": "IfcSpace",
+          "floor": 2,
+          "position": [
+            3.35,
+            7.8,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-3-0",
+          "sceneId": "ROOM-3-reception",
+          "label": "الاستقبال · الدور 4",
+          "type": "IfcSpace",
+          "floor": 3,
+          "position": [
+            -4.5,
+            11.2,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-3-1",
+          "sceneId": "ROOM-3-hall",
+          "label": "الصالة الرئيسية · الدور 4",
+          "type": "IfcSpace",
+          "floor": 3,
+          "position": [
+            3.35,
+            11.2,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-3-2",
+          "sceneId": "ROOM-3-office",
+          "label": "المكاتب · الدور 4",
+          "type": "IfcSpace",
+          "floor": 3,
+          "position": [
+            -4.5,
+            11.2,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-3-3",
+          "sceneId": "ROOM-3-service",
+          "label": "الخدمات · الدور 4",
+          "type": "IfcSpace",
+          "floor": 3,
+          "position": [
+            3.35,
+            11.2,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-4-0",
+          "sceneId": "ROOM-4-reception",
+          "label": "الاستقبال · الدور 5",
+          "type": "IfcSpace",
+          "floor": 4,
+          "position": [
+            -4.5,
+            14.6,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-4-1",
+          "sceneId": "ROOM-4-hall",
+          "label": "الصالة الرئيسية · الدور 5",
+          "type": "IfcSpace",
+          "floor": 4,
+          "position": [
+            3.35,
+            14.6,
+            3.05
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-4-2",
+          "sceneId": "ROOM-4-office",
+          "label": "المكاتب · الدور 5",
+          "type": "IfcSpace",
+          "floor": 4,
+          "position": [
+            -4.5,
+            14.6,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        },
+        {
+          "id": "A-4-3",
+          "sceneId": "ROOM-4-service",
+          "label": "الخدمات · الدور 5",
+          "type": "IfcSpace",
+          "floor": 4,
+          "position": [
+            3.35,
+            14.6,
+            -2.85
+          ],
+          "description": "حيّز داخلي تجريبي بأبعاد مبسطة، مرتبط بالفلتر داخل المشهد"
+        }
+      ]
+    },
+    {
+      "id": "structural",
+      "name": "Structural.ifc",
+      "label": "الهيكل الإنشائي",
+      "desc": "أعمدة وكمرات وبلاطات لكل دور",
+      "group": "architecture",
+      "color": "#b5aa9d",
+      "count": 20,
+      "elements": [
+        {
+          "id": "S-0-0",
+          "sceneId": "ROOM-0-reception",
+          "label": "عمود/كمرة · الاستقبال · 1",
+          "type": "IfcBuildingElementProxy",
+          "floor": 0,
+          "position": [
+            -4.5,
+            1.7,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-0-1",
+          "sceneId": "ROOM-0-hall",
+          "label": "عمود/كمرة · الصالة الرئيسية · 1",
+          "type": "IfcBuildingElementProxy",
+          "floor": 0,
+          "position": [
+            3.35,
+            1.7,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-0-2",
+          "sceneId": "ROOM-0-office",
+          "label": "عمود/كمرة · المكاتب · 1",
+          "type": "IfcBuildingElementProxy",
+          "floor": 0,
+          "position": [
+            -4.5,
+            1.7,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-0-3",
+          "sceneId": "ROOM-0-service",
+          "label": "عمود/كمرة · الخدمات · 1",
+          "type": "IfcBuildingElementProxy",
+          "floor": 0,
+          "position": [
+            3.35,
+            1.7,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-1-0",
+          "sceneId": "ROOM-1-reception",
+          "label": "عمود/كمرة · الاستقبال · 2",
+          "type": "IfcBuildingElementProxy",
+          "floor": 1,
+          "position": [
+            -4.5,
+            5.1,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-1-1",
+          "sceneId": "ROOM-1-hall",
+          "label": "عمود/كمرة · الصالة الرئيسية · 2",
+          "type": "IfcBuildingElementProxy",
+          "floor": 1,
+          "position": [
+            3.35,
+            5.1,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-1-2",
+          "sceneId": "ROOM-1-office",
+          "label": "عمود/كمرة · المكاتب · 2",
+          "type": "IfcBuildingElementProxy",
+          "floor": 1,
+          "position": [
+            -4.5,
+            5.1,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-1-3",
+          "sceneId": "ROOM-1-service",
+          "label": "عمود/كمرة · الخدمات · 2",
+          "type": "IfcBuildingElementProxy",
+          "floor": 1,
+          "position": [
+            3.35,
+            5.1,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-2-0",
+          "sceneId": "ROOM-2-reception",
+          "label": "عمود/كمرة · الاستقبال · 3",
+          "type": "IfcBuildingElementProxy",
+          "floor": 2,
+          "position": [
+            -4.5,
+            8.5,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-2-1",
+          "sceneId": "ROOM-2-hall",
+          "label": "عمود/كمرة · الصالة الرئيسية · 3",
+          "type": "IfcBuildingElementProxy",
+          "floor": 2,
+          "position": [
+            3.35,
+            8.5,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-2-2",
+          "sceneId": "ROOM-2-office",
+          "label": "عمود/كمرة · المكاتب · 3",
+          "type": "IfcBuildingElementProxy",
+          "floor": 2,
+          "position": [
+            -4.5,
+            8.5,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-2-3",
+          "sceneId": "ROOM-2-service",
+          "label": "عمود/كمرة · الخدمات · 3",
+          "type": "IfcBuildingElementProxy",
+          "floor": 2,
+          "position": [
+            3.35,
+            8.5,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-3-0",
+          "sceneId": "ROOM-3-reception",
+          "label": "عمود/كمرة · الاستقبال · 4",
+          "type": "IfcBuildingElementProxy",
+          "floor": 3,
+          "position": [
+            -4.5,
+            11.899999999999999,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-3-1",
+          "sceneId": "ROOM-3-hall",
+          "label": "عمود/كمرة · الصالة الرئيسية · 4",
+          "type": "IfcBuildingElementProxy",
+          "floor": 3,
+          "position": [
+            3.35,
+            11.899999999999999,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-3-2",
+          "sceneId": "ROOM-3-office",
+          "label": "عمود/كمرة · المكاتب · 4",
+          "type": "IfcBuildingElementProxy",
+          "floor": 3,
+          "position": [
+            -4.5,
+            11.899999999999999,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-3-3",
+          "sceneId": "ROOM-3-service",
+          "label": "عمود/كمرة · الخدمات · 4",
+          "type": "IfcBuildingElementProxy",
+          "floor": 3,
+          "position": [
+            3.35,
+            11.899999999999999,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-4-0",
+          "sceneId": "ROOM-4-reception",
+          "label": "عمود/كمرة · الاستقبال · 5",
+          "type": "IfcBuildingElementProxy",
+          "floor": 4,
+          "position": [
+            -4.5,
+            15.299999999999999,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-4-1",
+          "sceneId": "ROOM-4-hall",
+          "label": "عمود/كمرة · الصالة الرئيسية · 5",
+          "type": "IfcBuildingElementProxy",
+          "floor": 4,
+          "position": [
+            3.35,
+            15.299999999999999,
+            3.05
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-4-2",
+          "sceneId": "ROOM-4-office",
+          "label": "عمود/كمرة · المكاتب · 5",
+          "type": "IfcBuildingElementProxy",
+          "floor": 4,
+          "position": [
+            -4.5,
+            15.299999999999999,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        },
+        {
+          "id": "S-4-3",
+          "sceneId": "ROOM-4-service",
+          "label": "عمود/كمرة · الخدمات · 5",
+          "type": "IfcBuildingElementProxy",
+          "floor": 4,
+          "position": [
+            3.35,
+            15.299999999999999,
+            -2.85
+          ],
+          "description": "عنصر إنشائي مرجعي تجريبي بمستوى الدور، لم تُنشأ هندسته من IFC"
+        }
+      ]
+    },
+    {
+      "id": "mep",
+      "name": "MEP.ifc",
+      "label": "الكهرباء والمواسير والتكييف",
+      "desc": "شبكات كهرباء ومياه وصرف وتكييف وتأريض",
+      "group": "mep",
+      "color": "#e2ab47",
+      "count": 75,
+      "elements": [
+        {
+          "id": "M-0-electricity-0",
+          "sceneId": "DETAIL-0-electricity-0",
+          "label": "كابلات ولوحات كهرباء · نقطة 1 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "electricity",
+          "position": [
+            -4.8,
+            2.89,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-0-electricity-1",
+          "sceneId": "DETAIL-0-electricity-1",
+          "label": "كابلات ولوحات كهرباء · نقطة 2 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "electricity",
+          "position": [
+            0,
+            2.89,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-0-electricity-2",
+          "sceneId": "DETAIL-0-electricity-2",
+          "label": "كابلات ولوحات كهرباء · نقطة 3 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "electricity",
+          "position": [
+            4.8,
+            2.89,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-0-water-0",
+          "sceneId": "DETAIL-0-water-0",
+          "label": "خط مياه بارد · نقطة 1 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "water",
+          "position": [
+            -4.8,
+            2.65,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-0-water-1",
+          "sceneId": "DETAIL-0-water-1",
+          "label": "خط مياه بارد · نقطة 2 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "water",
+          "position": [
+            0,
+            2.65,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-0-water-2",
+          "sceneId": "DETAIL-0-water-2",
+          "label": "خط مياه بارد · نقطة 3 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "water",
+          "position": [
+            4.8,
+            2.65,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-0-drainage-0",
+          "sceneId": "DETAIL-0-drainage-0",
+          "label": "خط صرف صحي · نقطة 1 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "drainage",
+          "position": [
+            -4.8,
+            0.45,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-0-drainage-1",
+          "sceneId": "DETAIL-0-drainage-1",
+          "label": "خط صرف صحي · نقطة 2 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "drainage",
+          "position": [
+            0,
+            0.45,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-0-drainage-2",
+          "sceneId": "DETAIL-0-drainage-2",
+          "label": "خط صرف صحي · نقطة 3 · دور 1",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "system": "drainage",
+          "position": [
+            4.8,
+            0.45,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-0-hvac-0",
+          "sceneId": "DETAIL-0-hvac-0",
+          "label": "مجرى تكييف · نقطة 1 · دور 1",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "system": "hvac",
+          "position": [
+            -4.8,
+            2.8,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-0-hvac-1",
+          "sceneId": "DETAIL-0-hvac-1",
+          "label": "مجرى تكييف · نقطة 2 · دور 1",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "system": "hvac",
+          "position": [
+            0,
+            2.8,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-0-hvac-2",
+          "sceneId": "DETAIL-0-hvac-2",
+          "label": "مجرى تكييف · نقطة 3 · دور 1",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "system": "hvac",
+          "position": [
+            4.8,
+            2.8,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-0-grounding-0",
+          "sceneId": "DETAIL-0-grounding-0",
+          "label": "موصل تأريض · نقطة 1 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "grounding",
+          "position": [
+            -4.8,
+            0.32,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-0-grounding-1",
+          "sceneId": "DETAIL-0-grounding-1",
+          "label": "موصل تأريض · نقطة 2 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "grounding",
+          "position": [
+            0,
+            0.32,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-0-grounding-2",
+          "sceneId": "DETAIL-0-grounding-2",
+          "label": "موصل تأريض · نقطة 3 · دور 1",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "system": "grounding",
+          "position": [
+            4.8,
+            0.32,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-1-electricity-0",
+          "sceneId": "DETAIL-1-electricity-0",
+          "label": "كابلات ولوحات كهرباء · نقطة 1 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "electricity",
+          "position": [
+            -4.8,
+            6.29,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-1-electricity-1",
+          "sceneId": "DETAIL-1-electricity-1",
+          "label": "كابلات ولوحات كهرباء · نقطة 2 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "electricity",
+          "position": [
+            0,
+            6.29,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-1-electricity-2",
+          "sceneId": "DETAIL-1-electricity-2",
+          "label": "كابلات ولوحات كهرباء · نقطة 3 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "electricity",
+          "position": [
+            4.8,
+            6.29,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-1-water-0",
+          "sceneId": "DETAIL-1-water-0",
+          "label": "خط مياه بارد · نقطة 1 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "water",
+          "position": [
+            -4.8,
+            6.05,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-1-water-1",
+          "sceneId": "DETAIL-1-water-1",
+          "label": "خط مياه بارد · نقطة 2 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "water",
+          "position": [
+            0,
+            6.05,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-1-water-2",
+          "sceneId": "DETAIL-1-water-2",
+          "label": "خط مياه بارد · نقطة 3 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "water",
+          "position": [
+            4.8,
+            6.05,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-1-drainage-0",
+          "sceneId": "DETAIL-1-drainage-0",
+          "label": "خط صرف صحي · نقطة 1 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "drainage",
+          "position": [
+            -4.8,
+            3.85,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-1-drainage-1",
+          "sceneId": "DETAIL-1-drainage-1",
+          "label": "خط صرف صحي · نقطة 2 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "drainage",
+          "position": [
+            0,
+            3.85,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-1-drainage-2",
+          "sceneId": "DETAIL-1-drainage-2",
+          "label": "خط صرف صحي · نقطة 3 · دور 2",
+          "type": "IFCPIPESEGMENT",
+          "floor": 1,
+          "system": "drainage",
+          "position": [
+            4.8,
+            3.85,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-1-hvac-0",
+          "sceneId": "DETAIL-1-hvac-0",
+          "label": "مجرى تكييف · نقطة 1 · دور 2",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 1,
+          "system": "hvac",
+          "position": [
+            -4.8,
+            6.199999999999999,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-1-hvac-1",
+          "sceneId": "DETAIL-1-hvac-1",
+          "label": "مجرى تكييف · نقطة 2 · دور 2",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 1,
+          "system": "hvac",
+          "position": [
+            0,
+            6.199999999999999,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-1-hvac-2",
+          "sceneId": "DETAIL-1-hvac-2",
+          "label": "مجرى تكييف · نقطة 3 · دور 2",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 1,
+          "system": "hvac",
+          "position": [
+            4.8,
+            6.199999999999999,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-1-grounding-0",
+          "sceneId": "DETAIL-1-grounding-0",
+          "label": "موصل تأريض · نقطة 1 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "grounding",
+          "position": [
+            -4.8,
+            3.7199999999999998,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-1-grounding-1",
+          "sceneId": "DETAIL-1-grounding-1",
+          "label": "موصل تأريض · نقطة 2 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "grounding",
+          "position": [
+            0,
+            3.7199999999999998,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-1-grounding-2",
+          "sceneId": "DETAIL-1-grounding-2",
+          "label": "موصل تأريض · نقطة 3 · دور 2",
+          "type": "IFCCABLESEGMENT",
+          "floor": 1,
+          "system": "grounding",
+          "position": [
+            4.8,
+            3.7199999999999998,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-2-electricity-0",
+          "sceneId": "DETAIL-2-electricity-0",
+          "label": "كابلات ولوحات كهرباء · نقطة 1 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "electricity",
+          "position": [
+            -4.8,
+            9.69,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-2-electricity-1",
+          "sceneId": "DETAIL-2-electricity-1",
+          "label": "كابلات ولوحات كهرباء · نقطة 2 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "electricity",
+          "position": [
+            0,
+            9.69,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-2-electricity-2",
+          "sceneId": "DETAIL-2-electricity-2",
+          "label": "كابلات ولوحات كهرباء · نقطة 3 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "electricity",
+          "position": [
+            4.8,
+            9.69,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-2-water-0",
+          "sceneId": "DETAIL-2-water-0",
+          "label": "خط مياه بارد · نقطة 1 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "water",
+          "position": [
+            -4.8,
+            9.45,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-2-water-1",
+          "sceneId": "DETAIL-2-water-1",
+          "label": "خط مياه بارد · نقطة 2 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "water",
+          "position": [
+            0,
+            9.45,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-2-water-2",
+          "sceneId": "DETAIL-2-water-2",
+          "label": "خط مياه بارد · نقطة 3 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "water",
+          "position": [
+            4.8,
+            9.45,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-2-drainage-0",
+          "sceneId": "DETAIL-2-drainage-0",
+          "label": "خط صرف صحي · نقطة 1 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "drainage",
+          "position": [
+            -4.8,
+            7.25,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-2-drainage-1",
+          "sceneId": "DETAIL-2-drainage-1",
+          "label": "خط صرف صحي · نقطة 2 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "drainage",
+          "position": [
+            0,
+            7.25,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-2-drainage-2",
+          "sceneId": "DETAIL-2-drainage-2",
+          "label": "خط صرف صحي · نقطة 3 · دور 3",
+          "type": "IFCPIPESEGMENT",
+          "floor": 2,
+          "system": "drainage",
+          "position": [
+            4.8,
+            7.25,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-2-hvac-0",
+          "sceneId": "DETAIL-2-hvac-0",
+          "label": "مجرى تكييف · نقطة 1 · دور 3",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 2,
+          "system": "hvac",
+          "position": [
+            -4.8,
+            9.6,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-2-hvac-1",
+          "sceneId": "DETAIL-2-hvac-1",
+          "label": "مجرى تكييف · نقطة 2 · دور 3",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 2,
+          "system": "hvac",
+          "position": [
+            0,
+            9.6,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-2-hvac-2",
+          "sceneId": "DETAIL-2-hvac-2",
+          "label": "مجرى تكييف · نقطة 3 · دور 3",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 2,
+          "system": "hvac",
+          "position": [
+            4.8,
+            9.6,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-2-grounding-0",
+          "sceneId": "DETAIL-2-grounding-0",
+          "label": "موصل تأريض · نقطة 1 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "grounding",
+          "position": [
+            -4.8,
+            7.12,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-2-grounding-1",
+          "sceneId": "DETAIL-2-grounding-1",
+          "label": "موصل تأريض · نقطة 2 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "grounding",
+          "position": [
+            0,
+            7.12,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-2-grounding-2",
+          "sceneId": "DETAIL-2-grounding-2",
+          "label": "موصل تأريض · نقطة 3 · دور 3",
+          "type": "IFCCABLESEGMENT",
+          "floor": 2,
+          "system": "grounding",
+          "position": [
+            4.8,
+            7.12,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-3-electricity-0",
+          "sceneId": "DETAIL-3-electricity-0",
+          "label": "كابلات ولوحات كهرباء · نقطة 1 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "electricity",
+          "position": [
+            -4.8,
+            13.09,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-3-electricity-1",
+          "sceneId": "DETAIL-3-electricity-1",
+          "label": "كابلات ولوحات كهرباء · نقطة 2 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "electricity",
+          "position": [
+            0,
+            13.09,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-3-electricity-2",
+          "sceneId": "DETAIL-3-electricity-2",
+          "label": "كابلات ولوحات كهرباء · نقطة 3 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "electricity",
+          "position": [
+            4.8,
+            13.09,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-3-water-0",
+          "sceneId": "DETAIL-3-water-0",
+          "label": "خط مياه بارد · نقطة 1 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "water",
+          "position": [
+            -4.8,
+            12.85,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-3-water-1",
+          "sceneId": "DETAIL-3-water-1",
+          "label": "خط مياه بارد · نقطة 2 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "water",
+          "position": [
+            0,
+            12.85,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-3-water-2",
+          "sceneId": "DETAIL-3-water-2",
+          "label": "خط مياه بارد · نقطة 3 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "water",
+          "position": [
+            4.8,
+            12.85,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-3-drainage-0",
+          "sceneId": "DETAIL-3-drainage-0",
+          "label": "خط صرف صحي · نقطة 1 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "drainage",
+          "position": [
+            -4.8,
+            10.649999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-3-drainage-1",
+          "sceneId": "DETAIL-3-drainage-1",
+          "label": "خط صرف صحي · نقطة 2 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "drainage",
+          "position": [
+            0,
+            10.649999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-3-drainage-2",
+          "sceneId": "DETAIL-3-drainage-2",
+          "label": "خط صرف صحي · نقطة 3 · دور 4",
+          "type": "IFCPIPESEGMENT",
+          "floor": 3,
+          "system": "drainage",
+          "position": [
+            4.8,
+            10.649999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-3-hvac-0",
+          "sceneId": "DETAIL-3-hvac-0",
+          "label": "مجرى تكييف · نقطة 1 · دور 4",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 3,
+          "system": "hvac",
+          "position": [
+            -4.8,
+            13,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-3-hvac-1",
+          "sceneId": "DETAIL-3-hvac-1",
+          "label": "مجرى تكييف · نقطة 2 · دور 4",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 3,
+          "system": "hvac",
+          "position": [
+            0,
+            13,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-3-hvac-2",
+          "sceneId": "DETAIL-3-hvac-2",
+          "label": "مجرى تكييف · نقطة 3 · دور 4",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 3,
+          "system": "hvac",
+          "position": [
+            4.8,
+            13,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-3-grounding-0",
+          "sceneId": "DETAIL-3-grounding-0",
+          "label": "موصل تأريض · نقطة 1 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "grounding",
+          "position": [
+            -4.8,
+            10.52,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-3-grounding-1",
+          "sceneId": "DETAIL-3-grounding-1",
+          "label": "موصل تأريض · نقطة 2 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "grounding",
+          "position": [
+            0,
+            10.52,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-3-grounding-2",
+          "sceneId": "DETAIL-3-grounding-2",
+          "label": "موصل تأريض · نقطة 3 · دور 4",
+          "type": "IFCCABLESEGMENT",
+          "floor": 3,
+          "system": "grounding",
+          "position": [
+            4.8,
+            10.52,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-4-electricity-0",
+          "sceneId": "DETAIL-4-electricity-0",
+          "label": "كابلات ولوحات كهرباء · نقطة 1 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "electricity",
+          "position": [
+            -4.8,
+            16.49,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-4-electricity-1",
+          "sceneId": "DETAIL-4-electricity-1",
+          "label": "كابلات ولوحات كهرباء · نقطة 2 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "electricity",
+          "position": [
+            0,
+            16.49,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-4-electricity-2",
+          "sceneId": "DETAIL-4-electricity-2",
+          "label": "كابلات ولوحات كهرباء · نقطة 3 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "electricity",
+          "position": [
+            4.8,
+            16.49,
+            4.7
+          ],
+          "description": "تمثيل تغذية كهربائية فرعية؛ الأحمال والسعات غير محسوبة"
+        },
+        {
+          "id": "M-4-water-0",
+          "sceneId": "DETAIL-4-water-0",
+          "label": "خط مياه بارد · نقطة 1 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "water",
+          "position": [
+            -4.8,
+            16.25,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-4-water-1",
+          "sceneId": "DETAIL-4-water-1",
+          "label": "خط مياه بارد · نقطة 2 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "water",
+          "position": [
+            0,
+            16.25,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-4-water-2",
+          "sceneId": "DETAIL-4-water-2",
+          "label": "خط مياه بارد · نقطة 3 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "water",
+          "position": [
+            4.8,
+            16.25,
+            -3.6
+          ],
+          "description": "مواسير التغذية والتفرعات؛ الأقطار توضيحية"
+        },
+        {
+          "id": "M-4-drainage-0",
+          "sceneId": "DETAIL-4-drainage-0",
+          "label": "خط صرف صحي · نقطة 1 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "drainage",
+          "position": [
+            -4.8,
+            14.049999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-4-drainage-1",
+          "sceneId": "DETAIL-4-drainage-1",
+          "label": "خط صرف صحي · نقطة 2 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "drainage",
+          "position": [
+            0,
+            14.049999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-4-drainage-2",
+          "sceneId": "DETAIL-4-drainage-2",
+          "label": "خط صرف صحي · نقطة 3 · دور 5",
+          "type": "IFCPIPESEGMENT",
+          "floor": 4,
+          "system": "drainage",
+          "position": [
+            4.8,
+            14.049999999999999,
+            -4.1
+          ],
+          "description": "مواسير الصرف والتجميع؛ الميل توضيحي"
+        },
+        {
+          "id": "M-4-hvac-0",
+          "sceneId": "DETAIL-4-hvac-0",
+          "label": "مجرى تكييف · نقطة 1 · دور 5",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 4,
+          "system": "hvac",
+          "position": [
+            -4.8,
+            16.4,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-4-hvac-1",
+          "sceneId": "DETAIL-4-hvac-1",
+          "label": "مجرى تكييف · نقطة 2 · دور 5",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 4,
+          "system": "hvac",
+          "position": [
+            0,
+            16.4,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-4-hvac-2",
+          "sceneId": "DETAIL-4-hvac-2",
+          "label": "مجرى تكييف · نقطة 3 · دور 5",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 4,
+          "system": "hvac",
+          "position": [
+            4.8,
+            16.4,
+            0.1
+          ],
+          "description": "مجاري الهواء وناشراته؛ التدفق توضيحي"
+        },
+        {
+          "id": "M-4-grounding-0",
+          "sceneId": "DETAIL-4-grounding-0",
+          "label": "موصل تأريض · نقطة 1 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "grounding",
+          "position": [
+            -4.8,
+            13.92,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-4-grounding-1",
+          "sceneId": "DETAIL-4-grounding-1",
+          "label": "موصل تأريض · نقطة 2 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "grounding",
+          "position": [
+            0,
+            13.92,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        },
+        {
+          "id": "M-4-grounding-2",
+          "sceneId": "DETAIL-4-grounding-2",
+          "label": "موصل تأريض · نقطة 3 · دور 5",
+          "type": "IFCCABLESEGMENT",
+          "floor": 4,
+          "system": "grounding",
+          "position": [
+            4.8,
+            13.92,
+            5.1
+          ],
+          "description": "تأريض المعدات، دون قيمة مقاومة معتمدة"
+        }
+      ]
+    },
+    {
+      "id": "fire",
+      "name": "FireSafety.ifc",
+      "label": "الحريق والإنذار",
+      "desc": "رشاشات الحريق ونقاط المسار",
+      "group": "fire",
+      "color": "#d75042",
+      "count": 15,
+      "elements": [
+        {
+          "id": "F-0-0",
+          "sceneId": "DETAIL-0-fire-0",
+          "label": "مرش حريق1 · الدور 1",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "system": "fire",
+          "position": [
+            -4.8,
+            2.98,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-0-1",
+          "sceneId": "DETAIL-0-fire-1",
+          "label": "مرش حريق2 · الدور 1",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "system": "fire",
+          "position": [
+            0,
+            2.98,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-0-2",
+          "sceneId": "DETAIL-0-fire-2",
+          "label": "مرش حريق3 · الدور 1",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "system": "fire",
+          "position": [
+            4.8,
+            2.98,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-1-0",
+          "sceneId": "DETAIL-1-fire-0",
+          "label": "مرش حريق1 · الدور 2",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 1,
+          "system": "fire",
+          "position": [
+            -4.8,
+            6.38,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-1-1",
+          "sceneId": "DETAIL-1-fire-1",
+          "label": "مرش حريق2 · الدور 2",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 1,
+          "system": "fire",
+          "position": [
+            0,
+            6.38,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-1-2",
+          "sceneId": "DETAIL-1-fire-2",
+          "label": "مرش حريق3 · الدور 2",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 1,
+          "system": "fire",
+          "position": [
+            4.8,
+            6.38,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-2-0",
+          "sceneId": "DETAIL-2-fire-0",
+          "label": "مرش حريق1 · الدور 3",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 2,
+          "system": "fire",
+          "position": [
+            -4.8,
+            9.78,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-2-1",
+          "sceneId": "DETAIL-2-fire-1",
+          "label": "مرش حريق2 · الدور 3",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 2,
+          "system": "fire",
+          "position": [
+            0,
+            9.78,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-2-2",
+          "sceneId": "DETAIL-2-fire-2",
+          "label": "مرش حريق3 · الدور 3",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 2,
+          "system": "fire",
+          "position": [
+            4.8,
+            9.78,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-3-0",
+          "sceneId": "DETAIL-3-fire-0",
+          "label": "مرش حريق1 · الدور 4",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 3,
+          "system": "fire",
+          "position": [
+            -4.8,
+            13.18,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-3-1",
+          "sceneId": "DETAIL-3-fire-1",
+          "label": "مرش حريق2 · الدور 4",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 3,
+          "system": "fire",
+          "position": [
+            0,
+            13.18,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-3-2",
+          "sceneId": "DETAIL-3-fire-2",
+          "label": "مرش حريق3 · الدور 4",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 3,
+          "system": "fire",
+          "position": [
+            4.8,
+            13.18,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-4-0",
+          "sceneId": "DETAIL-4-fire-0",
+          "label": "مرش حريق1 · الدور 5",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 4,
+          "system": "fire",
+          "position": [
+            -4.8,
+            16.58,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-4-1",
+          "sceneId": "DETAIL-4-fire-1",
+          "label": "مرش حريق2 · الدور 5",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 4,
+          "system": "fire",
+          "position": [
+            0,
+            16.58,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        },
+        {
+          "id": "F-4-2",
+          "sceneId": "DETAIL-4-fire-2",
+          "label": "مرش حريق3 · الدور 5",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 4,
+          "system": "fire",
+          "position": [
+            4.8,
+            16.58,
+            -1.9
+          ],
+          "description": "مرش حريق وخط تغذية تمثيلي، وليس حساب تغطية أو اعتمادًا نظاميًا"
+        }
+      ]
+    }
+  ]
+}
