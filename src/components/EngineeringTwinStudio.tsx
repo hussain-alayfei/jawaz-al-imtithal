@@ -505,7 +505,7 @@ export function EngineeringTwinStudio({ projectName, activityName, findingsCount
           {inspected && <div className="twin-studio__mobile-selection" dir="rtl">
             <button type="button" aria-label="إغلاق تفاصيل العنصر" onClick={() => setSelected(null)}><X size={16}/></button>
             <strong>{inspected.label}</strong><span>{inspected.description}</span>
-          </div>
+          </div>}
           {menuOpen && <div className="twin-studio__mobile-menu">
             {SYSTEM_LIST.map(item => <button key={item.key} type="button" onClick={() => {setFocusSystem(item.key); setMenuOpen(false);}}>{item.label}</button>)}
           </div>}
