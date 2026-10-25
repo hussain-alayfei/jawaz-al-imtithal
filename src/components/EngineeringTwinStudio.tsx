@@ -38,16 +38,19 @@ const FLOOR_LIST: { key: Floor; label: string; en: string }[] = [
   { key: "roof", label: "السطح والخدمات", en: "RF" },
 ];
 const SYSTEM_LIST: { key: Utility; label: string; color: string }[] = [
-  { key: "architecture", label: "العمارة والإنشاء", color: "#a9b0af" },
-  { key: "all", label: "كل شبكات التمديدات", color: "#80c9a6" },
+  { key: "all", label: "إظهار جميع الأنظمة", color: "#80c9a6" },
   { key: "electricity", label: "الكهرباء", color: SERVICE_META.electricity.color },
   { key: "water", label: "المياه", color: SERVICE_META.water.color },
   { key: "drainage", label: "الصرف الصحي", color: SERVICE_META.drainage.color },
   { key: "hvac", label: "التكييف والتهوية", color: SERVICE_META.hvac.color },
   { key: "fire", label: "الحريق والسلامة", color: SERVICE_META.fire.color },
   { key: "grounding", label: "التأريض", color: SERVICE_META.grounding.color },
+  { key: "architecture", label: "العمارة فقط (إخفاء الشبكات)", color: "#a9b0af" },
 ];
 const ALL_VISIBLE: ServiceVisibility = {
+  electricity: true, water: true, drainage: true, hvac: true, fire: true, grounding: true,
+};
+const NONE_VISIBLE: ServiceVisibility = {
   electricity: false, water: false, drainage: false, hvac: false, fire: false, grounding: false,
 };
 const CUSTOM_NODES: NodeInfo[] = [
@@ -338,10 +341,10 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const floorCount = 5;
   void floors;
   const availableFloors = FLOOR_LIST;
-  const [system, setSystem] = useState<Utility>("architecture");
+  const [system, setSystem] = useState<Utility>("all");
   const [floor, setFloor] = useState<Floor>("all");
   const rooms = getActivityRooms(activityId, Math.max(0, levelOf(floor)));
-  const [sideSection, setSideSection] = useState<"floors"|"systems"|"rooms"|"view">("floors");
+  const [sideSection, setSideSection] = useState<"floors"|"systems"|"rooms"|"view">("systems");
   const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
   const [furniture, setFurniture] = useState(true);
   const [labels, setLabels] = useState(false);
@@ -356,8 +359,8 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [inspectorTab, setInspectorTab] = useState<"files"|"items"|"analysis">("items");
   const [mobileInspectorOpen,setMobileInspectorOpen] = useState(false);
   const chooseScene = (next:"building"|VenueKind) => {
-    setScene(next);setSideSection("floors");setInspectorTab("items");
-    setSystem("architecture");setVisible(ALL_VISIBLE);setFloor("all");
+    setScene(next);setSideSection("systems");setInspectorTab("items");
+    setSystem("all");setVisible(ALL_VISIBLE);setFloor("all");
     setGhost(true);setFurniture(true);setSelected(null);setPreset("iso");
     setMobileInspectorOpen(false);setNonce(n=>n+1);
   };
@@ -402,8 +405,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const setFocusSystem = useCallback((key: Utility) => {
     setSystem(key);
     setSelected(null);
-    setVisible(key === "architecture"
-      ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key || key === "all"])) as ServiceVisibility);
+    setVisible(key === "architecture" ? NONE_VISIBLE
+      : key === "all" ? ALL_VISIBLE
+      : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key])) as ServiceVisibility);
     if (isBuilding && floor === "roof") setFloor("ground");
     setGhost(true);
     if (key === "architecture") {setRoomFilter("all");setFurniture(true);}
@@ -418,7 +422,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     const key:Utility = discipline && SERVICE_KEYS.includes(discipline as ServiceKey)
       ? discipline as Utility : "architecture";
     setSystem(key);
-    setVisible(key==="architecture" ? ALL_VISIBLE
+    setVisible(key==="architecture" ? NONE_VISIBLE
       : Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===key])) as ServiceVisibility);
     setGhost(key!=="architecture");
     setFurniture(true);
@@ -432,7 +436,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       setSystem(item.system);
       setVisible(Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===item.system])) as ServiceVisibility);
     }else{
-      setSystem("architecture");setVisible(ALL_VISIBLE);
+      setSystem("architecture");setVisible(NONE_VISIBLE);
     }
     setGhost(true);setNonce(n=>n+1);
     setMobileInspectorOpen(false);
@@ -443,7 +447,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setGhost(true);setNonce(n=>n+1);
   };
   const reset = () => {
-    setSystem("architecture"); setFloor("all"); setSideSection("floors"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
+    setSystem("all"); setFloor("all"); setSideSection("systems"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
     setFurniture(true); setLabels(false); setGhost(true); setExploded(false); setFlow(true);
     setPreset("iso"); setSelected(null); setNonce(n => n + 1);
   };
@@ -504,14 +508,21 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               onClick={()=>setSideSection(key)}>{label}</button>)}
           </div>
           {sideSection==="systems" && <section className="twin-studio__side-panel" aria-label="الأنظمة الهندسية">
-          <div className="twin-studio__section-heading"><Layers3 size={17}/> <span>اختر النظام الهندسي</span><small>08</small></div>
+          <div className="twin-studio__section-heading"><Layers3 size={17}/> <span>الشبكات الهندسية</span><small>{totalVisible}/6</small></div>
+          <div className="twin-studio__systems-intro" data-testid="network-visibility-summary">
+            <strong>{totalVisible===6 ? "جميع الشبكات ظاهرة الآن" : totalVisible===0 ? "عرض معماري فقط" : "عرض "+SYSTEM_LIST.find(s=>s.key===system)?.label}</strong>
+            <span>{totalVisible===6 ? "كل التمديدات مفعّلة. اختر شبكة أدناه لعزلها والتركيز عليها." : "اضغط إظهار جميع الأنظمة لاستعادة الشبكات الست معًا."}</span>
+          </div>
           <div className="twin-studio__system-list">
             {SYSTEM_LIST.map(item => (
-              <button key={item.key} type="button" className={"twin-studio__system" + (system === item.key ? " is-active" : "")}
+              <button key={item.key} type="button"
+                className={"twin-studio__system" + (system === item.key ? " is-active" : "") + (item.key!=="all" && item.key!=="architecture" && visible[item.key] ? " is-visible" : "")}
                 style={{ "--system-color": item.color } as CSSProperties}
+                data-network-visible={item.key==="all" ? totalVisible===6 : item.key==="architecture" ? totalVisible===0 : visible[item.key]}
                 onClick={() => setFocusSystem(item.key)} aria-pressed={system === item.key}>
                 <span className="twin-studio__system-bullet" />
-                <span>{item.label}</span>
+                <span className="twin-studio__system-name">{item.label}</span>
+                {item.key!=="all" && item.key!=="architecture" && visible[item.key] ? <span className="twin-studio__system-state">ظاهر</span> : null}
                 {system === item.key ? <Check size={15}/> : <span className="twin-studio__system-arrow">◂</span>}
               </button>
             ))}
@@ -612,6 +623,13 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           <div className="twin-studio__viewport-stats">
             <span>{isBuilding?"5 STOREYS":"1 STOREY · "+(scene==="cafe"?"CAFE":"RESTAURANT")}</span><span>◦</span><span>DEMO / NOT AS-BUILT</span>
           </div>
+          {totalVisible>0 && <div className="twin-studio__network-legend" data-testid="network-color-legend" aria-label="دليل ألوان الشبكات الظاهرة">
+            <strong><Layers3 size={13}/> {totalVisible===6?"جميع التمديدات":"التمديدات الظاهرة"} · {totalVisible}/6</strong>
+            <div>{SERVICE_KEYS.filter(key=>visible[key]).map(key=><button key={key} type="button" title={"عرض "+SERVICE_META[key].label+" فقط"}
+              onClick={()=>setFocusSystem(key)}>
+              <span style={{background:SERVICE_META[key].color}}/>{SERVICE_META[key].label}
+            </button>)}</div>
+          </div>}
           {isBuilding && <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
             <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
               {availableFloors.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
