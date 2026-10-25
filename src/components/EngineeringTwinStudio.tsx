@@ -48,9 +48,9 @@ const ALL_VISIBLE: ServiceVisibility = {
   electricity: false, water: false, drainage: false, hvac: false, fire: false, grounding: false,
 };
 const CUSTOM_NODES: NodeInfo[] = [
-  { id: "DEMO-HVAC-ROOF", system: "hvac", label: "معدات التكييف على السطح", description: "مجموعة معالجة هواء ووصلات تغذية توضيحية.", position: [5.7, 11.1, -3.5] },
+  { id: "DEMO-HVAC-ROOF", system: "hvac", label: "معدات التكييف على السطح", description: "مجموعة معالجة هواء ووصلات تغذية توضيحية.", position: [5.7, 17.9, -3.5] },
   { id: "DEMO-F-VALVE", system: "fire", label: "صمام تغذية الحريق", description: "صمام تحكم افتراضي متصل بمسار مكافحة الحريق.", position: [-6.2, 0.8, -4.7] },
-  { id: "DEMO-W-TANK", system: "water", label: "خزان المياه العلوي", description: "خزان مبني هندسيًا للتوضيح، وليس مستخرجًا من الملف المرفوع.", position: [5, 11.2, 3.3] },
+  { id: "DEMO-W-TANK", system: "water", label: "خزان المياه العلوي", description: "خزان مبني هندسيًا للتوضيح، وليس مستخرجًا من الملف المرفوع.", position: [5, 18, 3.3] },
   { id: "DEMO-GLTF-CABINET", system: "architecture", label: "خزانة أثاث من glTF", description: "مجسم أثاث ثلاثي الأبعاد من ملف glTF تجريبي حقيقي داخل مجلد المشروع، لا ينتمي إلى ملف IFC.", position: [5.85, 0.95, -4.85] },
 ];
 const viewDefaults: Record<Preset, { position: Vec3; target: Vec3 }> = {
@@ -292,7 +292,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
       <Storey key={level} level={level} floor={floor} ghost={ghost} explode={exploded}
         activity={activity} roomFilter={roomFilter} furniture={furniture} labels={labels}
         selectedId={selected} selectedSystem={selectedSystem} onSelectRoom={onSelect} />)}
-    {floor === "roof" && <group position={[0,(floorCount - 3)*STOREY_HEIGHT,0]}>
+    {(floor === "all" || floor === "roof") && <group position={[0,(floorCount - 3)*STOREY_HEIGHT,0]}>
       <Roof ghost={ghost} onSelectEquipment={onSelect} />
     </group>}
     {(floor === "all" || floor === "ground") && <>
