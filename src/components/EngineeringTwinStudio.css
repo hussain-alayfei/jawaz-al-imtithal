@@ -350,3 +350,7 @@
  .twin-studio__system,.twin-studio__floor-list button { font-size: 11px; }
  .twin-studio__viewport-stats { max-width: 260px; }
 }
+
+.twin-studio__mobile-inspector-close { width:100%; background:#dcefe2; border:1px solid #bbd7c5; color:#19452f; padding:10px; font-size:12px; font-weight:700; margin-bottom:12px; }
+.twin-studio__inspector .twin-studio__inspector-hero p,.twin-studio__inspector .twin-studio__guidance p { color:#d4e5d8; }
+.twin-studio__inspector .twin-studio__mini-stats small { color:#c9e0d1; }
