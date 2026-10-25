@@ -4877,3 +4877,18 @@ code,
 @media (max-width: 430px) {
  .bim-upload-kit__files { grid-template-columns: 1fr; }
 }
+
+
+/* Activity-specific, downloadable, clearly labelled synthetic BIM samples. */
+.bim-venue-packs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 22px;}
+.bim-venue-packs__card {border:1px solid #b0c5b6;background:#f8faf6;padding:17px;}
+.bim-venue-packs__card>div:first-child strong {font-size:17px;color:#17462e;}
+.bim-venue-packs__card>div:first-child p {margin:5px 0 13px;font-size:12px;color:#4a6753;}
+.bim-venue-packs__links {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.bim-venue-packs__links a {min-width:0;display:flex;align-items:center;gap:6px;min-height:35px;
+ border:1px solid #c1d4c4;background:#e9f1e8;padding:7px 8px;color:#1e4c32;font-size:11px;}
+.bim-venue-packs__links a svg {flex:none;}
+.bim-venue-packs__links a span {flex:1;min-width:0;overflow-wrap:anywhere;}
+.bim-venue-packs__links a:hover {border-color:#6e9a7b;background:#dcebe0;}
+.bim-venue-packs__card>small {display:block;margin-top:10px;font-size:11px;color:#76592f;line-height:1.7;}
+@media(max-width:760px){.bim-venue-packs{grid-template-columns:1fr;}}

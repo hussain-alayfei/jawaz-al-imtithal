@@ -16,6 +16,8 @@ import {
   findServiceNode, type ServiceKey, type ServiceVisibility,
 } from "./EngineeringNetworks3D";
 import { VenueScene3D, VENUE_META, VENUE_SPOTS, getVenueSpot, type VenueKind } from "./VenueScene3D";
+import { VenueAnalysisPanel, VenueBimPanel } from "./VenueEngineeringPanel";
+import { getVenueElement, getVenueEngineeringElements, getVenueMetrics, type VenueBimElement } from "./VenueEngineeringData";
 import "./EngineeringTwinStudio.css";
 
 type Vec3 = [number, number, number];
@@ -351,7 +353,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [selected, setSelected] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inspectorTab, setInspectorTab] = useState<"files"|"items">("items");
+  const [inspectorTab, setInspectorTab] = useState<"files"|"items"|"analysis">("items");
   const [mobileInspectorOpen,setMobileInspectorOpen] = useState(false);
   const chooseScene = (next:"building"|VenueKind) => {
     setScene(next);setSideSection("floors");setInspectorTab("items");
@@ -371,7 +373,12 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     : null;
   const selectedFurniture = isBuilding ? [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected) : undefined;
   const selectedVenueSpot = isBuilding ? undefined : getVenueSpot(selected);
-  const inspected = selectedVenueSpot ? {
+  const selectedVenueElement = isBuilding ? undefined : getVenueElement(scene,selected);
+  const inspected = selectedVenueElement && !selectedVenueSpot ? {
+       id:selectedVenueElement.sceneId,system:(selectedVenueElement.system??"architecture") as Utility,
+       label:selectedVenueElement.label,description:selectedVenueElement.description+" · "+selectedVenueElement.review,
+       position:selectedVenueElement.position
+    } : selectedVenueSpot ? {
      id:selectedVenueSpot.id,system:"architecture" as const,label:selectedVenueSpot.title,
      description:selectedVenueSpot.description,position:selectedVenueSpot.position
    } : selectedFurniture
@@ -418,6 +425,23 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setRoomFilter("all");
     setNonce(n=>n+1);
   };
+  const showVenueElement = (item:VenueBimElement) => {
+    if(isBuilding)return;
+    setSelected(item.sceneId);
+    if(item.system){
+      setSystem(item.system);
+      setVisible(Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===item.system])) as ServiceVisibility);
+    }else{
+      setSystem("architecture");setVisible(ALL_VISIBLE);
+    }
+    setGhost(true);setNonce(n=>n+1);
+    setMobileInspectorOpen(false);
+  };
+  const showVenueSystem = (key:ServiceKey) => {
+    setSystem(key);setSelected(null);
+    setVisible(Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===key])) as ServiceVisibility);
+    setGhost(true);setNonce(n=>n+1);
+  };
   const reset = () => {
     setSystem("architecture"); setFloor("all"); setSideSection("floors"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
     setFurniture(true); setLabels(false); setGhost(true); setExploded(false); setFlow(true);
@@ -434,7 +458,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   }, [onClose]);
   const totalVisible = SERVICE_KEYS.filter(key => visible[key]).length;
   const countEquipment = totalVisible
-    ? SERVICE_KEYS.filter(key => visible[key]).reduce((count, key) => count + SERVICE_NETWORKS[key].nodes.length, 0)
+    ? isBuilding
+      ? SERVICE_KEYS.filter(key => visible[key]).reduce((count, key) => count + SERVICE_NETWORKS[key].nodes.length, 0)
+      : getVenueEngineeringElements(scene).filter(element=>element.system&&visible[element.system]).length
     : 0;
   const fullScreen = async () => {
     if (!overlayRef.current) return;
@@ -573,10 +599,10 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <span>{SYSTEM_LIST.find(x => x.key === system)?.label}</span>
           </div>
           <div className="twin-studio__north"><Compass size={21}/><span>ش</span></div>
-          {isBuilding && <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
+          <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
             onClick={()=>{setInspectorTab("files");setMobileInspectorOpen(v=>!v);}}>
-            <Layers3 size={15}/> ملفات IFC (٤)
-          </button>}
+            <Layers3 size={15}/> {isBuilding?"ملفات IFC (٤)":"ملفات المنشأة والتحليلات"}
+          </button>
           <div className="twin-studio__view-controls">
             {([["iso","منظور"], ["top","علوي"], ["front","واجهة"], ["inside","داخلي"]] as [Preset, string][]).map(([key, label]) =>
               <button type="button" key={key} className={preset === key ? "is-active" : ""}
@@ -617,14 +643,21 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           </div>
           <div className="twin-studio__mini-stats">
             <div><strong>{isBuilding?"05":"01"}</strong><small>أدوار تمثيلية</small></div>
-            <div><strong>08</strong><small>أنظمة عرض</small></div>
-            <div><strong>{countEquipment.toString().padStart(2, "0")}</strong><small>عناصر خدمة ظاهرة</small></div>
+            <div><strong>{isBuilding?"08":"06"}</strong><small>شبكات هندسية</small></div>
+            <div><strong>{isBuilding?countEquipment.toString().padStart(2,"0"):getVenueMetrics(scene).total}</strong>
+              <small>{isBuilding?"عناصر خدمة ظاهرة":"عناصر هندسية مفهرسة"}</small></div>
           </div>
           <div className="twin-studio__inspector-tabs" role="group" aria-label="قسم تفاصيل التوأم الرقمي">
             <button type="button" onClick={()=>setInspectorTab("items")} aria-pressed={inspectorTab==="items"}>العناصر والتجهيزات</button>
-            {isBuilding&&<button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات BIM</button>}
+            <button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات BIM</button>
+            {!isBuilding&&<button type="button" onClick={()=>setInspectorTab("analysis")} aria-pressed={inspectorTab==="analysis"}>التحليلات</button>}
           </div>
-          {isBuilding&&inspectorTab==="files" ? <DemoBimPanel onPick={showDemoElement}/> : <>
+          {inspectorTab==="files"
+            ? isBuilding ? <DemoBimPanel onPick={showDemoElement}/>
+              : <VenueBimPanel key={scene} kind={scene} onPick={showVenueElement}/>
+            : !isBuilding&&inspectorTab==="analysis"
+              ? <VenueAnalysisPanel key={scene} kind={scene} onSystem={showVenueSystem} onPick={showVenueElement}/>
+            : <>
           {!isBuilding&&<div className="twin-studio__venue-spot-list" data-testid="venue-inspector-spots">
             <div className="twin-studio__section-heading"><Building2 size={16}/><span>مناطق المنشأة</span></div>
             {venueSpots.map((spot,i)=><button key={spot.id} type="button" className={selected===spot.id?"is-active":""}
@@ -660,7 +693,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <strong>اختر شبكة، ثم اضغط أحد عناصرها</strong>
             <p>يمكنك استكشاف الأنابيب واللوحات والمعدات ومسارات الخدمات داخل كل طابق.</p>
           </div>}
-          {isBuilding && <>
+          {isBuilding ? <>
           <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><Layers3 size={17}/><span>نقاط الخدمات التفصيلية</span></div>
           <div className="twin-studio__inventory">
@@ -673,14 +706,17 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 <span>{point.label}</span><small>{point.specification}</small>
               </button>)}
           </div>
-          </>}
+          </> : <div className="twin-studio__venue-quick-links">
+            <button type="button" onClick={()=>setInspectorTab("analysis")}><ShieldCheck size={15}/> مراجعة الأنظمة الهندسية</button>
+            <button type="button" onClick={()=>setInspectorTab("files")}><Layers3 size={15}/> الملفات والعناصر المرتبطة</button>
+          </div>}
           </>}
           <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><ShieldCheck size={17}/><span>حالة الدليل</span></div>
           <div className="twin-studio__evidence">
             <div><span>نتائج الفحص الفعلية</span><strong>{findingsCount} قواعد</strong></div>
             <div><span>مصدر هندسة هذا المشهد</span><strong>إجرائي تجريبي</strong></div>
-            <div><span>حالة الربط مع IFC</span><strong>غير مرتبط هندسيًا</strong></div>
+            <div><span>حالة الربط مع IFC</span><strong>{isBuilding?"غير مرتبط هندسيًا":"معرّفات تجريبية فقط"}</strong></div>
           </div>
           <div className="twin-studio__disclaimer"><ShieldAlert size={18}/>
             <p>مشاهد المقهى والمطعم والعمارة أمثلة ثلاثية الأبعاد مولّدة بالكود، وليست هندسة IFC أو مخططات تنفيذ. نتائج الفحص الأصلية مستقلة عنها.</p>
