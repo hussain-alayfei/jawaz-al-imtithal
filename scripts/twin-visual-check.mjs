@@ -44,7 +44,9 @@ try {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(base, { waitUntil: "networkidle" });
-    await page.locator('[data-testid="open-digital-twin"]').first().click();
+    await page.locator(size.width <= 660
+      ? '[data-testid="open-digital-twin-mobile"]'
+      : '[data-testid="open-digital-twin"]').first().click();
     await page.locator(".twin-studio__canvas canvas").waitFor({ state: "visible", timeout: 25000 });
     await page.waitForTimeout(1800);
     const hasCanvas = await page.locator(".twin-studio__canvas canvas").count();
