@@ -58,7 +58,7 @@ try {
       await page.locator(".twin-studio__mobile-floors select").selectOption("first");
     }
     await page.waitForTimeout(900);
-    await page.screenshot({ path: join(target, size.name + ".png"), fullPage: true, animations: "disabled" });
+    await page.screenshot({ path: join(target, size.name + ".png"), fullPage: false, animations: "disabled" });
     const measured = await page.evaluate(() => ({
       bodyWidth: document.documentElement.scrollWidth,
       screenWidth: window.innerWidth,
