@@ -56,6 +56,7 @@ try {
     if (await page.locator(".twin-studio__floor-list button").count() !== 7)
       failures.push(size.name + ": five real scene levels and roof are not selectable");
     if (size.width > 1000) {
+      await page.getByRole("button",{name:"ملفات BIM",exact:true}).click();
       const mep = page.locator('.bim-library__file[data-file="MEP.ifc"] button');
       await mep.click();
       await page.locator("[data-testid='bim-file-elements']").waitFor({state:"visible"});
@@ -64,7 +65,9 @@ try {
       await page.locator(".bim-library__content select").selectOption("4");
       await page.locator('[data-scene-id="DETAIL-4-electricity-2"]').click();
       await page.screenshot({path:join(target,size.name+"-ifc-5floor.png"),fullPage:false});
+      await page.getByRole("tab",{name:"الأدوار"}).click();
       await page.locator(".twin-studio__floor-list button").filter({hasText:"كامل المبنى"}).click();
+      await page.getByRole("tab",{name:"الأنظمة"}).click();
       await page.locator(".twin-studio__system-list button").filter({hasText:"العمارة والإنشاء"}).click();
     }
     if (size.width <= 660) {
@@ -73,12 +76,13 @@ try {
       await page.locator(".twin-studio__mobile-inspector-close").click();
     }
     if (size.width > 1000) {
-      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"تفاصيل العناصر"}).click();
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"العناصر والتجهيزات"}).click();
       if (!await page.locator(".twin-studio__inventory button").count())
         failures.push(size.name + ": no furniture inventory when item inspector is active");
-      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات IFC التجريبية"}).click();
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات BIM"}).click();
     }
     if (size.width > 660) {
+      await page.getByRole("tab",{name:"الغرف"}).click();
       const roomFilters = page.locator(".twin-studio__room-filter button");
       if (await roomFilters.count() !== 5) failures.push(size.name + ": missing room filters");
       await roomFilters.nth(2).click();
@@ -91,6 +95,19 @@ try {
     }
     await page.waitForTimeout(750);
     await page.screenshot({ path: join(target, size.name + "-interior.png"), fullPage: false, animations: "disabled" });
+    if (size.width > 1000) {
+      await page.getByRole("tab",{name:"الأدوار"}).click();
+      const roles=await page.locator(".twin-studio__floor-list button").allTextContents();
+      if(!roles.some(x=>x.includes("المطبخ والتحضير")) || !roles.some(x=>x.includes("ضيافة خاصة")))
+        failures.push(size.name+": storeys lack distinct operational purposes");
+      for(const label of ["الدور الثاني","الدور الرابع"]){
+        await page.locator(".twin-studio__floor-list button").filter({hasText:label}).click();
+        await page.waitForTimeout(350);
+        await page.screenshot({path:join(target,size.name+"-"+(label.includes("الثاني")?"kitchen":"management")+".png"),fullPage:false});
+      }
+      await page.locator(".twin-studio__floor-list button").filter({hasText:"كامل المبنى"}).click();
+    }
+    await page.getByRole("tab",{name:"الأنظمة"}).click();
     if (size.width > 660) {
       await page.locator(".twin-studio__system-list button").filter({ hasText: "كل شبكات التمديدات" }).click();
     } else {
