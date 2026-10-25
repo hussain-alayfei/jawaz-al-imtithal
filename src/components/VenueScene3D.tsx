@@ -2,7 +2,8 @@ import { Html, OrbitControls, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { DetailedServiceNetwork3D, getDetailPoint } from "./DetailedServiceNetwork3D";
+import { VenueServiceNetwork3D } from "./VenueServiceNetwork3D";
+import { getVenueElement } from "./VenueEngineeringData";
 
 import type { ServiceVisibility } from "./EngineeringNetworks3D";
 
@@ -269,8 +270,8 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
     </Html>
  </group>;
 }
-function VenueNetworks({visible,onSelect,selected}: {visible:ServiceVisibility;onSelect:(id:string)=>void;selected:string|null}){
- return <group><DetailedServiceNetwork3D floor={0} visible={visible} selected={selected} onSelect={onSelect} animate={false}/></group>;
+function VenueNetworks({kind,visible,onSelect,selected}: {kind:VenueKind;visible:ServiceVisibility;onSelect:(id:string)=>void;selected:string|null}){
+ return <VenueServiceNetwork3D kind={kind} visible={visible} selected={selected} onSelect={onSelect}/>;
 }
 export function VenueCameraRig({kind,preset,nonce,selected}:{
  kind:VenueKind;preset:VenueCameraPreset;nonce:number;selected:Vec3|null;
@@ -311,7 +312,7 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
  selected:string|null;onSelect:(id:string)=>void;preset:VenueCameraPreset;nonce:number;
 }){
  const spot=getVenueSpot(selected);
- const selectedPoint=spot?.position ?? getDetailPoint(selected)?.position ?? null;
+ const selectedPoint=spot?.position ?? getVenueElement(kind,selected)?.position ?? null;
  const isCafe=kind==="cafe";
  return <>
     <color attach="background" args={["#c7d8d8"]}/>
@@ -344,7 +345,7 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
         <div className="venue-world-inspector" dir="rtl"><strong>{s.title}</strong><small>{s.description}</small></div>
        </Html>}
     </group>)}
-    <VenueNetworks visible={visible} selected={selected} onSelect={onSelect}/>
+    <VenueNetworks kind={kind} visible={visible} selected={selected} onSelect={onSelect}/>
     <ContactShadows opacity={.26} scale={38} far={20} blur={2.6} position={[0,-.15,0]} frames={1}/>
     <VenueCameraRig kind={kind} preset={preset} selected={selectedPoint} nonce={nonce}/>
     </group>
