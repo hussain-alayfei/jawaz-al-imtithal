@@ -2448,6 +2448,8 @@ export default function App() {
           <EngineeringTwinStudio
             projectName={run && screen === "workspace" ? run.facility.projectName : facility.projectName}
             activityName={facility.activity}
+            activityId={activityId}
+            floors={run && screen === "workspace" ? run.facility.floors : facility.floors}
             findingsCount={run && screen === "workspace" ? run.findings.length : 0}
             onClose={() => setTwinOpen(false)}
           />
