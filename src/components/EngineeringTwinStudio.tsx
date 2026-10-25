@@ -227,9 +227,12 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
     desired.current.set(...view.position);
     focus.current.set(...view.target);
     if (floor !== "all" && floor !== "roof" && !selected) {
-      const index = Math.max(0,levelOf(floor));
-      focus.current.y = index * STOREY_HEIGHT + 1.6;
-      desired.current.y = index * STOREY_HEIGHT + 10;
+      const base = Math.max(0,levelOf(floor)) * STOREY_HEIGHT;
+      focus.current.set(0,base + 1.6,0);
+      if (preset==="iso") desired.current.set(17,base+11,18);
+      else if (preset==="top") desired.current.set(.01,base+23,.01);
+      else if (preset==="front") desired.current.set(0,base+8,22);
+      else desired.current.set(5.3,base+5.1,9);
     }
     if (floor === "roof" && !selected) {
       focus.current.y = floorCount * STOREY_HEIGHT + 0.6; desired.current.y = floorCount * STOREY_HEIGHT + 12;
