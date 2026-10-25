@@ -165,7 +165,7 @@ function Storey({ level, floor, ghost, explode, selectedSystem, onSelectRoom,
         <Block p={[x + 1.0, 2.26, 5.87]} s={[1.9, 1.45, 0.045]} color="#7ba5b1" opacity={ghost || selectedSystem !== "architecture" ? 0.12 : 0.42} />
       </group>)}
     <InteriorFitout3D activity={activity} floor={level} roomFilter={roomFilter}
-      showFurniture={furniture} showLabels={labels && floor !== "all"} showRoomWalls={!ghost && selectedSystem === "architecture"}
+      showFurniture={furniture} showLabels={labels && floor !== "all"} ghost={ghost} showRoomWalls={selectedSystem === "architecture"}
       selectedId={selectedId} onSelect={onSelectRoom}/>
     {floor === "all" && <Block p={[0, 3.27, 0]} s={[15.9, 0.19, 11.9]} color="#e0ded5" opacity={0.1} />}
     <Html position={[-8.3, 2, 0]} center distanceFactor={16}>
