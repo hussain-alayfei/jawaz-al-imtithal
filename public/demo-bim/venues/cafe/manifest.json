@@ -1,0 +1,485 @@
+{
+  "version": "MIYAR-VENUES-1",
+  "kind": "cafe",
+  "disclaimer": "SYNTHETIC IFC4 SEMANTIC ELEMENTS ONLY. NOT AS BUILT. NO IFC GEOMETRY.",
+  "files": [
+    {
+      "id": "architectural",
+      "name": "Architectural.ifc",
+      "label": "المخطط المعماري",
+      "desc": "4 فراغات ومناطق تشغيل",
+      "count": 4,
+      "elements": [
+        {
+          "id": "A-cafe-0",
+          "sceneId": "VENUE-cafe-entrance",
+          "label": "مدخل المقهى",
+          "description": "منطقة تشغيل توضيحية",
+          "type": "IFCSPACE",
+          "floor": 0,
+          "area": "entrance",
+          "position": [
+            -4,
+            1.4,
+            6
+          ],
+          "discipline": "architectural",
+          "review": "مخطط افتراضي غير معتمد"
+        },
+        {
+          "id": "A-cafe-1",
+          "sceneId": "VENUE-cafe-seating",
+          "label": "جلسات المقهى",
+          "description": "منطقة تشغيل توضيحية",
+          "type": "IFCSPACE",
+          "floor": 0,
+          "area": "seating",
+          "position": [
+            3.3,
+            1.3,
+            2.3
+          ],
+          "discipline": "architectural",
+          "review": "مخطط افتراضي غير معتمد"
+        },
+        {
+          "id": "A-cafe-2",
+          "sceneId": "VENUE-cafe-counter",
+          "label": "كاونتر القهوة",
+          "description": "منطقة تشغيل توضيحية",
+          "type": "IFCSPACE",
+          "floor": 0,
+          "area": "counter",
+          "position": [
+            -4.3,
+            1.4,
+            2.8
+          ],
+          "discipline": "architectural",
+          "review": "مخطط افتراضي غير معتمد"
+        },
+        {
+          "id": "A-cafe-3",
+          "sceneId": "VENUE-cafe-back",
+          "label": "التحضير والغسيل",
+          "description": "منطقة تشغيل توضيحية",
+          "type": "IFCSPACE",
+          "floor": 0,
+          "area": "back",
+          "position": [
+            3.3,
+            1.3,
+            -2.8
+          ],
+          "discipline": "architectural",
+          "review": "مخطط افتراضي غير معتمد"
+        }
+      ]
+    },
+    {
+      "id": "structural",
+      "name": "Structural.ifc",
+      "label": "الهيكل الإنشائي",
+      "desc": "6 أعمدة وعتبات مرجعية",
+      "count": 6,
+      "elements": [
+        {
+          "id": "S-cafe-0",
+          "sceneId": "VENUE-cafe-struct-0",
+          "label": "عمود محيطي 1",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCCOLUMN",
+          "floor": 0,
+          "position": [
+            -7.55,
+            2.05,
+            -5.6
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        },
+        {
+          "id": "S-cafe-1",
+          "sceneId": "VENUE-cafe-struct-1",
+          "label": "عمود محيطي 2",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCCOLUMN",
+          "floor": 0,
+          "position": [
+            -7.55,
+            2.05,
+            5.6
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        },
+        {
+          "id": "S-cafe-2",
+          "sceneId": "VENUE-cafe-struct-2",
+          "label": "عمود محيطي 3",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCCOLUMN",
+          "floor": 0,
+          "position": [
+            7.55,
+            2.05,
+            -5.6
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        },
+        {
+          "id": "S-cafe-3",
+          "sceneId": "VENUE-cafe-struct-3",
+          "label": "عمود محيطي 4",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCCOLUMN",
+          "floor": 0,
+          "position": [
+            7.55,
+            2.05,
+            5.6
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        },
+        {
+          "id": "S-cafe-4",
+          "sceneId": "VENUE-cafe-struct-4",
+          "label": "عتبة الواجهة 1",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCBEAM",
+          "floor": 0,
+          "position": [
+            0,
+            4.3,
+            -5.8
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        },
+        {
+          "id": "S-cafe-5",
+          "sceneId": "VENUE-cafe-struct-5",
+          "label": "عتبة الواجهة 2",
+          "description": "عنصر إنشائي مرجعي",
+          "type": "IFCBEAM",
+          "floor": 0,
+          "position": [
+            0,
+            4.3,
+            5.8
+          ],
+          "discipline": "structural",
+          "review": "لم تحسب الأحمال أو التسليح"
+        }
+      ]
+    },
+    {
+      "id": "mep",
+      "name": "MEP.ifc",
+      "label": "التمديدات والتكييف",
+      "desc": "15 نقطة توزيع لخمس شبكات",
+      "count": 15,
+      "elements": [
+        {
+          "id": "M-cafe-electricity-0",
+          "sceneId": "VENUE-cafe-electricity-0",
+          "label": "لوحة الكاونتر وماكينة القهوة",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            -5.7,
+            2.95,
+            3.7
+          ],
+          "system": "electricity",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-electricity-1",
+          "sceneId": "VENUE-cafe-electricity-1",
+          "label": "دائرة إنارة وجلسات",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            -0.2,
+            2.95,
+            2.8
+          ],
+          "system": "electricity",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-electricity-2",
+          "sceneId": "VENUE-cafe-electricity-2",
+          "label": "تغذية مبردات التحضير",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            4.7,
+            2.95,
+            -3.4
+          ],
+          "system": "electricity",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-water-0",
+          "sceneId": "VENUE-cafe-water-0",
+          "label": "مياه بار القهوة",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            -3.6,
+            0.9,
+            0.75
+          ],
+          "system": "water",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-water-1",
+          "sceneId": "VENUE-cafe-water-1",
+          "label": "تغذية حوض الغسيل",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            3,
+            0.9,
+            -1.7
+          ],
+          "system": "water",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-water-2",
+          "sceneId": "VENUE-cafe-water-2",
+          "label": "محبس تغذية التحضير",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            5.2,
+            0.9,
+            -4.25
+          ],
+          "system": "water",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-drainage-0",
+          "sceneId": "VENUE-cafe-drainage-0",
+          "label": "مصرف تحضير القهوة",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            -3.7,
+            0.26,
+            0.68
+          ],
+          "system": "drainage",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-drainage-1",
+          "sceneId": "VENUE-cafe-drainage-1",
+          "label": "صرف حوض الغسيل",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            3,
+            0.26,
+            -1.8
+          ],
+          "system": "drainage",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-drainage-2",
+          "sceneId": "VENUE-cafe-drainage-2",
+          "label": "نقطة تجميع الخدمة",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCPIPESEGMENT",
+          "floor": 0,
+          "position": [
+            5.25,
+            0.26,
+            -4.3
+          ],
+          "system": "drainage",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-hvac-0",
+          "sceneId": "VENUE-cafe-hvac-0",
+          "label": "تغذية هواء منطقة الكاونتر",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "position": [
+            -4.9,
+            3.4,
+            -0.3
+          ],
+          "system": "hvac",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-hvac-1",
+          "sceneId": "VENUE-cafe-hvac-1",
+          "label": "ناشر صالة الجلوس",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "position": [
+            0,
+            3.45,
+            0.1
+          ],
+          "system": "hvac",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-hvac-2",
+          "sceneId": "VENUE-cafe-hvac-2",
+          "label": "تهوية خلفية للتحضير",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCDUCTSEGMENT",
+          "floor": 0,
+          "position": [
+            3.65,
+            3.45,
+            -3.3
+          ],
+          "system": "hvac",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-grounding-0",
+          "sceneId": "VENUE-cafe-grounding-0",
+          "label": "ربط ماكينة الإسبريسو",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            -5.7,
+            0.15,
+            3.7
+          ],
+          "system": "grounding",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-grounding-1",
+          "sceneId": "VENUE-cafe-grounding-1",
+          "label": "ربط اللوحة الفرعية",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            0,
+            0.15,
+            -4.25
+          ],
+          "system": "grounding",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-grounding-2",
+          "sceneId": "VENUE-cafe-grounding-2",
+          "label": "تأريض تجهيزات الغسيل",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCCABLESEGMENT",
+          "floor": 0,
+          "position": [
+            5.8,
+            0.15,
+            -4.25
+          ],
+          "system": "grounding",
+          "discipline": "mep",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        }
+      ]
+    },
+    {
+      "id": "fire",
+      "name": "FireSafety.ifc",
+      "label": "الحريق والسلامة",
+      "desc": "3 نقاط رش تجريبية",
+      "count": 3,
+      "elements": [
+        {
+          "id": "M-cafe-fire-0",
+          "sceneId": "VENUE-cafe-fire-0",
+          "label": "رشاش الكاونتر",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "position": [
+            -4.2,
+            3.55,
+            1.65
+          ],
+          "system": "fire",
+          "discipline": "fire",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-fire-1",
+          "sceneId": "VENUE-cafe-fire-1",
+          "label": "رشاش منطقة الجلوس",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "position": [
+            0.3,
+            3.55,
+            1.65
+          ],
+          "system": "fire",
+          "discipline": "fire",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        },
+        {
+          "id": "M-cafe-fire-2",
+          "sceneId": "VENUE-cafe-fire-2",
+          "label": "رشاش الخدمة",
+          "description": "تمديدات افتراضية، يلزم مراجعة التصميم",
+          "type": "IFCFIREPROTECTIONTERMINAL",
+          "floor": 0,
+          "position": [
+            4.8,
+            3.55,
+            -3.2
+          ],
+          "system": "fire",
+          "discipline": "fire",
+          "review": "مراجعة هندسية مطلوبة، لا نتائج امتثال"
+        }
+      ]
+    }
+  ]
+}
