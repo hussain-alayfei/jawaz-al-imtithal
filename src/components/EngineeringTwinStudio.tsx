@@ -1,11 +1,11 @@
 import {
   Activity, ArrowLeft, Box, Building2, Check, ChevronDown, Compass,
-  Droplets, Eye, EyeOff, Fan, Focus, Layers3, Maximize2, Move3d,
-  RotateCcw, ShieldAlert, ShieldCheck, Sun, X, Zap,
+  Eye, EyeOff, Focus, Layers3, Maximize2, Move3d,
+  RotateCcw, ShieldAlert, ShieldCheck, Sun, X,
 } from "lucide-react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Grid, Html, OrbitControls } from "@react-three/drei";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import * as THREE from "three";
 import {
   EngineeringNetworks3D, SERVICE_KEYS, SERVICE_META, SERVICE_NETWORKS,
@@ -16,7 +16,7 @@ import "./EngineeringTwinStudio.css";
 type Vec3 = [number, number, number];
 type Floor = "all" | "ground" | "first" | "second" | "roof";
 type Preset = "iso" | "top" | "front" | "inside";
-type Utility = ServiceKey | "architecture" | "solar";
+type Utility = ServiceKey | "architecture" | "solar" | "all";
 type NodeInfo = { id: string; label: string; description: string; system: Utility; position: Vec3 };
 const STOREY_HEIGHT = 3.4;
 const FLOOR_LIST: { key: Floor; label: string; en: string }[] = [
@@ -28,6 +28,7 @@ const FLOOR_LIST: { key: Floor; label: string; en: string }[] = [
 ];
 const SYSTEM_LIST: { key: Utility; label: string; color: string }[] = [
   { key: "architecture", label: "العمارة والإنشاء", color: "#a9b0af" },
+  { key: "all", label: "كل شبكات التمديدات", color: "#80c9a6" },
   { key: "electricity", label: "الكهرباء", color: SERVICE_META.electricity.color },
   { key: "water", label: "المياه", color: SERVICE_META.water.color },
   { key: "drainage", label: "الصرف الصحي", color: SERVICE_META.drainage.color },
@@ -293,7 +294,10 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, solar, flow, s
 }) {
   const custom = CUSTOM_NODES.find(node => node.id === selected);
   const sourceNode = findServiceNode(selected);
-  const selectedPos: Vec3 | null = custom?.position ?? sourceNode?.position ?? null;
+  const upper = selected?.startsWith("UPPER-") ? selected.split("-") : null;
+  const upperY = upper ? (Number(upper[1]) * STOREY_HEIGHT + (exploded ? Number(upper[1]) * 0.8 : 0) + 2) : 0;
+  const selectedPos: Vec3 | null = custom?.position ?? sourceNode?.position
+    ?? (upper ? [-6.8, upperY, -4.7] : null);
   return <>
     <color attach="background" args={["#d2ddd9"]} />
     <fog attach="fog" args={["#d2ddd9", 42, 76]} />
@@ -366,7 +370,7 @@ export function EngineeringTwinStudio({ projectName, activityName, findingsCount
     setSystem(key);
     setSelected(null);
     setVisible(key === "architecture" || key === "solar"
-      ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key])) as ServiceVisibility);
+      ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key || key === "all"])) as ServiceVisibility);
     if (key === "solar") setFloor("roof");
     else if (floor === "roof") setFloor("all");
     setGhost(key !== "architecture");
@@ -420,11 +424,11 @@ export function EngineeringTwinStudio({ projectName, activityName, findingsCount
       </header>
       <div className="twin-studio__layout">
         <aside className="twin-studio__systems" aria-label="أنظمة المبنى">
-          <div className="twin-studio__section-heading"><Layers3 size={17}/> <span>الأنظمة الهندسية</span><small>08</small></div>
+          <div className="twin-studio__section-heading"><Layers3 size={17}/> <span>الأنظمة الهندسية</span><small>09</small></div>
           <div className="twin-studio__system-list">
             {SYSTEM_LIST.map(item => (
               <button key={item.key} type="button" className={"twin-studio__system" + (system === item.key ? " is-active" : "")}
-                style={{ "--system-color": item.color } as React.CSSProperties}
+                style={{ "--system-color": item.color } as CSSProperties}
                 onClick={() => setFocusSystem(item.key)} aria-pressed={system === item.key}>
                 <span className="twin-studio__system-bullet" />
                 <span>{item.label}</span>
@@ -491,6 +495,17 @@ export function EngineeringTwinStudio({ projectName, activityName, findingsCount
           <div className="twin-studio__viewport-stats">
             <span>3D INTERACTIVE</span><span>◦</span><span>SCHEMATIC / NOT AS-BUILT</span>
           </div>
+          <div className="twin-studio__mobile-floors" aria-label="اختيار الدور">
+            <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
+              {FLOOR_LIST.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+            </select>
+            <button type="button" aria-pressed={ghost} onClick={() => setGhost(v => !v)} title="شفافية الجدران"><EyeOff size={17}/></button>
+            <button type="button" aria-pressed={exploded} onClick={() => setExploded(v => !v)} title="فصل الطوابق"><Move3d size={17}/></button>
+          </div>
+          {inspected && <div className="twin-studio__mobile-selection" dir="rtl">
+            <button type="button" aria-label="إغلاق تفاصيل العنصر" onClick={() => setSelected(null)}><X size={16}/></button>
+            <strong>{inspected.label}</strong><span>{inspected.description}</span>
+          </div>
           {menuOpen && <div className="twin-studio__mobile-menu">
             {SYSTEM_LIST.map(item => <button key={item.key} type="button" onClick={() => {setFocusSystem(item.key); setMenuOpen(false);}}>{item.label}</button>)}
           </div>}
@@ -504,7 +519,7 @@ export function EngineeringTwinStudio({ projectName, activityName, findingsCount
           </div>
           <div className="twin-studio__mini-stats">
             <div><strong>03</strong><small>طوابق تمثيلية</small></div>
-            <div><strong>08</strong><small>أنظمة عرض</small></div>
+            <div><strong>09</strong><small>أنظمة عرض</small></div>
             <div><strong>{countEquipment.toString().padStart(2, "0")}</strong><small>عناصر خدمة ظاهرة</small></div>
           </div>
           <div className="twin-studio__rail-divider" />
