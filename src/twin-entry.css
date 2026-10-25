@@ -1,0 +1,23 @@
+/* Entry point when the header collapses on phones. */
+.mobile-twin-launch { display: none; }
+@media (max-width: 660px) {
+  .mobile-twin-launch {
+    position: fixed;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    right: 15px;
+    bottom: max(15px, env(safe-area-inset-bottom));
+    z-index: 100;
+    min-height: 45px;
+    padding: 10px 16px;
+    border: 1px solid #1b5944;
+    border-radius: 5px;
+    background: #155943;
+    color: #fff;
+    font: 600 12px "IBM Plex Sans Arabic", Tahoma, sans-serif;
+    box-shadow: 0 7px 24px #19433246;
+  }
+  .mobile-twin-launch:focus-visible { outline: 3px solid #8ad5b3; outline-offset: 3px; }
+}

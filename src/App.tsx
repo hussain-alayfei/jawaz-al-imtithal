@@ -45,6 +45,7 @@ import {
   useState,
 } from "react";
 import { BrandMark } from "./components/BrandMark";
+import "./twin-entry.css";
 import {
   activityExamples,
   calculateSummary,
@@ -75,6 +76,11 @@ import {
 const Viewer3D = lazy(() =>
   import("./components/Viewer3D").then((module) => ({
     default: module.Viewer3D,
+  })),
+);
+const EngineeringTwinStudio = lazy(() =>
+  import("./components/EngineeringTwinStudio").then((module) => ({
+    default: module.EngineeringTwinStudio,
   })),
 );
 
@@ -137,10 +143,12 @@ function activityIcon(activityId: ActivityId, size = 20) {
 function AppHeader({
   onHome,
   onNew,
+  onTwin,
   minimal = false,
 }: {
   onHome: () => void;
   onNew: () => void;
+  onTwin?: () => void;
   minimal?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -160,6 +168,17 @@ function AppHeader({
             </a>
           </nav>
           <div className="app-header__actions">
+            {onTwin && (
+              <button
+                type="button"
+                className="button button--small button--outline"
+                onClick={onTwin}
+                data-testid="open-digital-twin"
+              >
+                <Building2 size={16} />
+                التوأم الرقمي 3D
+              </button>
+            )}
             <button
               type="button"
               className="button button--small button--primary"
@@ -1602,8 +1621,10 @@ function Workspace({
   onHome,
   onNew,
   notify,
+  onTwin,
 }: {
   run: ComplianceRun;
+  onTwin: () => void;
   onReport: () => void;
   onRerun: () => void;
   onHome: () => void;
@@ -1723,6 +1744,10 @@ function Workspace({
         </div>
         <span className="prototype-badge">نسخة تجريبية</span>
         <div className="workspace-header__actions">
+          <button type="button" className="button button--small button--outline"
+            onClick={onTwin} data-testid="open-digital-twin">
+            <Building2 size={16} /> التوأم الرقمي 3D
+          </button>
           <button type="button" className="button button--small button--outline" onClick={onRerun}>
             <RefreshCcw size={15} /> إعادة الفحص
           </button>
@@ -2281,6 +2306,7 @@ export default function App() {
   const [upload, setUpload] = useState<IfcUpload>();
   const [run, setRun] = useState<ComplianceRun>();
   const [toast, setToast] = useState("");
+  const [twinOpen, setTwinOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -2335,6 +2361,7 @@ export default function App() {
           <AppHeader
             onHome={() => setScreen("dashboard")}
             onNew={startNew}
+            onTwin={() => setTwinOpen(true)}
           />
           <Dashboard
             run={run}
@@ -2387,6 +2414,7 @@ export default function App() {
 
       {screen === "workspace" && run && (
         <Workspace
+          onTwin={() => setTwinOpen(true)}
           run={run}
           onReport={() => setScreen("report")}
           onRerun={() => setScreen("model")}
@@ -2403,6 +2431,29 @@ export default function App() {
           onHome={() => setScreen("dashboard")}
           notify={setToast}
         />
+      )}
+
+      {!twinOpen && (screen === "dashboard" || screen === "workspace") && (
+        <button type="button" className="mobile-twin-launch"
+          data-testid="open-digital-twin-mobile"
+          onClick={() => setTwinOpen(true)}>
+          <Building2 size={18} /> استكشاف التوأم الرقمي 3D
+        </button>
+      )}
+
+      {twinOpen && (
+        <Suspense fallback={
+          <div className="viewer-loading" role="status">جارٍ تجهيز الاستوديو الهندسي ثلاثي الأبعاد…</div>
+        }>
+          <EngineeringTwinStudio
+            projectName={run && screen === "workspace" ? run.facility.projectName : facility.projectName}
+            activityName={facility.activity}
+            activityId={activityId}
+            floors={run && screen === "workspace" ? run.facility.floors : facility.floors}
+            findingsCount={run && screen === "workspace" ? run.findings.length : 0}
+            onClose={() => setTwinOpen(false)}
+          />
+        </Suspense>
       )}
 
       {toast && (
