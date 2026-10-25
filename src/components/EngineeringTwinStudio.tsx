@@ -348,6 +348,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key || key === "all"])) as ServiceVisibility);
     if (floor === "roof") setFloor("ground");
     setGhost(key !== "architecture");
+    if (key === "architecture") {setRoomFilter("all");setFurniture(true);}
     setNonce(n => n + 1);
   }, [floor]);
 
@@ -421,6 +422,21 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             ))}
           </div>
           <div className="twin-studio__rail-divider"/>
+          <div className="twin-studio__section-heading"><Building2 size={17}/> <span>تصفية الغرف</span></div>
+          <div className="twin-studio__room-filter" data-testid="twin-room-filters">
+            <button type="button" className={roomFilter === "all" ? "is-active" : ""}
+              aria-pressed={roomFilter==="all"} onClick={() => {setRoomFilter("all");setSelected(null);setNonce(n=>n+1);}}>
+              <span>جميع الغرف</span><small>04</small>
+            </button>
+            {rooms.map(room => (
+              <button type="button" key={room.key} className={roomFilter === room.key ? "is-active" : ""}
+                aria-pressed={roomFilter===room.key}
+                onClick={() => {setRoomFilter(room.key);setSelected("ROOM-"+(floor==="first"?1:floor==="second"?2:0)+"-"+room.key);setNonce(n=>n+1);}}>
+                <span>{room.name}</span><small>{room.key==="reception"?"01":room.key==="hall"?"02":room.key==="office"?"03":"04"}</small>
+              </button>
+            ))}
+          </div>
+          <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><Eye size={17}/> <span>خيارات المشهد</span></div>
           <div className="twin-studio__switches">
             {([
@@ -471,9 +487,13 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           <div className="twin-studio__viewport-stats">
             <span>3D INTERACTIVE</span><span>◦</span><span>SCHEMATIC / NOT AS-BUILT</span>
           </div>
-          <div className="twin-studio__mobile-floors" aria-label="اختيار الدور">
+          <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
             <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
               {availableFloors.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+            </select>
+            <select value={roomFilter} aria-label="الغرفة" onChange={e=>{setRoomFilter(e.target.value as RoomFilter);setSelected(null);}}>
+              <option value="all">جميع الغرف</option>
+              {rooms.map(r=><option key={r.key} value={r.key}>{r.name}</option>)}
             </select>
             <button type="button" aria-pressed={ghost} onClick={() => setGhost(v => !v)} title="شفافية الجدران"><EyeOff size={17}/></button>
             <button type="button" aria-pressed={exploded} onClick={() => setExploded(v => !v)} title="فصل الطوابق"><Move3d size={17}/></button>
@@ -489,14 +509,25 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
         <aside className="twin-studio__inspector" aria-label="تفاصيل العناصر">
           <div className="twin-studio__section-heading"><Focus size={17}/><span>تفاصيل النموذج</span><span className="twin-studio__live"/></div>
           <div className="twin-studio__inspector-hero">
-            <span>PROJECT MODEL</span>
+            <span>FURNISHED INTERIOR / TECHNICAL VIEW</span>
             <h2>{projectName}</h2>
-            <p>مشهد هندسي إجرائي متعدد الطوابق، يعرض الشبكات وأنظمة الخدمات بصورة استكشافية.</p>
+            <p>مخطط داخلي يتغير حسب نشاط {activityName}، مع غرف مفروشة وشبكات مرافق قابلة للتصفية والاستكشاف.</p>
           </div>
           <div className="twin-studio__mini-stats">
             <div><strong>{String(floorCount).padStart(2,"0")}</strong><small>أدوار تمثيلية</small></div>
             <div><strong>08</strong><small>أنظمة عرض</small></div>
             <div><strong>{countEquipment.toString().padStart(2, "0")}</strong><small>عناصر خدمة ظاهرة</small></div>
+          </div>
+          <div className="twin-studio__rail-divider" />
+          <div className="twin-studio__section-heading"><Sofa size={17}/><span>أثاث وتجهيزات الغرف</span><small>{getInteriorItems(activityId,0).length}</small></div>
+          <div className="twin-studio__inventory" data-testid="twin-inventory">
+            {getInteriorItems(activityId, floor==="first"?1:floor==="second"?2:0)
+              .filter(item=>roomFilter==="all"||roomFilter===item.room)
+              .map(item=><button type="button" key={item.id} className={selected===item.id?"is-active":""}
+                onClick={()=>{setSelected(item.id);setFurniture(true);if(floor==="roof")setFloor("ground");setNonce(n=>n+1);}}
+                title={item.description}>
+                <span>{item.title}</span><small>{rooms.find(r=>r.key===item.room)?.name}</small>
+              </button>)}
           </div>
           <div className="twin-studio__rail-divider" />
           <div className="twin-studio__section-heading"><Box size={17}/><span>{inspected ? "العنصر المحدد" : "دليل الأنظمة"}</span></div>
