@@ -224,3 +224,57 @@
   .twin-studio__mobile-floors button[aria-pressed="true"] { background: #2b6047; color: white; border-color: #2b6047; }
   .twin-studio__mobile-selection { bottom: 89px; right: 9px; width: min(275px, calc(100% - 18px)); }
 }
+
+
+/* Room and furniture index are first-class navigation, not decorative labels. */
+.twin-studio__room-filter { display: grid; gap: 5px; }
+.twin-studio__room-filter button {
+  border: 1px solid #33493f;
+  background: #1d312b; color: #b9cfc2;
+  padding: 10px 9px; min-height: 41px; width: 100%;
+  display: flex; justify-content: space-between; align-items: center;
+  text-align: right; border-radius: 3px; font-size: 11px;
+}
+.twin-studio__room-filter button:hover { background: #2a4637; }
+.twin-studio__room-filter button.is-active {
+  background: #325745; color: #f1fff6; border-color: #76aa8c;
+}
+.twin-studio__room-filter button small { color: #84ac96; font: 10px "IBM Plex Mono", monospace; }
+.twin-studio__room-filter button.is-active small { color: #c0e8cc; }
+.twin-studio__inventory {
+  display: grid; gap: 4px; padding: 1px;
+  max-height: 239px; overflow-y: auto; scrollbar-width: thin;
+  scrollbar-color: #456251 transparent;
+}
+.twin-studio__inventory button {
+  background: #20362e; border: 1px solid #334a3f;
+  padding: 10px; text-align: right; color: #dceadd;
+  display: flex; flex-direction: column; gap: 5px; border-radius: 3px;
+}
+.twin-studio__inventory button:hover { background: #2c4a3a; }
+.twin-studio__inventory button.is-active {
+  background: #315641; border-color: #8ab89b;
+}
+.twin-studio__inventory button span { font-weight: 600; font-size: 11px; }
+.twin-studio__inventory button small { font-size: 10px; color: #86a797; }
+.twin-room-label {
+  display: block; white-space: nowrap; pointer-events: auto;
+  background: #f3f5f1eb; border: 1px solid #94b6a9; color: #285445;
+  padding: 5px 9px; font: 600 11px "IBM Plex Sans Arabic",Tahoma,sans-serif;
+  border-radius: 3px; box-shadow: 0 2px 8px #1c312126;
+}
+.twin-room-label:hover, .twin-room-label.is-selected { background: #286449; color: white; }
+.twin-world-label { display: flex; flex-direction: column; gap: 3px; line-height: 1.5; direction: rtl; }
+.twin-world-label small { color: #537568; font-size: 9px; }
+.twin-studio__mini-stats { margin-top: 5px; }
+.twin-studio__viewport .twin-studio__overlay-title {
+  background: #ffffffed;
+}
+@media (max-width: 1280px) {
+ .twin-studio__inventory { max-height: 175px; }
+}
+@media (max-width: 660px) {
+ .twin-studio__mobile-floors { left: 9px; right: 9px; width: calc(100% - 18px); gap: 4px; }
+ .twin-studio__mobile-floors select { min-width: 0; flex: 1; width: auto; font-size: 10px; }
+ .twin-studio__mobile-floors button { flex: none; width: 30px; }
+}
