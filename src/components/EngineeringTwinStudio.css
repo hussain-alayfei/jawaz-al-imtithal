@@ -278,3 +278,11 @@
  .twin-studio__mobile-floors select { min-width: 0; flex: 1; width: auto; font-size: 10px; }
  .twin-studio__mobile-floors button { flex: none; width: 30px; }
 }
+
+@media (max-width: 660px) {
+  /* On phones room navigation lives in the compact select, not inside the scroll rail. */
+  .twin-studio__systems .twin-studio__room-filter { display: none; }
+  .twin-studio__systems { padding: 7px 9px; }
+  .twin-studio__overlay-title { max-width: 153px; }
+  .twin-studio__mobile-floors { top: 80px; }
+}
