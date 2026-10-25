@@ -229,7 +229,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
     if (floor !== "all" && floor !== "roof" && !selected) {
       const base = Math.max(0,levelOf(floor)) * STOREY_HEIGHT;
       focus.current.set(0,base + 1.6,0);
-      if (preset==="iso") desired.current.set(17,base+11,18);
+      if (preset==="iso") desired.current.set(13,base+8.4,14);
       else if (preset==="top") desired.current.set(.01,base+23,.01);
       else if (preset==="front") desired.current.set(0,base+8,22);
       else desired.current.set(5.3,base+5.1,9);
@@ -288,9 +288,11 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
       shadow-camera-near={0.5} shadow-camera-far={65}
       shadow-bias={-0.00022} />
     <directionalLight position={[-9, 7, -12]} intensity={0.38} color="#a1c5cf" />
-    <Block p={[0, -0.35, 0]} s={[40, 0.4, 31]} color="#aab8ae" />
-    <Block p={[0, -0.14, 10.65]} s={[40, 0.05, 4.6]} color="#858f8d" />
-    {[-15, -5, 5, 15].map(x => <Block key={x} p={[x, -0.105, 10.65]} s={[1.2, 0.01, 0.08]} color="#dde0d7" />)}
+    {(floor==="all"||floor==="ground") && <>
+      <Block p={[0, -0.35, 0]} s={[40, 0.4, 31]} color="#aab8ae" />
+      <Block p={[0, -0.14, 10.65]} s={[40, 0.05, 4.6]} color="#858f8d" />
+      {[-15, -5, 5, 15].map(x => <Block key={x} p={[x, -0.105, 10.65]} s={[1.2, 0.01, 0.08]} color="#dde0d7" />)}
+    </>}
     {[0,1,2,3,4].filter(level => level < floorCount).map(level =>
       <Storey key={level} level={level} floor={floor} ghost={ghost} explode={exploded}
         activity={activity} roomFilter={roomFilter} furniture={furniture} labels={labels}
@@ -306,10 +308,12 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
     {[0,1,2,3,4].filter(level=>level<floorCount && (floor==="all" || LEVEL_KEYS[level]===floor))
       .map(level=><DetailedServiceNetwork3D key={level} floor={level} visible={visible} selected={selected}
         onSelect={onSelect} animate={flow}/>)}
-    <Grid args={[50, 50]} position={[0, -0.12, 0]} cellSize={1} cellColor="#92a69e"
-      cellThickness={0.35} sectionSize={5} sectionColor="#788f85"
-      sectionThickness={0.5} fadeDistance={42} fadeStrength={1.8} />
-    <ContactShadows position={[0, -0.16, 0]} opacity={0.32} blur={2.5} scale={34} far={18} frames={1} />
+    {(floor==="all"||floor==="ground") && <>
+      <Grid args={[50, 50]} position={[0, -0.12, 0]} cellSize={1} cellColor="#92a69e"
+        cellThickness={0.35} sectionSize={5} sectionColor="#788f85"
+        sectionThickness={0.5} fadeDistance={42} fadeStrength={1.8} />
+      <ContactShadows position={[0, -0.16, 0]} opacity={0.32} blur={2.5} scale={34} far={18} frames={1} />
+    </>}
     <CameraRig preset={preset} selected={selectedPos} floor={floor} nonce={nonce} floorCount={floorCount} />
   </>;
 }
