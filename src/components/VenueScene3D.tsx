@@ -2,7 +2,7 @@ import { Html, OrbitControls, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { DetailedServiceNetwork3D } from "./DetailedServiceNetwork3D";
+import { DetailedServiceNetwork3D, getDetailPoint } from "./DetailedServiceNetwork3D";
 import { InteriorFitout3D } from "./InteriorFitout3D";
 import type { ServiceVisibility } from "./EngineeringNetworks3D";
 
@@ -201,12 +201,12 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
  selected:string|null;onSelect:(id:string)=>void;preset:VenueCameraPreset;nonce:number;
 }){
  const spot=getVenueSpot(selected);
- const detailPosition=selected?.startsWith("DETAIL-")?undefined:spot?.position;
- const selectedPoint=detailPosition??null;
+ const selectedPoint=spot?.position ?? getDetailPoint(selected)?.position ?? null;
  const isCafe=kind==="cafe";
- return <group name={"standalone-"+kind}>
+ return <>
     <color attach="background" args={["#c7d8d8"]}/>
     <fog attach="fog" args={["#c7d8d8",42,92]}/>
+    <group name={"standalone-"+kind}>
     <ambientLight intensity={.8}/>
     <hemisphereLight args={["#f4faf1","#687e71",1.1]}/>
     <directionalLight castShadow position={[13,21,16]} intensity={2.6}
@@ -239,5 +239,6 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
     <VenueNetworks visible={visible} selected={selected} onSelect={onSelect}/>
     <ContactShadows opacity={.26} scale={38} far={20} blur={2.6} position={[0,-.15,0]} frames={1}/>
     <VenueCameraRig kind={kind} preset={preset} selected={selectedPoint} nonce={nonce}/>
- </group>;
+    </group>
+ </>;
 }
