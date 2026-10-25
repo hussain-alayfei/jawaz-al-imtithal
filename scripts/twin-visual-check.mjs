@@ -51,6 +51,30 @@ try {
     await page.waitForTimeout(1800);
     const hasCanvas = await page.locator(".twin-studio__canvas canvas").count();
     if (!hasCanvas) failures.push(size.name + ": no 3D canvas");
+    const switcher=page.locator("[data-testid='venue-scene-switcher']");
+    if (await switcher.locator("button").count()!==3)
+      failures.push(size.name+": missing three venue navigation buttons");
+    if (await switcher.locator('[data-scene="cafe"]').getAttribute("aria-pressed")!=="true")
+      failures.push(size.name+": cafe is not the default scene");
+    if (!(await page.locator(".twin-studio__overlay-title strong").textContent())?.includes("مقهى"))
+      failures.push(size.name+": first scene is not a cafe");
+    await page.waitForTimeout(850);
+    await page.screenshot({path:join(target,size.name+"-cafe.png"),fullPage:false,animations:"disabled"});
+    if (await page.locator('[data-testid="venue-inspector-spots"] button').count()!==4)
+      failures.push(size.name+": cafe inspection regions missing");
+    await page.locator('[data-scene="restaurant"]').click();
+    await page.waitForTimeout(850);
+    if (!(await page.locator(".twin-studio__overlay-title strong").textContent())?.includes("مطعم"))
+      failures.push(size.name+": restaurant failed to open");
+    await page.screenshot({path:join(target,size.name+"-restaurant.png"),fullPage:false,animations:"disabled"});
+    await page.locator("[data-testid='venue-scene-switcher'] [data-scene='cafe']").click();
+    await page.getByRole("tab",{name:"الأنظمة"}).click();
+    await page.locator(".twin-studio__system-list button").filter({hasText:"المياه"}).click();
+    if (await page.locator(".twin-studio__system.is-active").count()!==1)
+      failures.push(size.name+": water filter not active in venue");
+    await page.locator("[data-testid='venue-scene-switcher'] [data-scene='building']").click();
+    if (await switcher.locator('[data-scene="building"]').getAttribute("aria-pressed")!=="true")
+      failures.push(size.name+": original five-storey building inaccessible");
     if (await page.getByText("الطاقة الشمسية", { exact: true }).count())
       failures.push(size.name + ": removed solar energy still appears");
     if (await page.locator(".twin-studio__floor-list button").count() !== 7)

@@ -15,6 +15,7 @@ import {
   EngineeringNetworks3D, SERVICE_KEYS, SERVICE_META, SERVICE_NETWORKS,
   findServiceNode, type ServiceKey, type ServiceVisibility,
 } from "./EngineeringNetworks3D";
+import { VenueScene3D, VENUE_META, VENUE_SPOTS, getVenueSpot, type VenueKind } from "./VenueScene3D";
 import "./EngineeringTwinStudio.css";
 
 type Vec3 = [number, number, number];
@@ -327,6 +328,10 @@ interface Props {
   onClose: () => void;
 }
 export function EngineeringTwinStudio({ projectName, activityName, activityId, floors, findingsCount, onClose }: Props) {
+  const [scene,setScene] = useState<"building"|VenueKind>("cafe");
+  const isBuilding = scene==="building";
+  const venueSpots = isBuilding ? [] : VENUE_SPOTS[scene];
+  const currentVenue = isBuilding ? null : VENUE_META[scene];
   // Five-storey showcase is explicitly synthetic and independent of actual IFC / facility metadata.
   const floorCount = 5;
   void floors;
@@ -348,6 +353,12 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [menuOpen, setMenuOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<"files"|"items">("items");
   const [mobileInspectorOpen,setMobileInspectorOpen] = useState(false);
+  const chooseScene = (next:"building"|VenueKind) => {
+    setScene(next);setSideSection("floors");setInspectorTab("items");
+    setSystem("architecture");setVisible(ALL_VISIBLE);setFloor("all");
+    setGhost(true);setFurniture(true);setSelected(null);setPreset("iso");
+    setMobileInspectorOpen(false);setNonce(n=>n+1);
+  };
   const overlayRef = useRef<HTMLDivElement>(null);
   const selectedCustom = CUSTOM_NODES.find(x => x.id === selected);
   const selectedNode = findServiceNode(selected);
@@ -358,8 +369,12 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const selectedRoom = selected?.startsWith("ROOM-")
     ? getActivityRooms(activityId, Number(selected.split("-")[1])).find(r => r.key === selected.split("-")[2])
     : null;
-  const selectedFurniture = [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected);
-  const inspected = selectedFurniture
+  const selectedFurniture = isBuilding ? [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected) : undefined;
+  const selectedVenueSpot = isBuilding ? undefined : getVenueSpot(selected);
+  const inspected = selectedVenueSpot ? {
+     id:selectedVenueSpot.id,system:"architecture" as const,label:selectedVenueSpot.title,
+     description:selectedVenueSpot.description,position:selectedVenueSpot.position
+   } : selectedFurniture
     ? {id:selectedFurniture.id,system:"architecture" as const,label:selectedFurniture.title,
       description:selectedFurniture.description,position:selectedFurniture.position}
     : detailedNode
@@ -382,11 +397,11 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setSelected(null);
     setVisible(key === "architecture"
       ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key || key === "all"])) as ServiceVisibility);
-    if (floor === "roof") setFloor("ground");
+    if (isBuilding && floor === "roof") setFloor("ground");
     setGhost(true);
     if (key === "architecture") {setRoomFilter("all");setFurniture(true);}
     setNonce(n => n + 1);
-  }, [floor]);
+  }, [floor,isBuilding]);
 
   const showDemoElement = (item:DemoFileElement) => {
     setMobileInspectorOpen(false);
@@ -434,12 +449,14 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       <header className="twin-studio__top">
         <div className="twin-studio__brand">
           <span className="twin-studio__brand-icon"><Building2 size={22}/></span>
-          <div><strong>مِعيار <b>/</b> الاستوديو الهندسي</strong><small>ENGINEERING DIGITAL TWIN · LAB</small></div>
+          <div><strong>مِعيار <b>/</b> الاستوديو الهندسي</strong><small>VENUE DIGITAL TWIN · EXPLORE</small></div>
         </div>
-        <div className="twin-studio__project">
-          <span className="twin-studio__live" />
-          <div><strong>{projectName}</strong><small>{activityName} · نموذج ثلاثي الأبعاد توضيحي</small></div>
-        </div>
+        <nav className="twin-studio__scene-switcher" aria-label="التنقل بين نماذج المنشآت" data-testid="venue-scene-switcher">
+          {([["cafe","المقهى"],["restaurant","المطعم"],["building","العمارة"]] as const)
+           .map(([key,label])=><button type="button" key={key} data-scene={key}
+             className={scene===key?"is-active":""} aria-pressed={scene===key}
+             onClick={()=>chooseScene(key)}>{label}</button>)}
+        </nav>
         <div className="twin-studio__top-actions">
           <button type="button" onClick={reset} title="إعادة الإعدادات"><RotateCcw size={17}/><span>إعادة ضبط</span></button>
           <button type="button" onClick={() => void fullScreen()} title="ملء الشاشة"><Maximize2 size={17}/></button>
@@ -452,7 +469,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
         <aside className="twin-studio__systems" aria-label="أنظمة المبنى">
           <div className="twin-studio__side-nav" role="tablist" aria-label="أقسام التحكم في التوأم الرقمي">
             {([
-              ["floors","الأدوار"],
+              ["floors",isBuilding?"الأدوار":"المناطق"],
               ["systems","الأنظمة"],
               ["rooms","الغرف"],
               ["view","العرض"],
@@ -475,21 +492,24 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           </div>
           </section>}
           {sideSection==="floors" && <section className="twin-studio__side-panel" aria-label="اختيار الدور">
-          <div className="twin-studio__section-heading"><Box size={17}/> <span>اختر الدور أو المبنى كاملًا</span></div>
+          <div className="twin-studio__section-heading"><Box size={17}/> <span>{isBuilding?"اختر الدور":"مناطق المنشأة"}</span></div>
           <div className="twin-studio__floor-list">
-            {availableFloors.map(item => (
+            {isBuilding ? availableFloors.map(item => (
               <button type="button" key={item.key} className={floor === item.key ? "is-active" : ""}
                 onClick={() => { setFloor(item.key); setSelected(null); setNonce(n => n + 1); }}>
                 <small>{item.en}</small><span>{item.label}</span>
                 {item.key!=="all" && item.key!=="roof" && <em>{getFloorTitle(activityId,Math.max(0,levelOf(item.key)))}</em>}
               </button>
-            ))}
+            )) : venueSpots.map((spot,i)=><button type="button" key={spot.id}
+              className={selected===spot.id?"is-active":""} onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
+              <small>{String(i+1).padStart(2,"0")}</small><span>{spot.title}</span><em>{spot.description}</em>
+            </button>)}
           </div>
           </section>}
           {sideSection==="rooms" && <section className="twin-studio__side-panel" aria-label="الغرف والأثاث">
           <div className="twin-studio__section-heading"><Building2 size={17}/> <span>تصفية غرف الدور</span></div>
-          <p className="twin-studio__section-note">{floor==="all"?"اختر دورًا أولًا لرؤية غرفه المختلفة":"غرف "+getFloorTitle(activityId,Math.max(0,levelOf(floor)))}</p>
-          <div className="twin-studio__room-filter" data-testid="twin-room-filters">
+          <p className="twin-studio__section-note">{isBuilding?(floor==="all"?"اختر دورًا لرؤية غرفه":"غرف "+getFloorTitle(activityId,Math.max(0,levelOf(floor)))):"اختر مساحة للتركيز عليها داخل المشهد"}</p>
+          {isBuilding ? <div className="twin-studio__room-filter" data-testid="twin-room-filters">
             <button type="button" className={roomFilter === "all" ? "is-active" : ""}
               aria-pressed={roomFilter==="all"} onClick={() => {setRoomFilter("all");setSelected(null);setNonce(n=>n+1);}}>
               <span>جميع الغرف</span><small>04</small>
@@ -501,16 +521,22 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 <span>{room.name}</span><small>{room.key==="reception"?"01":room.key==="hall"?"02":room.key==="office"?"03":"04"}</small>
               </button>
             ))}
-          </div>
+          </div> : <div className="twin-studio__room-filter" data-testid="venue-room-filters">
+            {venueSpots.map((spot,i)=><button type="button" key={spot.id}
+              className={selected===spot.id?"is-active":""} aria-pressed={selected===spot.id}
+              onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
+              <span>{spot.title}</span><small>{String(i+1).padStart(2,"0")}</small>
+            </button>)}
+          </div>}
           </section>}
           {sideSection==="view" && <section className="twin-studio__side-panel" aria-label="إعدادات المشهد">
           <div className="twin-studio__section-heading"><Eye size={17}/> <span>إعدادات المشهد</span></div>
           <div className="twin-studio__switches">
             {([
               ["شفافية الجدران", ghost, setGhost, EyeOff],
-              ["تفكيك الطوابق", exploded, setExploded, Move3d],
+              ...(isBuilding ? [["تفكيك الطوابق", exploded, setExploded, Move3d] as const] : []),
               ["إظهار الأثاث والتجهيزات", furniture, setFurniture, Sofa],
-              ["إظهار أسماء الغرف", labels, setLabels, Focus],
+              ...(isBuilding ? [["إظهار أسماء الغرف", labels, setLabels, Focus] as const] : []),
               ["تحريك تدفق الخدمات", flow, setFlow, Activity],
             ] as const).map(([label, value, setter, Icon]) => (
               <label key={label} className="twin-studio__switch">
@@ -531,22 +557,26 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 gl.outputColorSpace = THREE.SRGBColorSpace;
               }}
               onPointerMissed={() => setSelected(null)}>
-              <Model floor={floor} selectedSystem={system} visible={visible}
-                ghost={ghost} exploded={exploded} flow={flow} activity={activityId}
-                floorCount={floorCount} roomFilter={roomFilter} furniture={furniture} labels={labels}
-                selected={selected} onSelect={setSelected} preset={preset} nonce={nonce} />
+              {scene==="building"
+                ? <Model floor={floor} selectedSystem={system} visible={visible}
+                  ghost={ghost} exploded={exploded} flow={flow} activity={activityId}
+                  floorCount={floorCount} roomFilter={roomFilter} furniture={furniture} labels={labels}
+                  selected={selected} onSelect={setSelected} preset={preset} nonce={nonce} />
+                : <VenueScene3D kind={scene} visible={visible} ghost={ghost} furniture={furniture}
+                    selected={selected} onSelect={setSelected} preset={preset} nonce={nonce}/>}
+
             </Canvas>
           </div>
           <div className="twin-studio__overlay-title">
-            <small>نموذج توضيحي · 5 أدوار</small>
-            <strong>{floor === "all" ? "المبنى كاملًا" : getFloorTitle(activityId,Math.max(0,levelOf(floor)))}</strong>
+            <small>{isBuilding?"مبنى توضيحي · 5 أدوار":"منشأة تجريبية · دور واحد"}</small>
+            <strong>{isBuilding?(floor==="all"?"المبنى كاملًا":getFloorTitle(activityId,Math.max(0,levelOf(floor)))):currentVenue?.title}</strong>
             <span>{SYSTEM_LIST.find(x => x.key === system)?.label}</span>
           </div>
           <div className="twin-studio__north"><Compass size={21}/><span>ش</span></div>
-          <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
+          {isBuilding && <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
             onClick={()=>{setInspectorTab("files");setMobileInspectorOpen(v=>!v);}}>
             <Layers3 size={15}/> ملفات IFC (٤)
-          </button>
+          </button>}
           <div className="twin-studio__view-controls">
             {([["iso","منظور"], ["top","علوي"], ["front","واجهة"], ["inside","داخلي"]] as [Preset, string][]).map(([key, label]) =>
               <button type="button" key={key} className={preset === key ? "is-active" : ""}
@@ -554,9 +584,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           </div>
           <div className="twin-studio__scene-hint"><span className="twin-studio__hint-dot"/> <span>دور بالكاميرا · قرّب · اختر شبكة ثم نقطة تمديد أو غرفة</span></div>
           <div className="twin-studio__viewport-stats">
-            <span>5 STOREYS · DEMO DATA</span><span>◦</span><span>SCHEMATIC / NOT AS-BUILT</span>
+            <span>{isBuilding?"5 STOREYS":"1 STOREY · "+(scene==="cafe"?"CAFE":"RESTAURANT")}</span><span>◦</span><span>DEMO / NOT AS-BUILT</span>
           </div>
-          <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
+          {isBuilding && <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
             <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
               {availableFloors.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
             </select>
@@ -566,7 +596,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             </select>
             <button type="button" aria-pressed={ghost} onClick={() => setGhost(v => !v)} title="شفافية الجدران"><EyeOff size={17}/></button>
             <button type="button" aria-pressed={exploded} onClick={() => setExploded(v => !v)} title="فصل الطوابق"><Move3d size={17}/></button>
-          </div>
+          </div>}
           {inspected && <div className="twin-studio__mobile-selection" dir="rtl">
             <button type="button" aria-label="إغلاق تفاصيل العنصر" onClick={() => setSelected(null)}><X size={16}/></button>
             <strong>{inspected.label}</strong><span>{inspected.description}</span>
@@ -580,21 +610,30 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             onClick={()=>setMobileInspectorOpen(false)} aria-label="إغلاق ملفات BIM">✕ إغلاق الملفات</button>}
           <div className="twin-studio__section-heading"><Focus size={17}/><span>تفاصيل النموذج</span><span className="twin-studio__live"/></div>
           <div className="twin-studio__inspector-hero">
-            <span>DIGITAL TWIN · DEMONSTRATION</span>
-            <h2>{projectName}</h2>
-            <p>{floor==="all"?"المبنى كاملًا":getFloorTitle(activityId,Math.max(0,levelOf(floor)))}
-              {" · "}نموذج {activityName} تجريبي، مختلف التوزيع في كل دور.</p>
+            <span>{isBuilding?"FIVE-STOREY BIM EXPLORER":"SINGLE-STOREY VENUE · DEMO"}</span>
+            <h2>{isBuilding?projectName:currentVenue?.title}</h2>
+            <p>{isBuilding ? (floor==="all"?"المبنى كاملًا":getFloorTitle(activityId,Math.max(0,levelOf(floor)))+" · "+"نموذج "+activityName+" تجريبي.")
+                        : currentVenue?.subtitle}</p>
           </div>
           <div className="twin-studio__mini-stats">
-            <div><strong>{String(floorCount).padStart(2,"0")}</strong><small>أدوار تمثيلية</small></div>
+            <div><strong>{isBuilding?"05":"01"}</strong><small>أدوار تمثيلية</small></div>
             <div><strong>08</strong><small>أنظمة عرض</small></div>
             <div><strong>{countEquipment.toString().padStart(2, "0")}</strong><small>عناصر خدمة ظاهرة</small></div>
           </div>
           <div className="twin-studio__inspector-tabs" role="group" aria-label="قسم تفاصيل التوأم الرقمي">
             <button type="button" onClick={()=>setInspectorTab("items")} aria-pressed={inspectorTab==="items"}>العناصر والتجهيزات</button>
-            <button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات BIM</button>
+            {isBuilding&&<button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات BIM</button>}
           </div>
-          {inspectorTab==="files" ? <DemoBimPanel onPick={showDemoElement}/> : <>
+          {isBuilding&&inspectorTab==="files" ? <DemoBimPanel onPick={showDemoElement}/> : <>
+          {!isBuilding&&<div className="twin-studio__venue-spot-list" data-testid="venue-inspector-spots">
+            <div className="twin-studio__section-heading"><Building2 size={16}/><span>مناطق المنشأة</span></div>
+            {venueSpots.map((spot,i)=><button key={spot.id} type="button" className={selected===spot.id?"is-active":""}
+              onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
+              <small>{String(i+1).padStart(2,"0")}</small><strong>{spot.title}</strong>
+              <span>{spot.description}</span>
+            </button>)}
+          </div>}
+          {isBuilding && <>
           <div className="twin-studio__rail-divider" />
           <div className="twin-studio__section-heading"><Sofa size={17}/><span>أثاث وتجهيزات الغرف</span><small>{getInteriorItems(activityId,0).length}</small></div>
           <div className="twin-studio__inventory" data-testid="twin-inventory">
@@ -606,6 +645,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 <span>{item.title}</span><small>{rooms.find(r=>r.key===item.room)?.name}</small>
               </button>)}
           </div>
+          </>}
           <div className="twin-studio__rail-divider" />
           <div className="twin-studio__section-heading"><Box size={17}/><span>{inspected ? "العنصر المحدد" : "دليل الأنظمة"}</span></div>
           {inspected ? <div className="twin-studio__selection">
@@ -620,6 +660,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <strong>اختر شبكة، ثم اضغط أحد عناصرها</strong>
             <p>يمكنك استكشاف الأنابيب واللوحات والمعدات ومسارات الخدمات داخل كل طابق.</p>
           </div>}
+          {isBuilding && <>
           <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><Layers3 size={17}/><span>نقاط الخدمات التفصيلية</span></div>
           <div className="twin-studio__inventory">
@@ -633,6 +674,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               </button>)}
           </div>
           </>}
+          </>}
           <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><ShieldCheck size={17}/><span>حالة الدليل</span></div>
           <div className="twin-studio__evidence">
@@ -641,7 +683,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <div><span>حالة الربط مع IFC</span><strong>غير مرتبط هندسيًا</strong></div>
           </div>
           <div className="twin-studio__disclaimer"><ShieldAlert size={18}/>
-            <p>المبنى والأثاث ومسارات الخدمات أمثلة هندسية مرئية وليست مخططات تنفيذ أو نتائج مستخرجة من ملف IFC. نتائج الفحص الأصلية موجودة في شاشة التقرير ولا تتغير بهذا العرض.</p>
+            <p>مشاهد المقهى والمطعم والعمارة أمثلة ثلاثية الأبعاد مولّدة بالكود، وليست هندسة IFC أو مخططات تنفيذ. نتائج الفحص الأصلية مستقلة عنها.</p>
           </div>
         </aside>
       </div>

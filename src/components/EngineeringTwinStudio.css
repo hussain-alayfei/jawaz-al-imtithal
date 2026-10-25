@@ -451,3 +451,66 @@
 @media (prefers-reduced-motion:reduce) {
  .twin-studio__side-panel { animation:none; }
 }
+
+
+/* Dedicated venue navigation: clearly separate business archetypes from in-scene filters. */
+.twin-studio__scene-switcher {
+  display:flex; gap:5px; padding:5px; background:#091b17; border:1px solid #355649;
+  border-radius:5px; align-items:center; justify-content:center;
+}
+.twin-studio__scene-switcher button {
+  color:#c0d6c8; background:transparent; border:1px solid transparent;
+  padding:10px 20px; min-width:96px; font-size:13px; font-weight:700; border-radius:3px;
+}
+.twin-studio__scene-switcher button:hover { background:#274a38; color:white; }
+.twin-studio__scene-switcher button.is-active {
+  background:#e7f1e4; color:#1e5136; border-color:#e7f1e4;
+}
+.twin-studio__venue-spot-list { display:grid; gap:6px; margin:9px 0 20px; }
+.twin-studio__venue-spot-list button {
+  background:#213c30; border:1px solid #416454; border-radius:3px;
+  padding:11px; display:grid; grid-template-columns:24px 1fr; column-gap:8px;
+  text-align:right; color:#eff6ef;
+}
+.twin-studio__venue-spot-list button.is-active { background:#315f43; border-color:#a6cfb3; }
+.twin-studio__venue-spot-list button:hover { background:#2f513d; }
+.twin-studio__venue-spot-list button small { font:11px "IBM Plex Mono",monospace; color:#9ac7aa; grid-row:1 / span 2; }
+.twin-studio__venue-spot-list button strong { font-size:12px; line-height:1.5; }
+.twin-studio__venue-spot-list button span { font-size:10px; line-height:1.65; color:#b9d1bf; }
+.venue-sign { display:flex; flex-direction:column; gap:3px; align-items:center; justify-content:center;
+  min-width:145px; padding:7px 16px; text-align:center; white-space:nowrap;
+  background:#314a3d; color:#f7f5e9; border:1px solid #bdae8d; border-radius:2px;
+  box-shadow:0 2px 12px #1a2b2442;
+}
+.venue-sign strong {font:700 19px "IBM Plex Sans Arabic",Tahoma,sans-serif;}
+.venue-sign span {font:9px "IBM Plex Mono",monospace;letter-spacing:2px;color:#dbd1b8;}
+.venue-sign.is-restaurant { background:#394045; }
+.venue-world-inspector {
+  min-width:160px; max-width:245px; background:#fffdf3ed;
+  color:#284338; padding:9px 12px; border:1px solid #abc3b5;
+  box-shadow:0 4px 15px #1b332b33; text-align:right;
+}
+.venue-world-inspector strong { display:block; font-size:12px; }
+.venue-world-inspector small { display:block; margin-top:4px; font-size:10px; line-height:1.6; }
+@media (max-width:1320px) {
+ .twin-studio__scene-switcher button { min-width:75px; padding:10px 13px; }
+ .twin-studio__brand { min-width:0; }
+}
+@media (max-width:820px) {
+ .twin-studio__top { gap:7px; padding:8px 10px; flex-wrap:wrap; }
+ .twin-studio__scene-switcher { order:3; width:100%; }
+ .twin-studio__scene-switcher button { flex:1; padding:7px; font-size:12px; }
+ .twin-studio__top-actions .twin-studio__close span { display:none; }
+ .twin-studio__brand strong { font-size:12px; }
+ .twin-studio__brand small { display:none; }
+}
+@media (max-width:660px) {
+ .twin-studio__top { min-height:97px; padding:7px 8px; }
+ .twin-studio__scene-switcher { order:3; padding:3px; gap:3px; }
+ .twin-studio__scene-switcher button {min-width:0;font-size:11px;padding:7px;}
+ .twin-studio__venue-spot-list { display:none; }
+ .twin-studio__overlay-title { top:7px; }
+ .twin-studio__north { top:10px; }
+ .twin-studio__scene-hint { display:none; }
+ .twin-studio__viewport-stats { max-width:240px; }
+}
