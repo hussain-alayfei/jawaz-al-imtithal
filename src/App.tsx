@@ -838,7 +838,7 @@ function ModelUpload({
       <section className="bim-upload-kit" aria-label="ملفات BIM التجريبية">
         <div className="bim-upload-kit__head">
           <div><strong>مكتبة BIM التجريبية الجاهزة</strong>
-            <p>خمسة أدوار تمثيلية، وأربعة ملفات IFC4 مملوءة بعناصر دلالية مرتبطة بالتوأم الرقمي. لا تمثل هندسة حقيقية أو مخططات اعتماد.</p>
+            <p>حمّل حزمة العمارة متعددة الأدوار أدناه، أو اختر إحدى حزمتَي المقهى والمطعم المستقلتين. جميع الملفات دلالية تجريبية وليست مخططات تنفيذ.</p>
           </div>
           <button type="button" className="button button--primary" onClick={onTwin}>
             <Building2 size={16}/> فتح الملفات داخل التوأم الرقمي
@@ -857,6 +857,22 @@ function ModelUpload({
             </a>)}
         </div>
         <small>ملفات الاستكشاف منفصلة عن رفع نموذج الامتثال أدناه؛ محرك الفحص الحالي يتطلب عقد IFC دلاليًا خاصًا، ولا يحوّل هذه الملفات إلى هندسة BIM.</small>
+      </section>
+      <section className="bim-venue-packs" aria-label="حزم BIM للمقهى والمطعم">
+        {([
+          ["cafe","المقهى","مقهى مستقل بدور واحد · 28 عنصرًا مرتبطًا"],
+          ["restaurant","المطعم","مطعم مستقل بدور واحد · 28 عنصرًا مرتبطًا"],
+        ] as const).map(([kind,label,desc])=><article className="bim-venue-packs__card" key={kind}>
+          <div><strong>حزمة {label}</strong><p>{desc}</p></div>
+          <div className="bim-venue-packs__links">
+            {(["Architectural.ifc","Structural.ifc","MEP.ifc","FireSafety.ifc","FurnitureDemo.gltf"] as const)
+              .map(name=><a key={name} href={"/demo-bim/venues/"+kind+"/"+name} download={name}
+                aria-label={"تنزيل "+name+" الخاص بـ"+label}>
+                <FileText size={14}/><span dir="ltr">{name}</span><Download size={14}/>
+              </a>)}
+          </div>
+          <small>التحليلات الهندسية المرتبطة بالنقاط موجودة داخل التوأم الرقمي، باختيار {label} ثم «التحليلات» أو «ملفات BIM».</small>
+        </article>)}
       </section>
       <div className="upload-layout">
         <section className="upload-card">
