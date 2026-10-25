@@ -4,8 +4,8 @@ import {
   RotateCcw, ShieldAlert, ShieldCheck, Sofa, X,
 } from "lucide-react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Grid, Html, OrbitControls } from "@react-three/drei";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ContactShadows, Grid, Html, OrbitControls, useGLTF } from "@react-three/drei";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import * as THREE from "three";
 import type { ActivityId } from "../data";
 import { InteriorFitout3D, getActivityRooms, getInteriorItems, type RoomFilter } from "./InteriorFitout3D";
@@ -51,6 +51,7 @@ const CUSTOM_NODES: NodeInfo[] = [
   { id: "DEMO-HVAC-ROOF", system: "hvac", label: "معدات التكييف على السطح", description: "مجموعة معالجة هواء ووصلات تغذية توضيحية.", position: [5.7, 11.1, -3.5] },
   { id: "DEMO-F-VALVE", system: "fire", label: "صمام تغذية الحريق", description: "صمام تحكم افتراضي متصل بمسار مكافحة الحريق.", position: [-6.2, 0.8, -4.7] },
   { id: "DEMO-W-TANK", system: "water", label: "خزان المياه العلوي", description: "خزان مبني هندسيًا للتوضيح، وليس مستخرجًا من الملف المرفوع.", position: [5, 11.2, 3.3] },
+  { id: "DEMO-GLTF-CABINET", system: "architecture", label: "خزانة أثاث من glTF", description: "مجسم أثاث ثلاثي الأبعاد من ملف glTF تجريبي حقيقي داخل مجلد المشروع، لا ينتمي إلى ملف IFC.", position: [5.85, 0.95, -4.85] },
 ];
 const viewDefaults: Record<Preset, { position: Vec3; target: Vec3 }> = {
   iso: { position: [30, 25, 30], target: [0, 8.2, 0] },
@@ -128,6 +129,13 @@ function Roof({ ghost, onSelectEquipment }: {
     <Block p={[5, 10.35, 3.6]} s={[1.9, 0.16, 1.9]} color="#8a9697" metal={0.6}
       onClick={() => onSelectEquipment("DEMO-W-TANK")} />
 
+  </group>;
+}
+function ExampleGltfFurniture({onSelect}:{onSelect:(id:string)=>void}){
+  const {scene}=useGLTF("/demo-bim/FurnitureDemo.gltf");
+  const cabinet=useMemo(()=>scene.clone(true),[scene]);
+  return <group position={[5.85,.18,-4.85]} onClick={e=>{e.stopPropagation();onSelect("DEMO-GLTF-CABINET");}}>
+    <primitive object={cabinet}/>
   </group>;
 }
 function Storey({ level, floor, ghost, explode, selectedSystem, onSelectRoom,
@@ -287,8 +295,10 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
     {floor === "roof" && <group position={[0,(floorCount - 3)*STOREY_HEIGHT,0]}>
       <Roof ghost={ghost} onSelectEquipment={onSelect} />
     </group>}
-    {(floor === "all" || floor === "ground") &&
-      <EngineeringNetworks3D visible={visible} selectedId={selected} onSelect={onSelect} />}
+    {(floor === "all" || floor === "ground") && <>
+      <EngineeringNetworks3D visible={visible} selectedId={selected} onSelect={onSelect} />
+      <Suspense fallback={null}><ExampleGltfFurniture onSelect={onSelect}/></Suspense>
+    </>}
     <NetworkExtensions floor={floor} system={visible} flow={flow} exploded={exploded} floorCount={floorCount} onSelect={onSelect} />
     {[0,1,2,3,4].filter(level=>level<floorCount && (floor==="all" || LEVEL_KEYS[level]===floor))
       .map(level=><DetailedServiceNetwork3D key={level} floor={level} visible={visible} selected={selected}
