@@ -321,7 +321,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [furniture, setFurniture] = useState(true);
   const [labels, setLabels] = useState(true);
   const [visible, setVisible] = useState<ServiceVisibility>(ALL_VISIBLE);
-  const [ghost, setGhost] = useState(false);
+  const [ghost, setGhost] = useState(true);
   const [exploded, setExploded] = useState(false);
   const [flow, setFlow] = useState(true);
   const [preset, setPreset] = useState<Preset>("iso");
@@ -329,6 +329,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [nonce, setNonce] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<"files"|"items">("files");
+  const [mobileInspectorOpen,setMobileInspectorOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const selectedCustom = CUSTOM_NODES.find(x => x.id === selected);
   const selectedNode = findServiceNode(selected);
@@ -362,12 +363,13 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setVisible(key === "architecture"
       ? ALL_VISIBLE : Object.fromEntries(SERVICE_KEYS.map(k => [k, k === key || key === "all"])) as ServiceVisibility);
     if (floor === "roof") setFloor("ground");
-    setGhost(key !== "architecture");
+    setGhost(true);
     if (key === "architecture") {setRoomFilter("all");setFurniture(true);}
     setNonce(n => n + 1);
   }, [floor]);
 
   const showDemoElement = (item:DemoFileElement) => {
+    setMobileInspectorOpen(false);
     setFloor(LEVEL_KEYS[item.floor] ?? "ground");
     setSelected(item.sceneId);
     const discipline = item.system;
@@ -383,7 +385,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   };
   const reset = () => {
     setSystem("architecture"); setFloor("all"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
-    setFurniture(true); setLabels(true); setGhost(false); setExploded(false); setFlow(true);
+    setFurniture(true); setLabels(true); setGhost(true); setExploded(false); setFlow(true);
     setPreset("iso"); setSelected(null); setNonce(n => n + 1);
   };
   useEffect(() => {
@@ -507,6 +509,10 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <span>{floor === "all" ? "المبنى كاملًا" : FLOOR_LIST.find(f => f.key === floor)?.label}</span>
           </div>
           <div className="twin-studio__north"><Compass size={21}/><span>ش</span></div>
+          <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
+            onClick={()=>{setInspectorTab("files");setMobileInspectorOpen(v=>!v);}}>
+            <Layers3 size={15}/> ملفات IFC (٤)
+          </button>
           <div className="twin-studio__view-controls">
             {([["iso","منظور"], ["top","علوي"], ["front","واجهة"], ["inside","داخلي"]] as [Preset, string][]).map(([key, label]) =>
               <button type="button" key={key} className={preset === key ? "is-active" : ""}
@@ -535,7 +541,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             {SYSTEM_LIST.map(item => <button key={item.key} type="button" onClick={() => {setFocusSystem(item.key); setMenuOpen(false);}}>{item.label}</button>)}
           </div>}
         </main>
-        <aside className="twin-studio__inspector" aria-label="تفاصيل العناصر">
+        <aside className={"twin-studio__inspector"+(mobileInspectorOpen?" is-mobile-open":"")} aria-label="تفاصيل العناصر">
+          {mobileInspectorOpen && <button type="button" className="twin-studio__mobile-inspector-close"
+            onClick={()=>setMobileInspectorOpen(false)} aria-label="إغلاق ملفات BIM">✕ إغلاق الملفات</button>}
           <div className="twin-studio__section-heading"><Focus size={17}/><span>تفاصيل النموذج</span><span className="twin-studio__live"/></div>
           <div className="twin-studio__inspector-hero">
             <span>FIVE-STOREY BIM EXPLORER · SYNTHETIC</span>
