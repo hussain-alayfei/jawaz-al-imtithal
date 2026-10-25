@@ -130,6 +130,7 @@ try {
       failures.push(size.name+": original building should start with six networks too");
     if (await page.getByText("الطاقة الشمسية", { exact: true }).count())
       failures.push(size.name + ": removed solar energy still appears");
+    await page.getByRole("tab",{name:"الأدوار"}).click();
     if (await page.locator(".twin-studio__floor-list button").count() !== 7)
       failures.push(size.name + ": five real scene levels and roof are not selectable");
     if (size.width > 1000) {
