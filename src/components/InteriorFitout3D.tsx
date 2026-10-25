@@ -328,7 +328,7 @@ export function InteriorFitout3D({
             onClick={e=>{e.stopPropagation();onSelect(item.id);}}
             onPointerOver={e=>{e.stopPropagation();document.body.style.cursor="pointer";}}
             onPointerOut={()=>{document.body.style.cursor="default";}}
-            visible={focused || roomFilter==="all"}>
+            visible={focused}>
             <group position={[-itemPosition[0],0,-itemPosition[2]]}><FurnitureModel activity={activity} item={item} visible/></group>
             {selectedId===item.id && <Html center position={[0,1.9,0]} distanceFactor={10}>
               <div className="twin-world-label" dir="rtl"><strong>{item.title}</strong><small>{item.description}</small></div>
