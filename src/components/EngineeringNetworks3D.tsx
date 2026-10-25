@@ -157,7 +157,7 @@ function Conduit({ points, color, radius }: ServicePath & { color: string }) {
   return (
     <mesh>
       <tubeGeometry args={[curve, Math.max(24, points.length * 12), radius, 10, false]} />
-      <meshStandardMaterial color={color} metalness={0.2} roughness={0.35} />
+      <meshStandardMaterial color={color} metalness={0.2} roughness={0.35} emissive={color} emissiveIntensity={0.2} />
     </mesh>
   );
 }
@@ -223,7 +223,7 @@ export function EngineeringNetworks3D({
       {SERVICE_KEYS.filter((system) => visible[system]).map((system) => (
         <group key={system} name={system}>
           {SERVICE_NETWORKS[system].paths.map((path, index) => (
-            <Conduit key={index} {...path} color={SERVICE_META[system].color} />
+            <Conduit key={index} {...path} radius={Math.max(path.radius * 1.65, 0.065)} color={SERVICE_META[system].color} />
           ))}
           {SERVICE_NETWORKS[system].nodes.map((node) => (
             <ServiceDevice
