@@ -236,6 +236,12 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
  return <group name="single-storey-premises">
     <B p={[0,-.01,0]} s={[16,.22,12]} c={cafe?"#cbb99e":"#c3c1b7"}/>
     <B p={[0,.09,0]} s={[15.8,.08,11.8]} c={cafe?"#e1d6c4":"#ddd7cd"}/>
+    {/* Structural column locations match the synthetic IFC structure reference. */}
+    {[-7.55,7.55].flatMap(x=>[-5.6,5.6].map(z=>
+      <B key={x+":"+z} p={[x,2.05,z]} s={[.39,4.1,.39]}
+        c={cafe?"#b9b7ab":"#b1b5b5"}/>))}
+    <B p={[0,4.3,-5.8]} s={[15.55,.34,.33]} c={cafe?"#adb5a9":"#adb5b5"}/>
+    <B p={[0,4.3,5.8]} s={[15.55,.34,.33]} c={cafe?"#adb5a9":"#adb5b5"}/>
     <B p={[0,2.18,-5.85]} s={[16,4.28,.26]} c={plaster}/>
     <B p={[-7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster}/>
     <B p={[7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster}/>
