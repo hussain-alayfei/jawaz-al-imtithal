@@ -1225,6 +1225,16 @@ function DiningSet({ x,z,coffee=false }: { x:number;z:number;coffee?:boolean }) 
     {!coffee && <><Chair x={-.85} z={0} rotate={Math.PI/2} color="#7f9a91"/><Chair x={.85} z={0} rotate={-Math.PI/2} color="#7f9a91"/></>}
   </group>;
 }
+function MeetingRoom({x,z}:{x:number;z:number}) {
+  return <group>
+    <Table x={x} z={z} w={3.15} d={1.16} top="#80664f"/>
+    {[-1.12,0,1.12].map(dx=><group key={dx}>
+      <Chair x={x+dx} z={z+1.0} rotate={Math.PI} color="#587478"/>
+      <Chair x={x+dx} z={z-1.0} color="#587478"/>
+    </group>)}
+    <Monitor x={x-.65} z={z-.16}/>
+  </group>;
+}
 function Sofa({x,z,rotate=0,color="#8ca19a"}:{x:number;z:number;rotate?:number;color?:string}) {
   return <group position={[x,0,z]} rotation={[0,rotate,0]}>
     <Round p={[0,.43,0]} s={[1.85,.36,.76]} c={color}/>
@@ -1326,7 +1336,8 @@ function FurnitureModel({activity, item, visible}:{
   const [x, ,z] = item.position;
   const title=item.title;
   if (/سرير/.test(title)) return <ExaminationBed x={x} z={z}/>;
-  if (/طاولات الطعام|طاولة اجتماعات|مائدة/.test(title)) return <group>
+  if (/طاولة اجتماعات|مائدة/.test(title)) return <MeetingRoom x={x} z={z}/>;
+  if (/طاولات الطعام/.test(title)) return <group>
     {[-1.35,1.35].flatMap(dx=>[-1,1].map(dz=><DiningSet key={dx+":"+dz} x={x+dx} z={z+dz}/>))}
   </group>;
   if (/جلسات المقهى/.test(title)) return <group>
@@ -1362,6 +1373,13 @@ export function InteriorFitout3D({
 }) {
   const rooms = getActivityRooms(activity, floor);
   const items = getInteriorItems(activity,floor);
+  const floorPalettes: Record<ActivityId,string[]> = {
+    restaurant:["#d5c7ae","#c8bda9","#aebcb7","#dbcab1","#b8c7c4"],
+    cafe:["#cebda2","#b6b7a8","#a3b1ae","#d1bca9","#c6beb0"],
+    clinic:["#d9dfd9","#dce7e3","#c4d4d3","#d7e3df","#c4d1d5"],
+    salon:["#e4d1c2","#d9c8c2","#dcd2c8","#e0c9bc","#c6d1ca"],
+  };
+  const baseColor = floorPalettes[activity][floor] ?? floorPalettes[activity][0];
   return <group name={"fitout-"+activity+"-"+floor}>
     {rooms.map(room => {
       const focused = roomFilter === "all" || roomFilter === room.key;
@@ -1369,7 +1387,7 @@ export function InteriorFitout3D({
       void alpha;
       return <group key={room.key}>
         <Cube p={[room.x,.17,room.z]} s={[room.w,.025,room.d]}
-          c={room.key==="service"?"#aab8b0":room.key==="office"?"#c9bdaf":"#d5c5ad"}
+          c={room.key==="service"?"#adbbb6":room.key==="office"?"#c0beb5":baseColor}
           opacity={focused?.9:.06} />
         {showLabels && focused && <Html position={[room.x,2.75,room.z]} center distanceFactor={11}>
           <button className={"twin-room-label"+(selectedId==="ROOM-"+floor+"-"+room.key?" is-selected":"")}
