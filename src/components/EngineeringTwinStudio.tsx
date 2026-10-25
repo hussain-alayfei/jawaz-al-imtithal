@@ -86,7 +86,7 @@ function Pipe({ points, color, radius = 0.045, opacity = 1 }: {
   const curve = useMemo(() => new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), false, "centripetal"), [points]);
   return <mesh>
     <tubeGeometry args={[curve, Math.max(16, points.length * 12), radius, 8, false]} />
-    <meshStandardMaterial color={color} metalness={0.23} roughness={0.39} transparent={opacity < 1} opacity={opacity} />
+    <meshStandardMaterial color={color} metalness={0.17} roughness={0.31} emissive={color} emissiveIntensity={0.27} transparent={opacity < 1} opacity={opacity} />
   </mesh>;
 }
 function FlowMarkers({ points, color }: { points: Vec3[]; color: string }) {
@@ -137,14 +137,14 @@ function SolarPanel({ x, z, onSelect }: { x: number; z: number; onSelect: () => 
     <Block p={[0, 0.058, 0]} s={[0.025, 0.015, 1.81]} color="#b3c2c8" metal={0.75} />
   </group>;
 }
-function Roof({ showSolar, selected, onSelect, onSelectEquipment }: {
-  showSolar: boolean; selected: string | null; onSelect: (id: string) => void;
+function Roof({ showSolar, selected, ghost, onSelect, onSelectEquipment }: {
+  showSolar: boolean; selected: string | null; ghost: boolean; onSelect: (id: string) => void;
   onSelectEquipment: (id: string) => void;
 }) {
   return <group>
-    <Block p={[0, 10.27, 0]} s={[15.9, 0.24, 11.9]} color="#c2c5c0" />
-    {[-7.8, 7.8].map(x => <Block key={x} p={[x, 10.72, 0]} s={[0.22, 0.75, 11.8]} color="#e0e1da" />)}
-    {[-5.85, 5.85].map(z => <Block key={z} p={[0, 10.72, z]} s={[15.9, 0.75, 0.23]} color="#e0e1da" />)}
+    <Block p={[0, 10.27, 0]} s={[15.9, 0.24, 11.9]} color="#c2c5c0" opacity={ghost ? 0.14 : 1} />
+    {[-7.8, 7.8].map(x => <Block key={x} p={[x, 10.72, 0]} s={[0.22, 0.75, 11.8]} color="#e0e1da" opacity={ghost ? 0.18 : 1} />)}
+    {[-5.85, 5.85].map(z => <Block key={z} p={[0, 10.72, z]} s={[15.9, 0.75, 0.23]} color="#e0e1da" opacity={ghost ? 0.18 : 1} />)}
     <Block p={[5.6, 11.0, -3.2]} s={[2.1, 1.03, 1.35]} color="#8d9e9d" metal={0.5} roughness={0.33}
       onClick={() => onSelectEquipment("DEMO-HVAC-ROOF")} />
     <Block p={[5.6, 11.53, -3.2]} s={[2.2, 0.09, 1.47]} color="#576d6e" metal={0.6} />
@@ -181,8 +181,8 @@ function Storey({ level, floor, ghost, explode, selectedSystem, onSelectRoom }: 
   const key = (["ground", "first", "second"] as const)[level];
   if (floor !== "all" && floor !== key) return null;
   const base = level * STOREY_HEIGHT + (explode ? level * 0.8 : 0);
-  const shellOpacity = ghost || selectedSystem !== "architecture" ? 0.16 : 1;
-  const solidOpacity = ghost || selectedSystem !== "architecture" ? 0.38 : 1;
+  const shellOpacity = ghost || selectedSystem !== "architecture" ? 0.1 : 1;
+  const solidOpacity = ghost || selectedSystem !== "architecture" ? 0.17 : 1;
   const wallColor = level === 0 ? "#d2d3c9" : "#dbdad1";
   return <group position={[0, base, 0]} name={"storey-" + level}>
     <Block p={[0, 0.02, 0]} s={[15.9, 0.21, 11.9]} color="#c9c5bd" opacity={solidOpacity} />
@@ -231,7 +231,7 @@ function NetworkExtensions({ floor, system, flow, exploded, onSelect }: {
             ? [[-6.8, y, -4.8], [0, y, -4.8], [4.8, y, -4.8], [4.8, y, -2.2]]
             : [[-6.8, y, 4.5], [-6.8, y, -4.7], [5.4, y, -4.7], [5.4, y, 2.5]];
           return <group key={k}>
-            <Pipe points={line} color={c} radius={k === "hvac" ? 0.16 : k === "drainage" ? 0.105 : 0.058} />
+            <Pipe points={line} color={c} radius={k === "hvac" ? 0.19 : k === "drainage" ? 0.15 : 0.1} />
             {flow && (k === "water" || k === "fire" || k === "hvac") && <FlowMarkers points={line} color={c} />}
             <Block p={line[0]} s={[0.35, 0.35, 0.35]} color={c} metal={0.3}
               onClick={() => onSelect("UPPER-" + level + "-" + k)} />
@@ -245,7 +245,7 @@ function NetworkExtensions({ floor, system, flow, exploded, onSelect }: {
     })}
     {SERVICE_KEYS.filter(k => system[k]).map((k, i) => (
       <Pipe key={k} points={[[7.05 - i * 0.38, 0.4, -4.55], [7.05 - i * 0.38, 10.1, -4.55]]}
-        radius={k === "hvac" ? 0.13 : 0.055} color={sColor(k)} opacity={floor === "all" ? 1 : 0.22} />
+        radius={k === "hvac" ? 0.19 : 0.085} color={sColor(k)} opacity={floor === "all" ? 1 : 0.22} />
     ))}
   </group>;
 }
@@ -317,7 +317,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, solar, flow, s
       <Storey key={level} level={level} floor={floor} ghost={ghost} explode={exploded}
         selectedSystem={selectedSystem} onSelectRoom={onSelect} />)}
     {(floor === "all" || floor === "roof") &&
-      <Roof showSolar={solar} selected={selected} onSelect={onSelect} onSelectEquipment={onSelect} />}
+      <Roof showSolar={solar} selected={selected} ghost={ghost} onSelect={onSelect} onSelectEquipment={onSelect} />}
     {(floor === "all" || floor === "ground") &&
       <EngineeringNetworks3D visible={visible} selectedId={selected} onSelect={onSelect} />}
     <NetworkExtensions floor={floor} system={visible} flow={flow} exploded={exploded} onSelect={onSelect} />
