@@ -9,7 +9,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
         </svg>
       </span>
       <span className="brand__copy">
-        <strong>مِعيار</strong>
+        <strong>موائم</strong>
       </span>
     </div>
   );

@@ -14,11 +14,11 @@ type Vec3=[number,number,number];
 export interface VenueSpot { id:string;area:Exclude<VenueArea,"all">;title:string;description:string;position:Vec3 }
 export const VENUE_META:Record<VenueKind,{title:string;tag:string;subtitle:string;areas:Record<Exclude<VenueArea,"all">,string>}> = {
   cafe:{
-    title:"مقهى مِعيار",tag:"COFFEE HOUSE",subtitle:"مقهى مستقل بطابق أرضي، تحضير قهوة وجلسات داخلية وخارجية",
+    title:"مقهى موائم",tag:"COFFEE HOUSE",subtitle:"مقهى مستقل بطابق أرضي، تحضير قهوة وجلسات داخلية وخارجية",
     areas:{entrance:"المدخل والاستقبال",seating:"الجلسات الداخلية",counter:"بار القهوة والطلبات",back:"الغسيل والمخزن"}
   },
   restaurant:{
-    title:"مطعم مِعيار",tag:"RESTAURANT",subtitle:"مطعم مستقل بطابق أرضي، صالة ضيوف ومطبخ خلفي مجهز",
+    title:"مطعم موائم",tag:"RESTAURANT",subtitle:"مطعم مستقل بطابق أرضي، صالة ضيوف ومطبخ خلفي مجهز",
     areas:{entrance:"المدخل والانتظار",seating:"صالة الطعام",counter:"الاستقبال والدفع",back:"المطبخ والتجهيز"}
   }
 };

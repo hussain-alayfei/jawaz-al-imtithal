@@ -1,5 +1,5 @@
 /* =========================================================================
-   مِعيار — design system
+   موائم — design system
    Register: engineering document / drawing sheet.
    Rules this file follows on purpose:
      - Arabic-first type scale. Nothing below 12px. No tracking on Arabic.
@@ -4831,20 +4831,20 @@ code,
 }
 
 /* Low-distraction transition language: respect an engineering/workflow product. */
-@keyframes miyar-enter {
+@keyframes mowaem-enter {
   from { opacity: 0; transform: translateY(7px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes miyar-dialog-enter {
+@keyframes mowaem-dialog-enter {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .app > :where(.app-header,.dashboard,.facility-page,.model-page,.analysis-page,.workspace-page,.report-page,.site-footer),
   .app > main, .app > header, .app > footer {
-    animation: miyar-enter 240ms cubic-bezier(.2,.65,.3,1) both;
+    animation: mowaem-enter 240ms cubic-bezier(.2,.65,.3,1) both;
   }
-  .twin-studio { animation: miyar-dialog-enter 200ms ease-out both; }
+  .twin-studio { animation: mowaem-dialog-enter 200ms ease-out both; }
   .twin-studio__system, .twin-studio__floor-list button,
   .twin-studio__room-filter button, .twin-studio__inventory button,
   .twin-studio__inspector-tabs button, .bim-library__file-actions button {

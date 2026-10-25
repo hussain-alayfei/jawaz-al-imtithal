@@ -11,7 +11,7 @@ describe("venue-specific BIM engineering packs",()=>{
    const dir=join(process.cwd(),"public","demo-bim","venues",kind);
    const manifest=JSON.parse(readFileSync(join(dir,"manifest.json"),"utf8"));
    const expected=getVenueEngineeringElements(kind);
-   expect(manifest.version).toBe("MIYAR-VENUES-1");
+   expect(manifest.version).toBe("MOWAEM-VENUES-1");
    expect(manifest.kind).toBe(kind);
    expect(manifest.files).toHaveLength(4);
    expect(manifest.files.map((f:{name:string})=>f.name))
@@ -25,7 +25,7 @@ describe("venue-specific BIM engineering packs",()=>{
     const contents=readFileSync(join(dir,file.name),"utf8");
     expect(contents).toContain("ISO-10303-21;");
     expect(contents).toContain("FILE_SCHEMA(('IFC4'))");
-    expect(contents).toContain("Pset_MiyarDigitalTwinDemo");
+    expect(contents).toContain("Pset_MowaemDigitalTwinDemo");
     expect(contents).toContain("END-ISO-10303-21;");
     expect(file.elements).toHaveLength(file.count);
     for(const item of file.elements){

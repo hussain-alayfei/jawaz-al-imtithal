@@ -38,7 +38,7 @@ const stageIds: StageId[] = [
   "link",
   "report",
 ];
-const SUPPORTED_CONTRACT_VERSION = "MIYAR-IFC-1.0";
+const SUPPORTED_CONTRACT_VERSION = "MOWAEM-IFC-1.0";
 
 function elapsed(start: number): number {
   return Math.max(0, Number((performance.now() - start).toFixed(1)));
@@ -215,7 +215,7 @@ export async function runIfcCompliance({
       throw new IfcProcessingError(
         "completeness",
         "ACTIVITY_CODE_MISSING",
-        "لم يتم العثور على ActivityCode صالح في Pset_MiyarProject.",
+        "لم يتم العثور على ActivityCode صالح في Pset_MowaemProject.",
       );
     }
     if (model.activityId !== activityId) {
@@ -240,7 +240,7 @@ export async function runIfcCompliance({
       throw new IfcProcessingError(
         "completeness",
         "SEMANTIC_CONTRACT_MISSING",
-        "مجموعة Pset_MiyarProject لا تحتوي FixtureContractVersion.",
+        "مجموعة Pset_MowaemProject لا تحتوي FixtureContractVersion.",
       );
     }
     if (contractVersion !== SUPPORTED_CONTRACT_VERSION) {

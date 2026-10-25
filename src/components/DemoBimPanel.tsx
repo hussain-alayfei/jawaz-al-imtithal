@@ -21,7 +21,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
      if(!r.ok)throw Error("تعذر قراءة فهرس ملفات BIM");
      return r.json();
    }).then((data:Manifest)=>{
-     if(data.version!=="MIYAR-DEMO-BIM-2"||data.files?.length!==4)throw Error("فهرس ملفات BIM غير متوافق");
+     if(data.version!=="MOWAEM-DEMO-BIM-2"||data.files?.length!==4)throw Error("فهرس ملفات BIM غير متوافق");
      setManifest(data);
    }).catch(e=>{if(!controller.signal.aborted){setMessage(String(e.message||e));setError(true);}});
    return ()=>controller.abort();
@@ -32,7 +32,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
    const response=await fetch("/demo-bim/"+encodeURIComponent(file.name));
    if(!response.ok)throw Error("ملف IFC غير موجود على الخادم");
    const value=await response.text();
-   if(!value.includes("FILE_SCHEMA(('IFC4'))")||!value.includes("Pset_MiyarDigitalTwinDemo"))
+   if(!value.includes("FILE_SCHEMA(('IFC4'))")||!value.includes("Pset_MowaemDigitalTwinDemo"))
     throw Error("ملف IFC لا يحتوي بيانات التجربة المتوقعة");
    for(const element of file.elements){
     if(!value.includes("'"+element.sceneId+"'"))

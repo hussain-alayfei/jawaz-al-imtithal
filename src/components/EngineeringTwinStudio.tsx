@@ -479,7 +479,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       <header className="twin-studio__top">
         <div className="twin-studio__brand">
           <span className="twin-studio__brand-icon"><Building2 size={22}/></span>
-          <div><strong>مِعيار <b>/</b> الاستوديو الهندسي</strong><small>VENUE DIGITAL TWIN · EXPLORE</small></div>
+          <div><strong>موائم <b>/</b> الاستوديو الهندسي</strong><small>VENUE DIGITAL TWIN · EXPLORE</small></div>
         </div>
         <nav className="twin-studio__scene-switcher" aria-label="التنقل بين نماذج المنشآت" data-testid="venue-scene-switcher">
           {([["cafe","المقهى"],["restaurant","المطعم"],["building","العمارة"]] as const)

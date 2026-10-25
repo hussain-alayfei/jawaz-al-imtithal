@@ -18,7 +18,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
   fetch("/demo-bim/venues/"+kind+"/manifest.json",{signal:controller.signal}).then(r=>{
    if(!r.ok)throw Error("ملفات المنشأة غير متوفرة");return r.json();
   }).then((data:VenueManifest)=>{
-   if(data.version!=="MIYAR-VENUES-1"||data.kind!==kind||data.files?.length!==4)
+   if(data.version!=="MOWAEM-VENUES-1"||data.kind!==kind||data.files?.length!==4)
     throw Error("بيانات المكتبة غير متوافقة مع المنشأة");
    setManifest(data);
   }).catch(e=>{if(!controller.signal.aborted){setError(true);setMessage(String(e.message||e));}});
@@ -30,7 +30,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
    const r=await fetch("/demo-bim/venues/"+kind+"/"+encodeURIComponent(file.name));
    if(!r.ok)throw Error("تعذر تحميل ملف IFC");
    const content=await r.text();
-   if(!content.includes("FILE_SCHEMA(('IFC4'))")||!content.includes("Pset_MiyarDigitalTwinDemo"))throw Error("ليس ملف IFC4 التجريبي المطلوب");
+   if(!content.includes("FILE_SCHEMA(('IFC4'))")||!content.includes("Pset_MowaemDigitalTwinDemo"))throw Error("ليس ملف IFC4 التجريبي المطلوب");
    const missing=file.elements.find(x=>!content.includes("'"+x.sceneId+"'"));
    if(missing)throw Error("لم يُعثر على ربط العنصر "+missing.sceneId);
    setActive(file.id);setSystem("all");

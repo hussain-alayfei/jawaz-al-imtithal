@@ -158,7 +158,7 @@ describe("real IFC compliance pipeline", () => {
       });
       const syntheticElements = run.model.elements.filter(
         (element) =>
-          element.propertySets.Pset_MiyarSyntheticQA?.SyntheticQA === true,
+          element.propertySets.Pset_MowaemSyntheticQA?.SyntheticQA === true,
       );
       const types = new Set(syntheticElements.map((element) => element.type));
 
@@ -190,7 +190,7 @@ describe("real IFC compliance pipeline", () => {
         ]),
       );
       for (const element of syntheticElements) {
-        const properties = element.propertySets.Pset_MiyarSyntheticQA;
+        const properties = element.propertySets.Pset_MowaemSyntheticQA;
         expect(element.name).toMatch(/اصطناعي QA \d{3}$/);
         expect(properties.SemanticCategory).toEqual(expect.any(String));
         expect(properties.ZoneCode).toEqual(expect.any(String));
@@ -510,7 +510,7 @@ describe("real IFC compliance pipeline", () => {
         const upload = await loadUpload(`ifc/${activityId}/${fileName}`);
         const text = new TextDecoder().decode(upload.bytes);
         expect(text).not.toMatch(
-          /(?:JAWAZ|MIYAR)_(?:SCENARIO|RESULT)|needs-work|ready|review/i,
+          /(?:JAWAZ|MOWAEM)_(?:SCENARIO|RESULT)|needs-work|ready|review/i,
         );
       }
     },

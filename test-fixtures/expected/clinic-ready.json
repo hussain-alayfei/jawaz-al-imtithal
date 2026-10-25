@@ -10,7 +10,7 @@
   "unknown": 0,
   "score": 100,
   "scoreMethod": "passed_over_total",
-  "rulePackVersion": "MIYAR-CLIN-2026.2",
+  "rulePackVersion": "MOWAEM-CLIN-2026.2",
   "fixtureKind": "synthetic_semantic_qa",
   "productionGeometry": false,
   "syntheticCatalogCategories": [
