@@ -58,6 +58,14 @@ try {
       failures.push(size.name+": cafe is not the default scene");
     if (!(await page.locator(".twin-studio__overlay-title strong").textContent())?.includes("مقهى"))
       failures.push(size.name+": first scene is not a cafe");
+    if (await page.getByRole("tab",{name:"الأنظمة"}).getAttribute("aria-selected")!=="true")
+      failures.push(size.name+": engineering systems are not the initial focus");
+    if (await page.locator('.twin-studio__system[data-network-visible="true"]').count()!==7)
+      failures.push(size.name+": all six systems and the show-all filter must be visible by default");
+    if (await page.locator('[data-testid="network-color-legend"] button').count()!==6)
+      failures.push(size.name+": initial viewport missing six visible system colors");
+    if (!await page.locator('.twin-studio__system.is-active').getByText("إظهار جميع الأنظمة").count())
+      failures.push(size.name+": show-all network mode not selected on entry");
     await page.waitForTimeout(850);
     await page.screenshot({path:join(target,size.name+"-cafe.png"),fullPage:false,animations:"disabled"});
     if (await page.locator('[data-testid="venue-inspector-spots"] button').count()!==4)
@@ -87,6 +95,8 @@ try {
     }
     await page.locator('[data-scene="restaurant"]').click();
     await page.waitForTimeout(850);
+    if (await page.locator('[data-testid="network-color-legend"] button').count()!==6)
+      failures.push(size.name+": restaurant network colors should remain all visible after switching");
     if (!(await page.locator(".twin-studio__overlay-title strong").textContent())?.includes("مطعم"))
       failures.push(size.name+": restaurant failed to open");
     await page.screenshot({path:join(target,size.name+"-restaurant.png"),fullPage:false,animations:"disabled"});
@@ -108,9 +118,16 @@ try {
     await page.locator(".twin-studio__system-list button").filter({hasText:"المياه"}).click();
     if (await page.locator(".twin-studio__system.is-active").count()!==1)
       failures.push(size.name+": water filter not active in venue");
+    if (await page.locator('[data-testid="network-color-legend"] button').count()!==1)
+      failures.push(size.name+": water isolation should show only one visible legend entry");
+    await page.locator(".twin-studio__system-list button").filter({hasText:"إظهار جميع الأنظمة"}).click();
+    if (await page.locator('[data-testid="network-color-legend"] button').count()!==6)
+      failures.push(size.name+": show-all control did not restore six networks");
     await page.locator("[data-testid='venue-scene-switcher'] [data-scene='building']").click();
     if (await switcher.locator('[data-scene="building"]').getAttribute("aria-pressed")!=="true")
       failures.push(size.name+": original five-storey building inaccessible");
+    if (await page.locator('[data-testid="network-color-legend"] button').count()!==6)
+      failures.push(size.name+": original building should start with six networks too");
     if (await page.getByText("الطاقة الشمسية", { exact: true }).count())
       failures.push(size.name + ": removed solar energy still appears");
     if (await page.locator(".twin-studio__floor-list button").count() !== 7)
@@ -128,7 +145,9 @@ try {
       await page.getByRole("tab",{name:"الأدوار"}).click();
       await page.locator(".twin-studio__floor-list button").filter({hasText:"كامل المبنى"}).click();
       await page.getByRole("tab",{name:"الأنظمة"}).click();
-      await page.locator(".twin-studio__system-list button").filter({hasText:"العمارة والإنشاء"}).click();
+      await page.locator(".twin-studio__system-list button").filter({hasText:"العمارة فقط"}).click();
+      if (await page.locator('[data-testid="network-color-legend"]').count()!==0)
+        failures.push(size.name+": architecture mode did not hide engineering overlays");
     }
     if (size.width <= 660) {
       await page.locator('[data-testid="mobile-bim-files"]').click();
@@ -169,7 +188,7 @@ try {
     }
     await page.getByRole("tab",{name:"الأنظمة"}).click();
     if (size.width > 660) {
-      await page.locator(".twin-studio__system-list button").filter({ hasText: "كل شبكات التمديدات" }).click();
+      await page.locator(".twin-studio__system-list button").filter({ hasText: "إظهار جميع الأنظمة" }).click();
     } else {
       await page.locator(".twin-studio__system-list button").filter({ hasText: "المياه" }).click();
     }
