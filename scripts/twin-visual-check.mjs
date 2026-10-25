@@ -51,14 +51,30 @@ try {
     await page.waitForTimeout(1800);
     const hasCanvas = await page.locator(".twin-studio__canvas canvas").count();
     if (!hasCanvas) failures.push(size.name + ": no 3D canvas");
+    if (await page.getByText("الطاقة الشمسية", { exact: true }).count())
+      failures.push(size.name + ": removed solar energy still appears");
+    if (!await page.locator(".twin-studio__inventory button").count() && size.width > 1000)
+      failures.push(size.name + ": no furniture inventory");
+    if (size.width > 660) {
+      const roomFilters = page.locator(".twin-studio__room-filter button");
+      if (await roomFilters.count() !== 5) failures.push(size.name + ": missing room filters");
+      await roomFilters.nth(2).click();
+      if (!await roomFilters.nth(2).getAttribute("aria-pressed") || await roomFilters.nth(2).getAttribute("aria-pressed") !== "true")
+        failures.push(size.name + ": room filter not selected");
+      await roomFilters.first().click();
+    } else {
+      await page.locator(".twin-studio__mobile-floors select[aria-label='الغرفة']").selectOption("hall");
+      await page.locator(".twin-studio__mobile-floors select[aria-label='الدور']").selectOption("ground");
+    }
+    await page.waitForTimeout(750);
+    await page.screenshot({ path: join(target, size.name + "-interior.png"), fullPage: false, animations: "disabled" });
     if (size.width > 660) {
       await page.locator(".twin-studio__system-list button").filter({ hasText: "كل شبكات التمديدات" }).click();
     } else {
       await page.locator(".twin-studio__system-list button").filter({ hasText: "المياه" }).click();
-      await page.locator(".twin-studio__mobile-floors select").selectOption("first");
     }
-    await page.waitForTimeout(900);
-    await page.screenshot({ path: join(target, size.name + ".png"), fullPage: false, animations: "disabled" });
+    await page.waitForTimeout(800);
+    await page.screenshot({ path: join(target, size.name + "-services.png"), fullPage: false, animations: "disabled" });
     const measured = await page.evaluate(() => ({
       bodyWidth: document.documentElement.scrollWidth,
       screenWidth: window.innerWidth,
