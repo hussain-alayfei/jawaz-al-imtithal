@@ -9,11 +9,24 @@ type Vec3=[number,number,number];
 function Conduit({pts,color,radius=.048}:{pts:Vec3[];color:string;radius?:number}){
  const curve=useMemo(()=>new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))),[pts]);
  return <mesh><tubeGeometry args={[curve,Math.max(20,pts.length*12),radius,8,false]}/>
-   <meshStandardMaterial color={color} metalness={.38} roughness={.37} emissive={color} emissiveIntensity={.16}/></mesh>;
+   <meshStandardMaterial color={color} metalness={.38} roughness={.37} emissive={color} emissiveIntensity={.42}/></mesh>;
 }
 function Unit({p,s,color,metal=.3}:{p:Vec3;s:Vec3;color:string;metal?:number}){
  return <mesh position={p} castShadow><boxGeometry args={s}/><meshStandardMaterial color={color} metalness={metal} roughness={.45}/></mesh>;
 }
+// Each utility has its own visible service spine and short branches to the
+// corresponding inspection nodes in the synthetic model.
+const branch=(system:ServiceKey,p:Vec3):Vec3[]=>{
+ const z=system==="electricity"?4.5:system==="water"?.7:
+         system==="drainage"?-4.6:system==="hvac"?-.3:
+         system==="fire"?1.65:-4.7;
+ const y=system==="electricity"?3.42:system==="water"?.85:
+         system==="drainage"?.21:system==="hvac"?3.62:
+         system==="fire"?3.72:.14;
+ const trunkX=system==="electricity"?-6.7:system==="water"?-3.5:
+              system==="fire"?-6.15:p[0];
+ return [[trunkX,y,z],[p[0],y,z],[p[0],y,p[2]],p];
+};
 const route=(system:ServiceKey):Vec3[]=>{
  const positions=VENUE_SERVICE_POSITIONS[system];
  const first=positions[0],last=positions[2];
@@ -34,7 +47,7 @@ export function VenueServiceNetwork3D({kind,visible,selected,onSelect}:{
  {SERVICE_KEYS.filter(key=>visible[key]).map(system=>{
   const color=SERVICE_META[system].color;
   const nodes=elements.filter(x=>x.system===system);
-  const diameter=system==="drainage"?.105:system==="hvac"?.13:system==="fire"?.07:.05;
+  const diameter=system==="drainage"?.13:system==="hvac"?.17:system==="fire"?.105:.085;
   return <group key={system} name={"service-"+system}>
    <Conduit pts={route(system)} color={color} radius={diameter}/>
    {system==="electricity"&&<>
@@ -47,6 +60,7 @@ export function VenueServiceNetwork3D({kind,visible,selected,onSelect}:{
       <Unit p={[4,3.63,-2.3]} s={[.65,.38,3.3]} color="#bdc7c3" metal={.6}/>
    </>}
    {nodes.map(node=><group key={node.sceneId}>
+    <Conduit pts={branch(system,node.position)} color={color} radius={system==="hvac"?.085:.048}/>
     {system==="fire"&&<group>
       <Conduit pts={[[node.position[0],3.7,node.position[2]],[node.position[0],3.25,node.position[2]]]} color={color} radius={.04}/>
       <mesh position={[node.position[0],3.2,node.position[2]]}>
@@ -60,9 +74,9 @@ export function VenueServiceNetwork3D({kind,visible,selected,onSelect}:{
     <mesh position={node.position} onClick={e=>{e.stopPropagation();onSelect(node.sceneId);}}
       onPointerOver={e=>{e.stopPropagation();document.body.style.cursor="pointer";}}
       onPointerOut={()=>{document.body.style.cursor="default";}}>
-      <sphereGeometry args={[selected===node.sceneId?.27:.17,12,12]}/>
+      <sphereGeometry args={[selected===node.sceneId?.30:.22,12,12]}/>
       <meshStandardMaterial color={selected===node.sceneId?"#fff2bf":color}
-        emissive={color} emissiveIntensity={selected===node.sceneId?.6:.2}/>
+        emissive={color} emissiveIntensity={selected===node.sceneId?.74:.48}/>
     </mesh>
     {selected===node.sceneId&&<Html center position={[node.position[0],node.position[1]+.64,node.position[2]]} distanceFactor={14}>
       <div className="venue-world-inspector" dir="rtl">
