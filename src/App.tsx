@@ -742,10 +742,12 @@ function ModelUpload({
   onBack,
   onHome,
   onNew,
+  onTwin,
 }: {
   activityId: ActivityId;
   upload?: IfcUpload;
   onUpload: (upload?: IfcUpload) => void;
+  onTwin: () => void;
   onContinue: () => void;
   onBack: () => void;
   onHome: () => void;
@@ -833,6 +835,29 @@ function ModelUpload({
       onHome={onHome}
       onNew={onNew}
     >
+      <section className="bim-upload-kit" aria-label="ملفات BIM التجريبية">
+        <div className="bim-upload-kit__head">
+          <div><strong>مكتبة BIM التجريبية الجاهزة</strong>
+            <p>خمسة أدوار تمثيلية، وأربعة ملفات IFC4 مملوءة بعناصر دلالية مرتبطة بالتوأم الرقمي. لا تمثل هندسة حقيقية أو مخططات اعتماد.</p>
+          </div>
+          <button type="button" className="button button--primary" onClick={onTwin}>
+            <Building2 size={16}/> فتح الملفات داخل التوأم الرقمي
+          </button>
+        </div>
+        <div className="bim-upload-kit__files">
+          {[
+            ["Architectural.ifc","العمارة والغرف"],
+            ["Structural.ifc","الإنشاء"],
+            ["MEP.ifc","الكهرباء والمواسير والتكييف"],
+            ["FireSafety.ifc","أنظمة الحريق"],
+            ["FurnitureDemo.gltf","أثاث ثلاثي الأبعاد (اختياري)"],
+          ].map(([filename,label])=>
+            <a key={filename} href={"/demo-bim/"+filename} download={filename} className="bim-upload-kit__file">
+              <FileText size={16}/><span><strong dir="ltr">{filename}</strong><small>{label}</small></span><Download size={15}/>
+            </a>)}
+        </div>
+        <small>ملفات الاستكشاف منفصلة عن رفع نموذج الامتثال أدناه؛ محرك الفحص الحالي يتطلب عقد IFC دلاليًا خاصًا، ولا يحوّل هذه الملفات إلى هندسة BIM.</small>
+      </section>
       <div className="upload-layout">
         <section className="upload-card">
           <div
@@ -2398,6 +2423,7 @@ export default function App() {
           onBack={() => setScreen("details")}
           onHome={() => setScreen("dashboard")}
           onNew={resetAll}
+          onTwin={() => setTwinOpen(true)}
         />
       )}
 
