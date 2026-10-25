@@ -16,7 +16,9 @@ import {
 import "./EngineeringTwinStudio.css";
 
 type Vec3 = [number, number, number];
-type Floor = "all" | "ground" | "first" | "second" | "roof";
+type Floor = "all" | "ground" | "first" | "second" | "third" | "fourth" | "roof";
+const LEVEL_KEYS = ["ground","first","second","third","fourth"] as const;
+const levelOf = (floor: Floor) => LEVEL_KEYS.indexOf(floor as typeof LEVEL_KEYS[number]);
 type Preset = "iso" | "top" | "front" | "inside";
 type Utility = ServiceKey | "architecture" | "all";
 type NodeInfo = { id: string; label: string; description: string; system: Utility; position: Vec3 };
@@ -26,6 +28,8 @@ const FLOOR_LIST: { key: Floor; label: string; en: string }[] = [
   { key: "ground", label: "الدور الأرضي", en: "G" },
   { key: "first", label: "الدور الأول", en: "01" },
   { key: "second", label: "الدور الثاني", en: "02" },
+  { key: "third", label: "الدور الثالث", en: "03" },
+  { key: "fourth", label: "الدور الرابع", en: "04" },
   { key: "roof", label: "السطح والخدمات", en: "RF" },
 ];
 const SYSTEM_LIST: { key: Utility; label: string; color: string }[] = [
@@ -47,10 +51,10 @@ const CUSTOM_NODES: NodeInfo[] = [
   { id: "DEMO-W-TANK", system: "water", label: "خزان المياه العلوي", description: "خزان مبني هندسيًا للتوضيح، وليس مستخرجًا من الملف المرفوع.", position: [5, 11.2, 3.3] },
 ];
 const viewDefaults: Record<Preset, { position: Vec3; target: Vec3 }> = {
-  iso: { position: [19, 14, 19], target: [0, 1.5, 0] },
-  top: { position: [0.01, 22, 0], target: [0, 1.4, 0] },
-  front: { position: [0, 7.5, 24], target: [0, 1.4, 0] },
-  inside: { position: [5.5, 4.2, 8.5], target: [0, 1.5, -1] },
+  iso: { position: [30, 25, 30], target: [0, 8.2, 0] },
+  top: { position: [0.01, 38, 0], target: [0, 8.2, 0] },
+  front: { position: [0, 13.5, 36], target: [0, 8.2, 0] },
+  inside: { position: [6.5, 7.5, 10.5], target: [0, 5, -1] },
 };
 const sColor = (system: ServiceKey) => SERVICE_META[system].color;
 
@@ -126,11 +130,11 @@ function Roof({ ghost, onSelectEquipment }: {
 }
 function Storey({ level, floor, ghost, explode, selectedSystem, onSelectRoom,
   activity, roomFilter, furniture, labels, selectedId }: {
-  level: 0 | 1 | 2; floor: Floor; ghost: boolean; explode: boolean; selectedSystem: Utility;
+  level: number; floor: Floor; ghost: boolean; explode: boolean; selectedSystem: Utility;
   onSelectRoom: (id: string) => void;
   activity: ActivityId; roomFilter: RoomFilter; furniture: boolean; labels: boolean; selectedId: string | null;
 }) {
-  const key = (["ground", "first", "second"] as const)[level];
+  const key = LEVEL_KEYS[level];
   if (floor !== "all" && floor !== key) return null;
   const base = level * STOREY_HEIGHT + (explode ? level * 0.8 : 0);
   const shellOpacity = ghost || selectedSystem !== "architecture" ? 0.1 : 1;
@@ -164,8 +168,8 @@ function NetworkExtensions({ floor, system, flow, exploded, floorCount, onSelect
   onSelect: (id: string) => void;
 }) {
   return <group name="upper-storey-utilities">
-    {([1, 2] as const).filter(level => level < floorCount).map(level => {
-      const floorKey = level === 1 ? "first" : "second";
+    {[1,2,3,4].filter(level => level < floorCount).map(level => {
+      const floorKey = LEVEL_KEYS[level];
       if (floor !== "all" && floor !== floorKey) return null;
       const base = STOREY_HEIGHT * level + (exploded ? level * 0.8 : 0);
       return <group key={level} position={[0, base, 0]}>
@@ -213,7 +217,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
     desired.current.set(...view.position);
     focus.current.set(...view.target);
     if (floor !== "all" && floor !== "roof" && !selected) {
-      const index = floor === "ground" ? 0 : floor === "first" ? 1 : 2;
+      const index = Math.max(0,levelOf(floor));
       focus.current.y = index * STOREY_HEIGHT + 1.6;
       desired.current.y = index * STOREY_HEIGHT + 10;
     }
@@ -225,7 +229,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount }: {
       desired.current.set(selected[0] + 7, selected[1] + 5.8, selected[2] + 8);
     }
     if (size.width < 661) {
-      desired.current.sub(focus.current).multiplyScalar(1.04).add(focus.current);
+      desired.current.sub(focus.current).multiplyScalar(floor === "all" ? 1.48 : 1.06).add(focus.current);
     }
     active.current = true;
   }, [preset, selected, floor, nonce, size.width, floorCount]);
@@ -251,7 +255,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
   const custom = CUSTOM_NODES.find(node => node.id === selected);
   const sourceNode = findServiceNode(selected);
   const upper = selected?.startsWith("UPPER-") ? selected.split("-") : null;
-  const interiorNode = [0,1,2].filter(n=>n < floorCount).flatMap(n=>getInteriorItems(activity,n)).find(item=>item.id===selected);
+  const interiorNode = [0,1,2,3,4].filter(n=>n < floorCount).flatMap(n=>getInteriorItems(activity,n)).find(item=>item.id===selected);
   const roomSelected = selected?.startsWith("ROOM-") ? selected.split("-") : null;
   const roomInfo = roomSelected ? getActivityRooms(activity).find(room=>room.key === roomSelected[2]) : null;
   const upperY = upper ? (Number(upper[1]) * STOREY_HEIGHT + (exploded ? Number(upper[1]) * 0.8 : 0) + 2) : 0;
@@ -273,7 +277,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
     <Block p={[0, -0.35, 0]} s={[40, 0.4, 31]} color="#aab8ae" />
     <Block p={[0, -0.14, 10.65]} s={[40, 0.05, 4.6]} color="#858f8d" />
     {[-15, -5, 5, 15].map(x => <Block key={x} p={[x, -0.105, 10.65]} s={[1.2, 0.01, 0.08]} color="#dde0d7" />)}
-    {([0, 1, 2] as const).filter(level => level < floorCount).map(level =>
+    {[0,1,2,3,4].filter(level => level < floorCount).map(level =>
       <Storey key={level} level={level} floor={floor} ghost={ghost} explode={exploded}
         activity={activity} roomFilter={roomFilter} furniture={furniture} labels={labels}
         selectedId={selected} selectedSystem={selectedSystem} onSelectRoom={onSelect} />)}
@@ -300,13 +304,13 @@ interface Props {
   onClose: () => void;
 }
 export function EngineeringTwinStudio({ projectName, activityName, activityId, floors, findingsCount, onClose }: Props) {
-  const floorCount = Math.max(1, Math.min(3, Math.round(floors || 1)));
+  // Five-storey showcase is explicitly synthetic and independent of actual IFC / facility metadata.
+  const floorCount = 5;
+  void floors;
   const rooms = getActivityRooms(activityId);
-  const availableFloors = FLOOR_LIST.filter(f => f.key === "all" || f.key === "roof"
-    || (f.key === "ground") || (f.key === "first" && floorCount > 1)
-    || (f.key === "second" && floorCount > 2));
+  const availableFloors = FLOOR_LIST;
   const [system, setSystem] = useState<Utility>("architecture");
-  const [floor, setFloor] = useState<Floor>("ground");
+  const [floor, setFloor] = useState<Floor>("all");
   const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
   const [furniture, setFurniture] = useState(true);
   const [labels, setLabels] = useState(true);
@@ -325,7 +329,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const upperSystem = selectedUpper && SERVICE_KEYS.includes(selectedUpper[2] as ServiceKey)
     ? selectedUpper[2] as ServiceKey : null;
   const selectedRoom = selected?.startsWith("ROOM-") ? rooms.find(r => r.key === selected.split("-")[2]) : null;
-  const selectedFurniture = [0,1,2].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected);
+  const selectedFurniture = [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected);
   const inspected = selectedFurniture
     ? {id:selectedFurniture.id,system:"architecture" as const,label:selectedFurniture.title,
       description:selectedFurniture.description,position:selectedFurniture.position}
@@ -353,7 +357,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   }, [floor]);
 
   const reset = () => {
-    setSystem("architecture"); setFloor("ground"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
+    setSystem("architecture"); setFloor("all"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
     setFurniture(true); setLabels(true); setGhost(false); setExploded(false); setFlow(true);
     setPreset("iso"); setSelected(null); setNonce(n => n + 1);
   };
@@ -431,7 +435,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             {rooms.map(room => (
               <button type="button" key={room.key} className={roomFilter === room.key ? "is-active" : ""}
                 aria-pressed={roomFilter===room.key}
-                onClick={() => {setRoomFilter(room.key);setSelected("ROOM-"+(floor==="first"?1:floor==="second"?2:0)+"-"+room.key);setNonce(n=>n+1);}}>
+                onClick={() => {setRoomFilter(room.key);setSelected("ROOM-"+Math.max(0,levelOf(floor))+"-"+room.key);setNonce(n=>n+1);}}>
                 <span>{room.name}</span><small>{room.key==="reception"?"01":room.key==="hall"?"02":room.key==="office"?"03":"04"}</small>
               </button>
             ))}
@@ -511,7 +515,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           <div className="twin-studio__inspector-hero">
             <span>FURNISHED INTERIOR / TECHNICAL VIEW</span>
             <h2>{projectName}</h2>
-            <p>مخطط داخلي يتغير حسب نشاط {activityName}، مع غرف مفروشة وشبكات مرافق قابلة للتصفية والاستكشاف.</p>
+            <p>نموذج تجريبي من خمسة أدوار يعرض غرفًا مفروشة وشبكات مرافق قابلة للتصفية حسب نشاط {activityName}. ليس عدد الأدوار الفعلي في ملف IFC.</p>
           </div>
           <div className="twin-studio__mini-stats">
             <div><strong>{String(floorCount).padStart(2,"0")}</strong><small>أدوار تمثيلية</small></div>
@@ -521,7 +525,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           <div className="twin-studio__rail-divider" />
           <div className="twin-studio__section-heading"><Sofa size={17}/><span>أثاث وتجهيزات الغرف</span><small>{getInteriorItems(activityId,0).length}</small></div>
           <div className="twin-studio__inventory" data-testid="twin-inventory">
-            {getInteriorItems(activityId, floor==="first"?1:floor==="second"?2:0)
+            {getInteriorItems(activityId, Math.max(0,levelOf(floor)))
               .filter(item=>roomFilter==="all"||roomFilter===item.room)
               .map(item=><button type="button" key={item.id} className={selected===item.id?"is-active":""}
                 onClick={()=>{setSelected(item.id);setFurniture(true);if(floor==="roof")setFloor("ground");setNonce(n=>n+1);}}
