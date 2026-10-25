@@ -70,11 +70,14 @@ try {
     if (size.width <= 660) {
       await page.locator('[data-testid="mobile-bim-files"]').click();
       await page.locator(".twin-studio__inspector.is-mobile-open").waitFor({state:"visible"});
-      await page.locator(".bim-library__mobile").count().catch(()=>0);
       await page.locator(".twin-studio__mobile-inspector-close").click();
     }
-    if (!await page.locator(".twin-studio__inventory button").count() && size.width > 1000)
-      failures.push(size.name + ": no furniture inventory");
+    if (size.width > 1000) {
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"تفاصيل العناصر"}).click();
+      if (!await page.locator(".twin-studio__inventory button").count())
+        failures.push(size.name + ": no furniture inventory when item inspector is active");
+      await page.locator(".twin-studio__inspector-tabs button").filter({hasText:"ملفات IFC التجريبية"}).click();
+    }
     if (size.width > 660) {
       const roomFilters = page.locator(".twin-studio__room-filter button");
       if (await roomFilters.count() !== 5) failures.push(size.name + ": missing room filters");
