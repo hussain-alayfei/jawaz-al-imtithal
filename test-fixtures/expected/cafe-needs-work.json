@@ -10,7 +10,7 @@
   "unknown": 1,
   "score": 40,
   "scoreMethod": "passed_over_total",
-  "rulePackVersion": "MIYAR-CAFE-2026.2",
+  "rulePackVersion": "MOWAEM-CAFE-2026.2",
   "fixtureKind": "synthetic_semantic_qa",
   "productionGeometry": false,
   "syntheticCatalogCategories": [

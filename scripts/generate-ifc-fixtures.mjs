@@ -11,7 +11,7 @@ const fixtureDirectory = path.join(projectDirectory, "test-fixtures");
 const configurations = {
   restaurant: {
     prefix: "R",
-    ruleVersion: "MIYAR-REST-2026.2",
+    ruleVersion: "MOWAEM-REST-2026.2",
     counts: { spaces: 6, doors: 7, review: 148, ready: 156 },
     spaces: [
       ["DINING", "منطقة الطعام", "SPACE-DINING", false],
@@ -43,7 +43,7 @@ const configurations = {
   },
   cafe: {
     prefix: "C",
-    ruleVersion: "MIYAR-CAFE-2026.2",
+    ruleVersion: "MOWAEM-CAFE-2026.2",
     counts: { spaces: 6, doors: 5, review: 132, ready: 141 },
     spaces: [
       ["SEATING", "منطقة الجلوس", "CAFE-SPACE-SEATING", false],
@@ -73,7 +73,7 @@ const configurations = {
   },
   clinic: {
     prefix: "L",
-    ruleVersion: "MIYAR-CLIN-2026.2",
+    ruleVersion: "MOWAEM-CLIN-2026.2",
     counts: { spaces: 8, doors: 9, review: 204, ready: 216 },
     spaces: [
       ["RECEPTION", "الاستقبال", "CLINIC-SPACE-RECEPTION", false],
@@ -109,7 +109,7 @@ const configurations = {
   },
   salon: {
     prefix: "S",
-    ruleVersion: "MIYAR-SALON-2026.2",
+    ruleVersion: "MOWAEM-SALON-2026.2",
     counts: { spaces: 7, doors: 6, review: 162, ready: 174 },
     spaces: [
       ["RECEPTION", "الاستقبال", "SALON-SPACE-RECEPTION", false],
@@ -199,7 +199,7 @@ function syntheticProductArgs(catalogItem, index) {
   const common = [
     "$",
     quote(`${catalogItem.arabicName} اصطناعي QA ${paddedIndex}`),
-    quote("عنصر دلالي اصطناعي لأغراض اختبار مِعيار فقط"),
+    quote("عنصر دلالي اصطناعي لأغراض اختبار موائم فقط"),
     quote(catalogItem.category),
     "$",
     "$",
@@ -291,7 +291,7 @@ function fixtureFor(activityId, scenario) {
 
   const project = addRoot(
     "IFCPROJECT",
-    ["$", quote(`Miyar ${activityId} fixture`), "$", "$", "$", "$", "$", "$"],
+    ["$", quote(`Mowaem ${activityId} fixture`), "$", "$", "$", "$", "$", "$"],
     undefined,
     false,
   );
@@ -325,7 +325,7 @@ function fixtureFor(activityId, scenario) {
       role,
     );
     spaceEntities.set(role, space);
-    addPropertySet(space.id, "Pset_MiyarSpace", {
+    addPropertySet(space.id, "Pset_MowaemSpace", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       NetFloorArea: 20 + spaceEntities.size * 4,
@@ -365,7 +365,7 @@ function fixtureFor(activityId, scenario) {
       ],
       role,
     );
-    addPropertySet(door.id, "Pset_MiyarDoor", {
+    addPropertySet(door.id, "Pset_MowaemDoor", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       ServesSpaceGuid:
@@ -390,7 +390,7 @@ function fixtureFor(activityId, scenario) {
       ["$", quote(name), "$", quote(role), "$", "$", quote(`TAG-${role}`), "$"],
       role,
     );
-    addPropertySet(element.id, "Pset_MiyarEquipment", {
+    addPropertySet(element.id, "Pset_MowaemEquipment", {
       RoleCode: role,
       ViewerElementId: viewerElementId,
       ServedSpaceGuid: spaceEntities.get(servedRole)?.guid ?? "",
@@ -543,7 +543,7 @@ function fixtureFor(activityId, scenario) {
       syntheticProductArgs(catalogItem, syntheticCatalogIndex),
       undefined,
     );
-    addPropertySet(syntheticProduct.id, "Pset_MiyarSyntheticQA", {
+    addPropertySet(syntheticProduct.id, "Pset_MowaemSyntheticQA", {
       SemanticCategory: catalogItem.category,
       ZoneCode: zone,
       CatalogIndex: syntheticCatalogIndex,
@@ -559,7 +559,7 @@ function fixtureFor(activityId, scenario) {
     );
   }
 
-  addPropertySet(project.id, "Pset_MiyarProject", {
+  addPropertySet(project.id, "Pset_MowaemProject", {
     ActivityCode: activityId,
     LengthUnit: "METRE",
     GrossArea:
@@ -578,7 +578,7 @@ function fixtureFor(activityId, scenario) {
           : activityId === "clinic"
             ? 36
             : 28,
-    FixtureContractVersion: "MIYAR-IFC-1.0",
+    FixtureContractVersion: "MOWAEM-IFC-1.0",
     FixturePurpose: "SYNTHETIC_QA_ONLY",
     ProductionGeometry: false,
     GeometryStatus: "SEMANTIC_ONLY_NO_PRODUCTION_GEOMETRY",
@@ -588,8 +588,8 @@ function fixtureFor(activityId, scenario) {
 
   const header = `ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('Miyar synthetic deterministic QA fixture; semantic only; not production geometry'),'2;1');
-FILE_NAME('${activityId}-semantic-model.ifc','2026-07-27T00:00:00',('Miyar QA'),('Miyar'),'Codex','Miyar','');
+FILE_DESCRIPTION(('Mowaem synthetic deterministic QA fixture; semantic only; not production geometry'),'2;1');
+FILE_NAME('${activityId}-semantic-model.ifc','2026-07-27T00:00:00',('Mowaem QA'),('Mowaem'),'Codex','Mowaem','');
 FILE_SCHEMA(('IFC4'));
 ENDSEC;
 DATA;`;
@@ -703,7 +703,7 @@ await writeFile(
   path.join(fixtureDirectory, "ifc", "invalid", "no-spaces.ifc"),
   restaurantReady
     .replaceAll("IFCSPACE(", "IFCFURNISHINGELEMENT(")
-    .replaceAll("Pset_MiyarSpace", "Pset_MiyarEquipment"),
+    .replaceAll("Pset_MowaemSpace", "Pset_MowaemEquipment"),
   "utf8",
 );
 await writeFile(
@@ -721,7 +721,7 @@ await writeFile(
     "invalid",
     "unsupported-contract-version.ifc",
   ),
-  restaurantReady.replace("MIYAR-IFC-1.0", "MIYAR-IFC-9.9"),
+  restaurantReady.replace("MOWAEM-IFC-1.0", "MOWAEM-IFC-9.9"),
   "utf8",
 );
 await writeFile(
@@ -732,7 +732,7 @@ await writeFile(
 
 await writeFile(
   path.join(fixtureDirectory, "manifest.json"),
-  `${JSON.stringify({ contractVersion: "MIYAR-IFC-1.0", cases: manifest }, null, 2)}\n`,
+  `${JSON.stringify({ contractVersion: "MOWAEM-IFC-1.0", cases: manifest }, null, 2)}\n`,
   "utf8",
 );
 

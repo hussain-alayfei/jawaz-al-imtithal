@@ -125,7 +125,7 @@ export const activityExamples: ActivityExample[] = [
     label: "مطعم",
     description: "صالة طعام ومطبخ وخدمات ومسارات خروج مترابطة.",
     rulePack: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
-    ruleVersion: "MIYAR-REST-2026.2",
+    ruleVersion: "MOWAEM-REST-2026.2",
     facility: { ...facilityDefaults.restaurant },
   },
   {
@@ -133,7 +133,7 @@ export const activityExamples: ActivityExample[] = [
     label: "مقهى",
     description: "منطقة جلوس وبار تحضير وتخزين وتجهيزات سباكة.",
     rulePack: "حزمة قواعد نشاط المقاهي (مرجع تجريبي)",
-    ruleVersion: "MIYAR-CAFE-2026.2",
+    ruleVersion: "MOWAEM-CAFE-2026.2",
     facility: { ...facilityDefaults.cafe },
   },
   {
@@ -141,7 +141,7 @@ export const activityExamples: ActivityExample[] = [
     label: "عيادة خارجية",
     description: "استقبال وغرف فحص وتجهيزات نظافة وخصوصية سريرية.",
     rulePack: "حزمة قواعد نشاط العيادات (مرجع تجريبي)",
-    ruleVersion: "MIYAR-CLIN-2026.2",
+    ruleVersion: "MOWAEM-CLIN-2026.2",
     facility: { ...facilityDefaults.clinic },
   },
   {
@@ -149,7 +149,7 @@ export const activityExamples: ActivityExample[] = [
     label: "صالون تجميل",
     description: "استقبال ومحطات تصفيف وغسيل وعناية وتخزين تشغيلي.",
     rulePack: "حزمة قواعد نشاط صالونات التجميل (مرجع تجريبي)",
-    ruleVersion: "MIYAR-SALON-2026.2",
+    ruleVersion: "MOWAEM-SALON-2026.2",
     facility: { ...facilityDefaults.salon },
   },
 ];
@@ -186,7 +186,7 @@ const sharedPasses: Finding[] = [
     recommendation: "لا يلزم إجراء في نطاق هذه القاعدة.",
     source: "متطلبات جودة النموذج (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -201,9 +201,9 @@ const sharedPasses: Finding[] = [
     explanation:
       "تتوفر البيانات اللازمة لاختيار حزمة قواعد المطاعم وتشغيل الفحص الأولي.",
     recommendation: "راجع البيانات عند تغير نطاق المشروع.",
-    source: "قاموس بيانات مِعيار",
+    source: "قاموس بيانات موائم",
     clause: "تعريف الحقول الأساسية",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -223,7 +223,7 @@ const sharedPasses: Finding[] = [
     recommendation: "حافظ على معايير التسمية عند تحديث النموذج.",
     source: "متطلبات تسليم نموذج BIM (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -243,7 +243,7 @@ const sharedPasses: Finding[] = [
     recommendation: "لا يلزم إجراء في نطاق هذه القاعدة.",
     source: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -263,7 +263,7 @@ const sharedPasses: Finding[] = [
     recommendation: "تحتاج الأبعاد التفصيلية إلى مرجع معتمد في النسخة الإنتاجية.",
     source: "حزمة قواعد نشاط المطاعم (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -283,7 +283,7 @@ const sharedPasses: Finding[] = [
     recommendation: "عالج عرض الباب الموضح في القاعدة المنفصلة.",
     source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
   {
@@ -303,7 +303,7 @@ const sharedPasses: Finding[] = [
     recommendation: "يتطلب التحقق الميداني للتأكد من التنفيذ الفعلي.",
     source: "فحص الواجهة (مرجع تجريبي)",
     clause: "قاعدة نموذجية لأغراض العرض",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "لا يوجد",
   },
 ];
@@ -328,7 +328,7 @@ const reviewFindings: Finding[] = [
       "راجع تصميم فتحة الباب وارفع العرض الصافي إلى الحد المعتمد بعد التحقق من المختص.",
     source: "حزمة قواعد مسارات الخروج (مرجع تجريبي)",
     clause: "حد تجريبي بانتظار اعتماد المرجع",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "تعديل هندسي متوسط",
   },
   {
@@ -349,7 +349,7 @@ const reviewFindings: Finding[] = [
       "أعد توزيع الأثاث أو حاجز الخدمة لتوفير عرض مستمر، ثم أعد تصدير النموذج.",
     source: "حزمة قواعد الوصول الشامل (مرجع تجريبي)",
     clause: "حد تجريبي بانتظار اعتماد المرجع",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "تعديل بسيط",
   },
   {
@@ -370,7 +370,7 @@ const reviewFindings: Finding[] = [
       "أرفق نموذج MEP أو أضف المروحة ومجرى الهواء وعلاقة الخدمة بالمطبخ.",
     source: "حزمة قواعد تهوية المطاعم (مرجع تجريبي)",
     clause: "تحتاج مراجعة مختص ميكانيكي",
-    version: "MIYAR-REST-2026.2",
+    version: "MOWAEM-REST-2026.2",
     effort: "استكمال معلومات",
   },
 ];
@@ -499,7 +499,7 @@ function createBasePasses({
       expected: "توفر جميع الحقول المطلوبة للفحص",
       explanation: `تتوفر البيانات اللازمة لاختيار حزمة قواعد ${activityLabel} وتشغيل الفحص الأولي.`,
       recommendation: "راجع البيانات عند تغير نطاق المشروع.",
-      source: "قاموس بيانات مِعيار",
+      source: "قاموس بيانات موائم",
       clause: "تعريف الحقول الأساسية",
     }),
     makePass(version, {
@@ -519,7 +519,7 @@ function createBasePasses({
   ];
 }
 
-const cafeVersion = "MIYAR-CAFE-2026.2";
+const cafeVersion = "MOWAEM-CAFE-2026.2";
 const cafePack = "حزمة قواعد نشاط المقاهي (مرجع تجريبي)";
 const cafePasses: Finding[] = [
   ...createBasePasses({
@@ -672,7 +672,7 @@ const cafeReady: Finding[] = [
   }),
 ];
 
-const clinicVersion = "MIYAR-CLIN-2026.2";
+const clinicVersion = "MOWAEM-CLIN-2026.2";
 const clinicPack = "حزمة قواعد نشاط العيادات (مرجع تجريبي)";
 const clinicPasses: Finding[] = [
   ...createBasePasses({
@@ -824,7 +824,7 @@ const clinicReady: Finding[] = [
   }),
 ];
 
-const salonVersion = "MIYAR-SALON-2026.2";
+const salonVersion = "MOWAEM-SALON-2026.2";
 const salonPack = "حزمة قواعد نشاط صالونات التجميل (مرجع تجريبي)";
 const salonPasses: Finding[] = [
   ...createBasePasses({

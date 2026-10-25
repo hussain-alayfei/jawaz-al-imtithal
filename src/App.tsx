@@ -92,7 +92,7 @@ type Screen =
   | "workspace"
   | "report";
 
-const STORAGE_KEY = "miyar-plan-compliance-v2";
+const STORAGE_KEY = "mowaem-plan-compliance-v2";
 
 function loadStoredState(): {
   facility: FacilityDetails;
@@ -308,7 +308,7 @@ function Dashboard({
             </div>
           </div>
 
-          <div className="hero__visual" aria-label="معاينة منتج مِعيار">
+          <div className="hero__visual" aria-label="معاينة منتج موائم">
             <div className="mini-window">
               <div className="mini-window__bar">
                 <span />
@@ -464,7 +464,7 @@ function Dashboard({
       <footer className="site-footer">
         <BrandMark compact />
         <p>نسخة تجريبية مستقلة. لا يوجد تكامل رسمي مع بلدي أو أي جهة حكومية.</p>
-        <span dir="ltr">MIYAR-MULTI-2026.2</span>
+        <span dir="ltr">MOWAEM-MULTI-2026.2</span>
       </footer>
     </>
   );
@@ -2077,7 +2077,7 @@ h1{color:#0b5d48;margin-bottom:4px}.meta{color:#637069}.summary{display:flex;gap
 table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #d7ded9;padding:8px;text-align:right;vertical-align:top}
 th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7ded9;background:#f5f7f3}
 </style></head><body>
-<p>مِعيار • نسخة تجريبية</p>
+<p>موائم • نسخة تجريبية</p>
 <h1>تقرير جاهزية الطلب</h1>
 <p class="meta">${escapeHtml(facility.projectName)} • ${escapeHtml(facility.city)} • ${escapeHtml(generatedAt)}</p>
 <div class="summary"><span><strong>${summary.score}</strong>مؤشر الجاهزية</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>ملاحظة</span><span><strong>${summary.unknown}</strong>غير مكتمل</span></div>
@@ -2091,7 +2091,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `miyar-readiness-${activityId}-${scenario}.html`;
+    anchor.download = `mowaem-readiness-${activityId}-${scenario}.html`;
     anchor.click();
     URL.revokeObjectURL(url);
     notify("تم تنزيل نسخة HTML قابلة للطباعة من التقرير.");
@@ -2331,7 +2331,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
         </section>
 
         <footer className="report-footer">
-          <span>مِعيار • فحص استباقي قبل الترخيص</span>
+          <span>موائم • فحص استباقي قبل الترخيص</span>
           <span>تقرير إلكتروني قابل للطباعة</span>
         </footer>
       </main>

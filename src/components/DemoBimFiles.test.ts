@@ -9,13 +9,13 @@ const manifest=JSON.parse(readFileSync(join(root,"manifest.json"),"utf8")) as {v
 
 describe("BIM demonstration corpus",()=>{
  it("ships all four IFC4 files with individually mapped elements",()=>{
-   expect(manifest.version).toBe("MIYAR-DEMO-BIM-2");
+   expect(manifest.version).toBe("MOWAEM-DEMO-BIM-2");
    expect(manifest.files.map(f=>f.name)).toEqual(["Architectural.ifc","Structural.ifc","MEP.ifc","FireSafety.ifc"]);
    for(const file of manifest.files){
      const content=readFileSync(join(root,file.name),"utf8");
      expect(content).toContain("ISO-10303-21;");
      expect(content).toContain("FILE_SCHEMA(('IFC4'))");
-     expect(content).toContain("Pset_MiyarDigitalTwinDemo");
+     expect(content).toContain("Pset_MowaemDigitalTwinDemo");
      expect(content).toContain("END-ISO-10303-21;");
      expect(file.elements).toHaveLength(file.count);
      expect(new Set(file.elements.map(e=>e.id)).size).toBe(file.count);

@@ -47,7 +47,7 @@ export interface ExtractedIfcEntity {
   globalId?: string;
   name?: string;
   /**
-   * Contract properties from the entity's expected MIYAR property-set
+   * Contract properties from the entity's expected MOWAEM property-set
    * namespace. Rules read this flattened view only after namespace validation.
    */
   properties: Record<string, IfcPropertyValue>;

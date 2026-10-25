@@ -116,7 +116,7 @@ const uploadAndFinishAnalysis = async (
   }
   await waitForEnabled(startAnalysis, `${context} analysis button`);
   await page.evaluate(() => {
-    window.__miyarProcessingTrace = {
+    window.__mowaemProcessingTrace = {
       sawActiveStage: false,
       sawIntermediateWork: false,
     };
@@ -125,9 +125,9 @@ const uploadAndFinishAnalysis = async (
       const progress = activeStage?.querySelector(
         ".analysis-stage__work",
       )?.getAttribute("aria-valuenow");
-      if (activeStage) window.__miyarProcessingTrace.sawActiveStage = true;
+      if (activeStage) window.__mowaemProcessingTrace.sawActiveStage = true;
       if (progress && Number(progress) > 0 && Number(progress) < 100) {
-        window.__miyarProcessingTrace.sawIntermediateWork = true;
+        window.__mowaemProcessingTrace.sawIntermediateWork = true;
       }
       if (document.querySelector(".analysis-stage.is-failed")) {
         observer.disconnect();
@@ -155,7 +155,7 @@ const uploadAndFinishAnalysis = async (
   if ((await completedStages.locator(".analysis-stage__detail").count()) !== 6) {
     throw new Error(`${context} processing stages did not retain their evidence.`);
   }
-  const processingTrace = await page.evaluate(() => window.__miyarProcessingTrace);
+  const processingTrace = await page.evaluate(() => window.__mowaemProcessingTrace);
   if (!processingTrace?.sawActiveStage || !processingTrace?.sawIntermediateWork) {
     throw new Error(
       `${context} did not render byte-derived intermediate processing work: ${JSON.stringify(processingTrace)}.`,

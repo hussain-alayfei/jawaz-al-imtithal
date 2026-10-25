@@ -24,11 +24,11 @@ const PRODUCT_TYPES = new Set([
   "IFCRAILING",
 ]);
 const ENTITY_CHUNK = 500;
-const MIYAR_PROPERTY_SETS = new Set([
-  "Pset_MiyarProject",
-  "Pset_MiyarSpace",
-  "Pset_MiyarDoor",
-  "Pset_MiyarEquipment",
+const MOWAEM_PROPERTY_SETS = new Set([
+  "Pset_MowaemProject",
+  "Pset_MowaemSpace",
+  "Pset_MowaemDoor",
+  "Pset_MowaemEquipment",
 ]);
 const CONTRACT_PROPERTY_KEYS = new Set([
   "ActivityCode",
@@ -154,10 +154,10 @@ function relationTargetIds(value: string | undefined): number[] {
 }
 
 function expectedPropertySet(type: string): string | undefined {
-  if (type === "IFCPROJECT") return "Pset_MiyarProject";
-  if (type === "IFCSPACE") return "Pset_MiyarSpace";
-  if (type === "IFCDOOR") return "Pset_MiyarDoor";
-  if (PRODUCT_TYPES.has(type)) return "Pset_MiyarEquipment";
+  if (type === "IFCPROJECT") return "Pset_MowaemProject";
+  if (type === "IFCSPACE") return "Pset_MowaemSpace";
+  if (type === "IFCDOOR") return "Pset_MowaemDoor";
+  if (PRODUCT_TYPES.has(type)) return "Pset_MowaemEquipment";
   return undefined;
 }
 
@@ -326,23 +326,23 @@ export async function extractIfcModel(
         const expectedNamespace = expectedPropertySet(target.type);
         const propertyNames = Object.keys(propertySet.properties);
         if (
-          MIYAR_PROPERTY_SETS.has(propertySet.name) &&
+          MOWAEM_PROPERTY_SETS.has(propertySet.name) &&
           propertySet.name !== expectedNamespace
         ) {
           throw new IfcProcessingError(
             "extract",
             "INVALID_PROPERTY_NAMESPACE",
-            `مجموعة ${propertySet.name} لا تصلح للكيان #${target.stepId} من النوع ${target.type}. النطاق المتوقع هو ${expectedNamespace ?? "لا يوجد نطاق MIYAR لهذا النوع"}.`,
+            `مجموعة ${propertySet.name} لا تصلح للكيان #${target.stepId} من النوع ${target.type}. النطاق المتوقع هو ${expectedNamespace ?? "لا يوجد نطاق MOWAEM لهذا النوع"}.`,
           );
         }
         if (
-          !MIYAR_PROPERTY_SETS.has(propertySet.name) &&
+          !MOWAEM_PROPERTY_SETS.has(propertySet.name) &&
           propertyNames.some((name) => CONTRACT_PROPERTY_KEYS.has(name))
         ) {
           throw new IfcProcessingError(
             "extract",
             "MISPLACED_CONTRACT_PROPERTY",
-            `مجموعة ${propertySet.name} تحتوي خاصية من عقد MIYAR خارج نطاقها المعتمد.`,
+            `مجموعة ${propertySet.name} تحتوي خاصية من عقد MOWAEM خارج نطاقها المعتمد.`,
           );
         }
 
@@ -499,7 +499,7 @@ export async function extractIfcModel(
     throw new IfcProcessingError(
       "extract",
       "UNSUPPORTED_LENGTH_UNIT",
-      "يجب أن يصرح Pset_MiyarProject بوحدة LengthUnit=METRE لهذه النسخة.",
+      "يجب أن يصرح Pset_MowaemProject بوحدة LengthUnit=METRE لهذه النسخة.",
     );
   }
   await reportPhase(

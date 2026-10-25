@@ -21,6 +21,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Validate branding across tracked files
+        run: npm run brand:check
       - name: Unit and pipeline tests
         run: npm test
       - name: Typecheck and production build

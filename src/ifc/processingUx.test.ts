@@ -165,35 +165,35 @@ describe("uploaded-byte processing proof", () => {
     });
 
     expect(
-      run.model.project?.propertySets.Pset_MiyarProject.ActivityCode,
+      run.model.project?.propertySets.Pset_MowaemProject.ActivityCode,
     ).toBe("restaurant");
     expect(
-      run.model.spaces[0].propertySets.Pset_MiyarSpace.RoleCode,
+      run.model.spaces[0].propertySets.Pset_MowaemSpace.RoleCode,
     ).toBe(run.model.spaces[0].properties.RoleCode);
     expect(
-      run.model.doors[0].propertySets.Pset_MiyarDoor.RoleCode,
+      run.model.doors[0].propertySets.Pset_MowaemDoor.RoleCode,
     ).toBe(run.model.doors[0].properties.RoleCode);
   });
 
   it.each([
     {
-      label: "a Miyar property set attached to the wrong IFC type",
+      label: "a Mowaem property set attached to the wrong IFC type",
       code: "INVALID_PROPERTY_NAMESPACE",
       transform: (source: string) =>
-        source.replace("Pset_MiyarSpace", "Pset_MiyarDoor"),
+        source.replace("Pset_MowaemSpace", "Pset_MowaemDoor"),
     },
     {
       label: "contract keys placed under an unapproved property set",
       code: "MISPLACED_CONTRACT_PROPERTY",
       transform: (source: string) =>
-        source.replace("Pset_MiyarProject", "Pset_CustomProject"),
+        source.replace("Pset_MowaemProject", "Pset_CustomProject"),
     },
     {
       label: "conflicting duplicate contract property values",
       code: "CONFLICTING_PROPERTY_VALUE",
       transform: (source: string) =>
         source.replace(
-          "IFCPROPERTYSINGLEVALUE('FixtureContractVersion',$,IFCLABEL('MIYAR-IFC-1.0'),$)",
+          "IFCPROPERTYSINGLEVALUE('FixtureContractVersion',$,IFCLABEL('MOWAEM-IFC-1.0'),$)",
           "IFCPROPERTYSINGLEVALUE('ActivityCode',$,IFCLABEL('clinic'),$)",
         ),
     },
@@ -227,9 +227,9 @@ describe("uploaded-byte processing proof", () => {
     });
   });
 
-  it("rejects a semantic contract version other than MIYAR-IFC-1.0", async () => {
+  it("rejects a semantic contract version other than MOWAEM-IFC-1.0", async () => {
     const mutatedUpload = await restaurantCorrectedMutation((source) =>
-      source.replace("MIYAR-IFC-1.0", "MIYAR-IFC-9.9"),
+      source.replace("MOWAEM-IFC-1.0", "MOWAEM-IFC-9.9"),
     );
     await expect(
       runIfcCompliance({
@@ -241,7 +241,7 @@ describe("uploaded-byte processing proof", () => {
       stageId: "completeness",
       code: "UNSUPPORTED_CONTRACT_VERSION",
       message:
-        "إصدار عقد البيانات داخل الملف (MIYAR-IFC-9.9) غير مدعوم. الإصدار المتوقع هو MIYAR-IFC-1.0.",
+        "إصدار عقد البيانات داخل الملف (MOWAEM-IFC-9.9) غير مدعوم. الإصدار المتوقع هو MOWAEM-IFC-1.0.",
     });
   });
 
