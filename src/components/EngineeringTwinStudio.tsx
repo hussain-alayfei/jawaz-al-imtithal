@@ -9,6 +9,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import * as THREE from "three";
 import type { ActivityId } from "../data";
 import { InteriorFitout3D, getActivityRooms, getInteriorItems, type RoomFilter } from "./InteriorFitout3D";
+import { DemoBimPanel, type DemoFileElement } from "./DemoBimPanel";
+import { DetailedServiceNetwork3D, getDetailPoint, getDetailPoints } from "./DetailedServiceNetwork3D";
 import {
   EngineeringNetworks3D, SERVICE_KEYS, SERVICE_META, SERVICE_NETWORKS,
   findServiceNode, type ServiceKey, type ServiceVisibility,
@@ -256,10 +258,11 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
   const sourceNode = findServiceNode(selected);
   const upper = selected?.startsWith("UPPER-") ? selected.split("-") : null;
   const interiorNode = [0,1,2,3,4].filter(n=>n < floorCount).flatMap(n=>getInteriorItems(activity,n)).find(item=>item.id===selected);
+  const detailNode = getDetailPoint(selected);
   const roomSelected = selected?.startsWith("ROOM-") ? selected.split("-") : null;
   const roomInfo = roomSelected ? getActivityRooms(activity).find(room=>room.key === roomSelected[2]) : null;
   const upperY = upper ? (Number(upper[1]) * STOREY_HEIGHT + (exploded ? Number(upper[1]) * 0.8 : 0) + 2) : 0;
-  const selectedPos: Vec3 | null = custom?.position ?? sourceNode?.position ?? interiorNode?.position
+  const selectedPos: Vec3 | null = custom?.position ?? sourceNode?.position ?? detailNode?.position ?? interiorNode?.position
     ?? (roomInfo ? [roomInfo.x, Number(roomSelected?.[1] ?? 0) * STOREY_HEIGHT + 1, roomInfo.z] : null)
     ?? (upper ? [-6.8, upperY, -4.7] : null);
   return <>
@@ -287,6 +290,9 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
     {(floor === "all" || floor === "ground") &&
       <EngineeringNetworks3D visible={visible} selectedId={selected} onSelect={onSelect} />}
     <NetworkExtensions floor={floor} system={visible} flow={flow} exploded={exploded} floorCount={floorCount} onSelect={onSelect} />
+    {[0,1,2,3,4].filter(level=>level<floorCount && (floor==="all" || LEVEL_KEYS[level]===floor))
+      .map(level=><DetailedServiceNetwork3D key={level} floor={level} visible={visible} selected={selected}
+        onSelect={onSelect} animate={flow}/>)}
     <Grid args={[50, 50]} position={[0, -0.12, 0]} cellSize={1} cellColor="#92a69e"
       cellThickness={0.35} sectionSize={5} sectionColor="#788f85"
       sectionThickness={0.5} fadeDistance={42} fadeStrength={1.8} />
@@ -322,9 +328,11 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [selected, setSelected] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<"files"|"items">("files");
   const overlayRef = useRef<HTMLDivElement>(null);
   const selectedCustom = CUSTOM_NODES.find(x => x.id === selected);
   const selectedNode = findServiceNode(selected);
+  const detailedNode = getDetailPoint(selected);
   const selectedUpper = selected?.startsWith("UPPER-") ? selected.split("-") : null;
   const upperSystem = selectedUpper && SERVICE_KEYS.includes(selectedUpper[2] as ServiceKey)
     ? selectedUpper[2] as ServiceKey : null;
@@ -333,6 +341,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const inspected = selectedFurniture
     ? {id:selectedFurniture.id,system:"architecture" as const,label:selectedFurniture.title,
       description:selectedFurniture.description,position:selectedFurniture.position}
+    : detailedNode
+    ? {id:detailedNode.id,system:detailedNode.system,label:detailedNode.label,
+      description:detailedNode.description+" · "+detailedNode.specification,position:detailedNode.position}
     : selectedCustom ?? selectedNode ??
     (upperSystem ? {
       id: selected ?? "", system: upperSystem,
@@ -356,6 +367,20 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setNonce(n => n + 1);
   }, [floor]);
 
+  const showDemoElement = (item:DemoFileElement) => {
+    setFloor(LEVEL_KEYS[item.floor] ?? "ground");
+    setSelected(item.sceneId);
+    const discipline = item.system;
+    const key:Utility = discipline && SERVICE_KEYS.includes(discipline as ServiceKey)
+      ? discipline as Utility : "architecture";
+    setSystem(key);
+    setVisible(key==="architecture" ? ALL_VISIBLE
+      : Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===key])) as ServiceVisibility);
+    setGhost(key!=="architecture");
+    setFurniture(true);
+    setRoomFilter("all");
+    setNonce(n=>n+1);
+  };
   const reset = () => {
     setSystem("architecture"); setFloor("all"); setRoomFilter("all"); setVisible(ALL_VISIBLE);
     setFurniture(true); setLabels(true); setGhost(false); setExploded(false); setFlow(true);
@@ -487,9 +512,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               <button type="button" key={key} className={preset === key ? "is-active" : ""}
                 onClick={() => {setPreset(key); setSelected(null); setNonce(n => n + 1);}}>{label}</button>)}
           </div>
-          <div className="twin-studio__scene-hint"><span className="twin-studio__hint-dot"/> <span>اسحب للتدوير · قرّب بالعجلة · اضغط عنصرًا للتفاصيل</span></div>
+          <div className="twin-studio__scene-hint"><span className="twin-studio__hint-dot"/> <span>دور بالكاميرا · قرّب · اختر شبكة ثم نقطة تمديد أو غرفة</span></div>
           <div className="twin-studio__viewport-stats">
-            <span>3D INTERACTIVE</span><span>◦</span><span>SCHEMATIC / NOT AS-BUILT</span>
+            <span>5 STOREYS · DEMO DATA</span><span>◦</span><span>SCHEMATIC / NOT AS-BUILT</span>
           </div>
           <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
             <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
@@ -513,7 +538,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
         <aside className="twin-studio__inspector" aria-label="تفاصيل العناصر">
           <div className="twin-studio__section-heading"><Focus size={17}/><span>تفاصيل النموذج</span><span className="twin-studio__live"/></div>
           <div className="twin-studio__inspector-hero">
-            <span>FURNISHED INTERIOR / TECHNICAL VIEW</span>
+            <span>FIVE-STOREY BIM EXPLORER · SYNTHETIC</span>
             <h2>{projectName}</h2>
             <p>نموذج تجريبي من خمسة أدوار يعرض غرفًا مفروشة وشبكات مرافق قابلة للتصفية حسب نشاط {activityName}. ليس عدد الأدوار الفعلي في ملف IFC.</p>
           </div>
@@ -522,6 +547,11 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <div><strong>08</strong><small>أنظمة عرض</small></div>
             <div><strong>{countEquipment.toString().padStart(2, "0")}</strong><small>عناصر خدمة ظاهرة</small></div>
           </div>
+          <div className="twin-studio__inspector-tabs" role="group" aria-label="قسم تفاصيل التوأم الرقمي">
+            <button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات IFC التجريبية</button>
+            <button type="button" onClick={()=>setInspectorTab("items")} aria-pressed={inspectorTab==="items"}>تفاصيل العناصر</button>
+          </div>
+          {inspectorTab==="files" ? <DemoBimPanel onPick={showDemoElement}/> : <>
           <div className="twin-studio__rail-divider" />
           <div className="twin-studio__section-heading"><Sofa size={17}/><span>أثاث وتجهيزات الغرف</span><small>{getInteriorItems(activityId,0).length}</small></div>
           <div className="twin-studio__inventory" data-testid="twin-inventory">
@@ -547,6 +577,19 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             <strong>اختر شبكة، ثم اضغط أحد عناصرها</strong>
             <p>يمكنك استكشاف الأنابيب واللوحات والمعدات ومسارات الخدمات داخل كل طابق.</p>
           </div>}
+          <div className="twin-studio__rail-divider"/>
+          <div className="twin-studio__section-heading"><Layers3 size={17}/><span>نقاط الخدمات التفصيلية</span></div>
+          <div className="twin-studio__inventory">
+            {getDetailPoints(Math.max(0,levelOf(floor))).filter(p=>system==="all"||system==="architecture"||p.system===system)
+              .map(point=><button type="button" key={point.id} onClick={()=>{
+                setSelected(point.id);setFloor(LEVEL_KEYS[point.floor]);setSystem(point.system);
+                setVisible(Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===point.system])) as ServiceVisibility);
+                setGhost(true);setNonce(n=>n+1);
+              }}>
+                <span>{point.label}</span><small>{point.specification}</small>
+              </button>)}
+          </div>
+          </>}
           <div className="twin-studio__rail-divider"/>
           <div className="twin-studio__section-heading"><ShieldCheck size={17}/><span>حالة الدليل</span></div>
           <div className="twin-studio__evidence">
