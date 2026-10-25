@@ -514,3 +514,57 @@
  .twin-studio__scene-hint { display:none; }
  .twin-studio__viewport-stats { max-width:240px; }
 }
+
+
+/* Dedicated document and assessment surfaces for one-storey hospitality models. */
+.twin-studio__inspector-tabs {grid-template-columns:repeat(auto-fit,minmax(74px,1fr));}
+.twin-studio__inspector-tabs button {min-width:0;padding:10px 5px;font-size:11px;}
+.twin-studio__venue-quick-links {display:grid;gap:7px;margin:15px 0;}
+.twin-studio__venue-quick-links button {
+ background:#2a4c39;border:1px solid #648b70;color:#e7f5e9;
+ padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;
+ font-size:12px;border-radius:3px;
+}
+.twin-studio__venue-quick-links button:hover {background:#39614b;}
+.venue-bim .bim-library__intro {margin-bottom:10px;}
+.venue-bim__metric {display:flex;align-items:center;gap:12px;padding:12px 14px;margin:10px 0;
+ background:#213f2f;border:1px solid #486f52;border-radius:3px;}
+.venue-bim__metric strong {font:700 23px "IBM Plex Mono",monospace;color:#dcebc6;}
+.venue-bim__metric span {font-size:11px;color:#d1e6d7;line-height:1.55;}
+.venue-analysis {font-size:12px;color:#e2eee5;direction:rtl;}
+.venue-analysis__heading {display:flex;align-items:flex-start;gap:10px;padding:13px;
+ border:1px solid #78865f;background:#334330;border-radius:3px;}
+.venue-analysis__heading svg {flex:none;color:#ead4a0;}
+.venue-analysis__heading strong {display:block;color:#f7f2df;font-size:14px;}
+.venue-analysis__heading span {display:block;color:#e5dfc5;line-height:1.7;margin-top:5px;font-size:11px;}
+.venue-analysis__stats {display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:14px 0;}
+.venue-analysis__stats>div {background:#233c30;border:1px solid #45634d;
+ padding:12px 9px;text-align:center;}
+.venue-analysis__stats strong {display:block;color:#e6f2e3;font:700 21px "IBM Plex Mono",monospace;}
+.venue-analysis__stats span {display:block;font-size:10px;color:#bad2c0;margin-top:4px;}
+.venue-analysis h3 {font-size:13px;font-weight:700;color:#d7ebda;margin:18px 2px 10px;}
+.venue-analysis__systems {display:grid;gap:9px;}
+.venue-analysis__systems article {background:#1d3429;border:1px solid #405e49;padding:11px;border-radius:3px;}
+.venue-analysis__systems article.is-active {background:#264734;border-color:#88ad8d;}
+.venue-analysis__systems article>button {width:100%;border:0;background:transparent;color:#f1f6ed;
+ display:flex;align-items:center;gap:8px;text-align:right;padding:1px 0 8px;}
+.venue-analysis__systems article>button strong {flex:1;font-size:12px;line-height:1.45;}
+.venue-analysis__systems article>button b {white-space:nowrap;font-size:10px;color:#c2deb8;}
+.venue-analysis__systems p {font-size:11px;color:#c7dacb;line-height:1.7;margin:0 0 7px;}
+.venue-analysis__color {flex:none;width:9px;height:9px;border-radius:100%;}
+.venue-analysis__review {border-top:1px solid #3c5744;padding-top:8px;
+ display:flex;gap:7px;align-items:flex-start;color:#e7cea0;font-size:11px;line-height:1.65;}
+.venue-analysis__review svg {flex:none;margin-top:2px;}
+.venue-analysis__points {display:grid;gap:5px;padding-top:12px;}
+.venue-analysis__points button {background:#315942;color:#e9f6e9;border:1px solid #568462;
+ padding:8px;display:flex;align-items:center;gap:6px;text-align:right;font-size:11px;}
+.venue-analysis__points button:hover {background:#3b6b4c;}
+.venue-analysis__limit {border:1px solid #826f4c;background:#373d2d;
+ margin-top:16px;padding:12px;line-height:1.7;}
+.venue-analysis__limit strong {color:#f4dba7;font-size:12px;}
+.venue-analysis__limit p {margin:6px 0 0;color:#eee4c9;font-size:11px;}
+@media(max-width:660px){
+ .twin-studio__inspector-tabs {grid-template-columns:repeat(3,minmax(0,1fr));}
+ .twin-studio__mobile-bim {top:126px;max-width:185px;}
+ .venue-analysis__systems {gap:7px;}
+}
