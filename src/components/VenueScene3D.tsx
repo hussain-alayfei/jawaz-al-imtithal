@@ -242,9 +242,9 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
         c={cafe?"#b9b7ab":"#b1b5b5"}/>))}
     <B p={[0,4.3,-5.8]} s={[15.55,.34,.33]} c={cafe?"#adb5a9":"#adb5b5"}/>
     <B p={[0,4.3,5.8]} s={[15.55,.34,.33]} c={cafe?"#adb5a9":"#adb5b5"}/>
-    <B p={[0,2.18,-5.85]} s={[16,4.28,.26]} c={plaster}/>
-    <B p={[-7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster}/>
-    <B p={[7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster}/>
+    <B p={[0,2.18,-5.85]} s={[16,4.28,.26]} c={plaster} opacity={ghost?.1:1}/>
+    <B p={[-7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster} opacity={ghost?.09:1}/>
+    <B p={[7.85,2.14,0]} s={[.3,4.28,11.9]} c={plaster} opacity={ghost?.09:1}/>
     {/* Storefront glazing, split into full-height windows and a centered main door. */}
     <B p={[0,3.9,5.88]} s={[16,.66,.3]} c={trim}/>
     {[-7.7,-4.0,0,4.0,7.7].map(x=><B key={x} p={[x,2.0,5.87]} s={[.13,3.1,.15]} c={trim} metal={.25}/>)}
@@ -255,14 +255,14 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
     <B p={[0,4.32,-5.8]} s={[16,.25,.25]} c={trim}/>
     <B p={[0,4.36,5.86]} s={[16,.27,.4]} c={trim}/>
     {/* The cutaway roof reveals real furniture; restore partial roof in facade view. */}
-    <B p={[0,4.45,-4.85]} s={[16,.18,2.1]} c="#d9ded6" opacity={ghost?.15:.92}/>
-    <B p={[0,4.52,4.1]} s={[16,.18,3.3]} c="#c5c4b9" opacity={ghost?.12:.72}/>
+    <B p={[0,4.45,-4.85]} s={[16,.18,2.1]} c="#d9ded6" opacity={ghost?.055:.92}/>
+    <B p={[0,4.52,4.1]} s={[16,.18,3.3]} c="#c5c4b9" opacity={ghost?.045:.72}/>
     <B p={[0,4.85,5.95]} s={[16,.48,.65]} c={trim}/>
     <B p={[0,4.62,6.36]} s={[11,.12,1.7]} c={cafe?"#bda17a":"#ae9d87"}/>
     {[-4,-2,0,2,4].map(x=><B key={x} p={[x,4.48,6.46]} s={[.09,.08,1.55]} c={trim}/>)}
     {/* Internal walls separate public and back of house without hiding the cutaway. */}
-    <B p={[0,1.43,-.3]} s={[15.5,2.65,.12]} c={plaster} opacity={ghost?.14:.5}/>
-    <B p={[-.92,1.43,-3.25]} s={[.13,2.65,4.5]} c={plaster} opacity={ghost?.14:.5}/>
+    <B p={[0,1.43,-.3]} s={[15.5,2.65,.12]} c={plaster} opacity={ghost?.065:.5}/>
+    <B p={[-.92,1.43,-3.25]} s={[.13,2.65,4.5]} c={plaster} opacity={ghost?.065:.5}/>
     {[-4.5,4.5].map(x=><group key={x}>
        <B p={[x,4.17,0]} s={[.85,.06,.85]} c="#fff3d5"/>
        <Cylinder p={[x,3.77,0]} h={.65} r={.025} c="#b0afa3"/>
