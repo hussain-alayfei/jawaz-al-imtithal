@@ -1,0 +1,1364 @@
+/* Landing screen («ختم»). Every class carries the lp- prefix. Colours, type, buttons and status marks come
+   from src/brand/tokens.css; this file only lays the page out. */
+
+.lp {
+  background: var(--paper);
+  color: var(--ink);
+  overflow-x: clip;
+}
+
+.lp-wrap {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 40px;
+}
+
+/* Sections that the nav scrolls to take focus without drawing a box around the whole section. */
+.lp [tabindex="-1"]:focus {
+  outline: none;
+}
+
+.lp-h2 {
+  font-size: clamp(30px, 2.8vw, 40px);
+  line-height: 1.4;
+}
+
+.lp-lede {
+  margin-top: 10px;
+  max-width: 62ch;
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ Bar */
+
+.lp-bar {
+  position: relative;
+  z-index: 20;
+  background: var(--palm);
+  color: #ffffff;
+}
+
+.lp-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 76px;
+}
+
+.lp-bar .wordmark {
+  min-height: 44px;
+  color: #ffffff;
+  font-size: 28px;
+}
+
+.lp-bar .wordmark svg,
+.lp-footer .wordmark svg {
+  width: 36px;
+  height: 36px;
+  color: var(--palm-deep);
+}
+
+.lp-nav {
+  flex: 1;
+}
+
+.lp-nav__toggle {
+  display: none;
+}
+
+.lp-nav__list {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 12px;
+  color: var(--stone);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 9px;
+  transition:
+    color 160ms var(--ease),
+    text-decoration-color 160ms var(--ease);
+}
+
+.lp-nav__link:hover {
+  color: #ffffff;
+  text-decoration-color: var(--gold-on-palm);
+}
+
+/* ------------------------------------------------------------------ Hero */
+
+.lp-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: clamp(560px, 62.5vw, 1000px);
+  overflow: hidden;
+  background: #5e8fcb;
+}
+
+.lp-hero__img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.lp-hero__frame {
+  position: absolute;
+  inset: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.lp-frame {
+  position: absolute;
+  overflow: visible;
+}
+
+.lp-frame--outer {
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lp-frame--inner {
+  inset-block-start: 7px;
+  inset-inline-start: 7px;
+  width: calc(100% - 14px);
+  height: calc(100% - 14px);
+}
+
+.lp-frame rect {
+  x: 0.5px;
+  y: 0.5px;
+  width: calc(100% - 1px);
+  height: calc(100% - 1px);
+  fill: none;
+  stroke: var(--gold-on-palm);
+  stroke-width: 1;
+}
+
+.lp-hero__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 980px;
+  padding: 46px 40px 0;
+  text-align: center;
+}
+
+.lp-hero__words {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Scrim: the sky alone gives white text about 3:1, so the top of the sky is deepened, as at dusk. It spans the
+   full width and fades out before the palm crowns, so it reads as sky rather than as a box behind the words. */
+.lp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 36, 46, 0.6) 0%,
+    rgba(9, 36, 46, 0.52) 14%,
+    rgba(9, 36, 46, 0.4) 22%,
+    rgba(9, 36, 46, 0.14) 30%,
+    rgba(9, 36, 46, 0) 38%
+  );
+  pointer-events: none;
+}
+
+.lp-hero__ornament {
+  display: block;
+  width: 168px;
+  height: 10px;
+  color: var(--gold-on-palm);
+}
+
+.lp-hero__title {
+  margin-top: 10px;
+  font-size: clamp(32px, 3.9vw, 58px);
+  line-height: 1.3;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(10, 43, 33, 0.45);
+}
+
+.lp-hero__lede {
+  margin-top: 6px;
+  max-width: 44ch;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.8;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(10, 43, 33, 0.45);
+}
+
+.lp-hero__cta {
+  margin-top: 22px;
+}
+
+/* ------------------------------------------------------------------ Dossier */
+
+.lp-dossier {
+  position: relative;
+  z-index: 3;
+  margin-top: -150px;
+  /* Keep the seal, which rises 84px above the card, in view when the nav scrolls here. */
+  scroll-margin-top: 108px;
+}
+
+.lp-dossier__card {
+  /* Brand green is 4.2:1 on limestone; a deeper tone of it keeps the pass mark at 5:1 here. */
+  --green: #1a6b46;
+  position: relative;
+  max-width: 1040px;
+  margin-inline: auto;
+  padding: 108px 56px 36px;
+  background: var(--stone);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 32px 56px -32px rgba(15, 59, 46, 0.5);
+}
+
+.lp-dossier__card::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--gold);
+  border-radius: calc(var(--radius-panel) - 7px);
+  pointer-events: none;
+}
+
+.lp-dossier__card .lp-dossier__seal {
+  position: absolute;
+  inset-block-start: -84px;
+  inset-inline: 0;
+  margin-inline: auto;
+}
+
+.lp-dossier__title {
+  position: relative;
+  font-size: clamp(28px, 2.4vw, 34px);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.lp-record {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  margin: 26px 0 0;
+  border-block: 1px solid var(--gold);
+}
+
+.lp-record__item {
+  padding: 14px 20px;
+  border-inline-start: 1px solid var(--gold);
+}
+
+.lp-record__item:nth-child(1),
+.lp-record__item:nth-child(4) {
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+
+.lp-record__item:nth-child(n + 4) {
+  border-top: 1px solid var(--gold);
+}
+
+.lp-record__item--wide {
+  grid-column: span 2;
+}
+
+.lp-record dt {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-record dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.lp-dossier__foot {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-top: 24px;
+}
+
+.lp-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-tally .status {
+  font-size: 15px;
+}
+
+/* ------------------------------------------------------------------ Register */
+
+.lp-register {
+  padding: 104px 0 88px;
+}
+
+.lp-table {
+  width: 100%;
+  margin-top: 36px;
+  border-collapse: collapse;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.lp-col-clause {
+  width: 7%;
+}
+
+.lp-col-measured {
+  width: 16%;
+}
+
+.lp-col-required {
+  width: 21%;
+}
+
+.lp-col-status {
+  width: 20%;
+}
+
+.lp-table th,
+.lp-table td {
+  padding: 14px 16px;
+  text-align: start;
+  vertical-align: top;
+}
+
+.lp-table thead th {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--palm);
+  border-bottom: 3px double var(--gold);
+  white-space: nowrap;
+}
+
+.lp-table tbody th,
+.lp-table tbody td {
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-cell-clause {
+  font-weight: 700;
+  color: var(--palm);
+  white-space: nowrap;
+}
+
+.lp-cell-na {
+  color: var(--slate);
+}
+
+.lp-cell-note {
+  display: block;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-cell-measured--fail {
+  font-weight: 700;
+  color: var(--burgundy);
+}
+
+.lp-cell-label {
+  display: none;
+}
+
+.lp-table .lp-row--fail > * {
+  background: var(--stone);
+  border-bottom: 0;
+}
+
+.lp-table .lp-row-detail > td {
+  padding: 4px 16px 28px;
+  background: var(--stone);
+}
+
+.lp-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 248px;
+  gap: 36px;
+  align-items: start;
+}
+
+.lp-detail__label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-detail__label--gap {
+  margin-top: 16px;
+}
+
+.lp-detail__quote {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.9;
+  color: var(--palm);
+}
+
+.lp-detail__cite {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-detail__name {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.lp-detail__sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-detail__action {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lp-detail__inset {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.lp-drawing--inset {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 340 / 266;
+  background: var(--paper);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+}
+
+.lp-detail__inset figcaption {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-register__foot {
+  margin-top: 18px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--slate);
+}
+
+/* ------------------------------------------------------------------ Model chapter */
+
+.lp-model {
+  padding: 0 0 104px;
+}
+
+.lp-chapter-mark {
+  display: block;
+  width: 168px;
+  height: 10px;
+  margin: 0 auto 44px;
+  color: var(--gold);
+}
+
+.lp-model__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.lp-model__text .lp-lede {
+  font-size: 17px;
+}
+
+.lp-facts {
+  margin: 28px 0 0;
+  border-top: 1px solid var(--gold);
+}
+
+.lp-facts > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-facts dt {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-facts dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.lp-facts__sub {
+  display: block;
+  font-size: 14px;
+  color: var(--slate);
+}
+
+.lp-guid {
+  overflow-wrap: anywhere;
+}
+
+.lp-plate {
+  margin: 0;
+}
+
+.lp-plate__frame {
+  margin: 6px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    0 0 0 5px var(--paper),
+    0 0 0 6px var(--gold);
+}
+
+.lp-drawing--plate {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 854 / 604;
+}
+
+.lp-plate__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.lp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-legend__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--burgundy);
+}
+
+.lp-legend__dash {
+  width: 24px;
+  border-top: 1.5px dashed var(--palm);
+}
+
+/* Drawing paint, by role. */
+.lp-d-slab {
+  fill: var(--palm);
+}
+
+.lp-d-floor {
+  fill: #d5e5da;
+  stroke: var(--palm);
+  stroke-opacity: 0.3;
+}
+
+.lp-d-swing {
+  fill: none;
+  stroke: var(--palm);
+  stroke-opacity: 0.55;
+}
+
+.lp-d-face {
+  fill: #e9e5dc;
+}
+
+.lp-d-side {
+  fill: #d3cbbb;
+}
+
+.lp-d-cap {
+  fill: #ffffff;
+}
+
+.lp-d-edge60,
+.lp-d-edge45 {
+  fill: none;
+  stroke: var(--palm);
+  stroke-opacity: 0.6;
+  stroke-linejoin: round;
+}
+
+.lp-d-edge45 {
+  stroke-opacity: 0.45;
+}
+
+.lp-d-tiles {
+  fill: var(--burgundy);
+}
+
+.lp-d-grout {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.28;
+}
+
+.lp-d-tilesEdge {
+  fill: none;
+  stroke: var(--burgundy);
+  stroke-width: 1.5;
+}
+
+.lp-d-required {
+  fill: none;
+  stroke: var(--palm);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+.lp-d-blockTop,
+.lp-d-wallTop {
+  fill: #ffffff;
+  stroke: var(--palm);
+  stroke-opacity: 0.45;
+  stroke-linejoin: round;
+}
+
+.lp-d-wallTop {
+  stroke-opacity: 0.7;
+}
+
+.lp-d-dimension {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.lp-d-dimensionRequired {
+  fill: none;
+  stroke: var(--palm);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.lp-dl text {
+  font-family: var(--font-ui);
+  text-anchor: middle;
+  direction: rtl;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.lp-dl__room {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--palm);
+  stroke: #d5e5da;
+  stroke-width: 4px;
+}
+
+.lp-dl__room--small {
+  font-size: 13px;
+}
+
+.lp-dl__room--out {
+  stroke: #ffffff;
+}
+
+.lp-dl__room--lg {
+  font-size: 32px;
+  font-weight: 600;
+  stroke-width: 7px;
+}
+
+.lp-dl__leader {
+  fill: none;
+  stroke: var(--palm);
+  stroke-width: 1;
+}
+
+.lp-dl__pin {
+  fill: #ffffff;
+  stroke: var(--palm);
+  stroke-width: 1.5;
+}
+
+.lp-dl__callout {
+  fill: #ffffff;
+  stroke: var(--burgundy);
+  stroke-width: 1;
+}
+
+.lp-dl .lp-dl__measured {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--burgundy);
+}
+
+.lp-dl__required {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--palm);
+}
+
+.lp-dl .lp-dl__measured--lg {
+  font-size: 56px;
+}
+
+.lp-dl__required--lg {
+  font-size: 30px;
+}
+
+.lp-dl--compact .lp-dl__leader {
+  stroke-width: 2;
+}
+
+.lp-dl--compact .lp-dl__callout {
+  stroke-width: 2;
+}
+
+.lp-dl--compact {
+  display: none;
+}
+
+.lp-dl__on-wall {
+  font-size: 18px;
+  font-weight: 600;
+  fill: #ffffff;
+  stroke: var(--burgundy);
+  stroke-width: 5px;
+}
+
+.lp-dl__on-dash {
+  font-size: 18px;
+  font-weight: 600;
+  fill: var(--palm);
+  stroke: #ffffff;
+  stroke-width: 5px;
+}
+
+/* ------------------------------------------------------------------ Notes */
+
+.lp-notes {
+  padding: 64px 0;
+  background: var(--stone);
+}
+
+.lp-notes__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.lp-notes__title {
+  font-size: clamp(28px, 2.4vw, 34px);
+  line-height: 1.5;
+}
+
+.lp-notes__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 3px double var(--gold);
+}
+
+.lp-notes__list li {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--gold);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+/* ------------------------------------------------------------------ Closing and footer */
+
+.lp-closing {
+  background: var(--palm-deep);
+  color: #ffffff;
+}
+
+.lp-closing__inner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-block: 64px 56px;
+}
+
+.lp-closing__mark {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  color: var(--palm);
+}
+
+.lp-closing h2 {
+  font-size: clamp(28px, 2.6vw, 36px);
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.lp-closing__text p {
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--stone);
+}
+
+.lp-closing__cta {
+  margin-inline-start: auto;
+}
+
+.lp-footer {
+  background: var(--palm-deep);
+  color: var(--stone);
+}
+
+.lp-footer__rule {
+  border-top: 1px solid rgba(185, 139, 46, 0.7);
+}
+
+.lp-footer__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px 48px;
+  align-items: start;
+  padding-block: 28px 40px;
+}
+
+.lp-footer .wordmark {
+  min-height: 44px;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.lp-footer__disclaimer {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.8;
+  color: #ffffff;
+}
+
+.lp-footer__basis {
+  padding-top: 8px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--stone);
+}
+
+/* ------------------------------------------------------------------ Motion */
+
+@keyframes lp-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lp-settle {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lp-press {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lp-row {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* One entrance, 1.18 s end to end: the frame draws, the words settle, the seal presses. */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-frame rect {
+    stroke-dasharray: 1 1;
+    animation: lp-draw 900ms cubic-bezier(0.65, 0, 0.35, 1) backwards;
+  }
+
+  .lp-frame--inner rect {
+    animation-delay: 120ms;
+  }
+
+  .lp-hero__ornament {
+    animation: lp-settle 600ms var(--ease) 200ms backwards;
+  }
+
+  .lp-hero__title {
+    animation: lp-settle 700ms var(--ease) 260ms backwards;
+  }
+
+  .lp-hero__lede {
+    animation: lp-settle 600ms var(--ease) 380ms backwards;
+  }
+
+  .lp-hero .lp-hero__cta {
+    animation: lp-settle 600ms var(--ease) 480ms backwards;
+  }
+
+  .lp-dossier__card .lp-dossier__seal {
+    animation: lp-press 480ms var(--ease) 700ms backwards;
+  }
+}
+
+/* Register rows come in, in clause order, as they scroll into view. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-table tbody tr > * {
+      animation: lp-row linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-nav__link {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ Responsive */
+
+/* Between 1100 and 1280 the sky is just tall enough for the headline and lede, so the ornament steps aside. */
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .lp-hero__ornament {
+    display: none;
+  }
+}
+
+/* Below 1100px the sky is too short for the words, so they move onto a solid palm panel. */
+@media (max-width: 1099px) {
+  .lp-hero {
+    height: auto;
+    min-height: 680px;
+  }
+
+  .lp-hero__copy {
+    margin: 56px 40px 0;
+    padding: 36px 32px 40px;
+    max-width: 640px;
+    background: var(--palm);
+    border-radius: var(--radius-panel);
+  }
+
+  .lp-hero__copy::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(217, 183, 106, 0.55);
+    border-radius: calc(var(--radius-panel) - 6px);
+    pointer-events: none;
+  }
+
+  .lp-hero::before {
+    display: none;
+  }
+
+  .lp-hero__title,
+  .lp-hero__lede {
+    text-shadow: none;
+  }
+
+  .lp-hero__title {
+    font-size: 40px;
+  }
+
+  .lp-hero__lede {
+    font-size: 17px;
+  }
+
+  /* On the palm panel the primary pill would vanish, so it takes the gold treatment. */
+  .lp-hero .lp-hero__cta {
+    --btn-bg: var(--gold-on-palm);
+    --btn-fg: var(--palm-deep);
+    --disc-bg: rgba(15, 59, 46, 0.12);
+    --disc-fg: var(--palm-deep);
+    box-shadow: none;
+  }
+
+  .lp-hero .lp-hero__cta:hover {
+    --btn-bg: #e4c784;
+  }
+
+  .lp-model__grid,
+  .lp-notes__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .lp-notes__grid {
+    gap: 20px;
+  }
+
+  .lp-detail {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .lp-detail__inset {
+    grid-column: 1 / -1;
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 959px) {
+  .lp-register {
+    padding-top: 88px;
+  }
+
+  /* The register becomes one stacked block per clause. Roles in the markup keep it a table for screen readers. */
+  .lp-table,
+  .lp-table tbody,
+  .lp-table tr,
+  .lp-table th,
+  .lp-table td {
+    display: block;
+  }
+
+  .lp-table colgroup {
+    display: none;
+  }
+
+  .lp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .lp-table {
+    margin-top: 28px;
+    border-top: 3px double var(--gold);
+  }
+
+  .lp-table .lp-row {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 6px 12px;
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .lp-table .lp-row > * {
+    grid-column: 2;
+    padding: 0;
+    border: 0;
+  }
+
+  .lp-table .lp-row > .lp-cell-clause {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .lp-cell-what {
+    font-weight: 600;
+  }
+
+  .lp-cell-label {
+    display: inline;
+    margin-inline-end: 8px;
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  .lp-cell-status {
+    padding-top: 2px;
+  }
+
+  .lp-table .lp-row--fail {
+    background: var(--stone);
+    border-bottom: 0;
+  }
+
+  .lp-table .lp-row-detail > td {
+    padding: 4px 12px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .lp-detail {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 859px) {
+  .lp-bar__inner {
+    gap: 12px;
+    min-height: 68px;
+  }
+
+  .lp-bar .wordmark {
+    font-size: 26px;
+  }
+
+  .lp-nav {
+    flex: none;
+    margin-inline-start: auto;
+  }
+
+  .lp-nav__toggle {
+    display: inline-grid;
+    background: transparent;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+
+  .lp-nav__toggle:hover,
+  .lp-nav__toggle[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--gold-on-palm);
+  }
+
+  .lp-nav__list {
+    display: none;
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline: 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 4px 16px 12px;
+    background: var(--palm-deep);
+    border-bottom: 1px solid var(--gold);
+  }
+
+  .lp-nav[data-open="true"] .lp-nav__list {
+    display: flex;
+  }
+
+  .lp-nav__list li + li {
+    border-top: 1px solid rgba(217, 183, 106, 0.28);
+  }
+
+  .lp-nav__link {
+    width: 100%;
+    min-height: 52px;
+    padding-inline: 4px;
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 760px) {
+  .lp-dl--wide {
+    display: none;
+  }
+
+  .lp-dl--compact {
+    display: inline;
+  }
+}
+
+@media (max-width: 719px) {
+  .lp-wrap {
+    padding-inline: 16px;
+  }
+
+  .lp-hero {
+    min-height: 600px;
+  }
+
+  .lp-hero__frame {
+    inset: 12px;
+  }
+
+  .lp-hero__copy {
+    margin: 36px 24px 0;
+    padding: 28px 20px 30px;
+  }
+
+  .lp-hero__title {
+    font-size: 30px;
+  }
+
+  .lp-hero__lede {
+    font-size: 16px;
+  }
+
+  .lp-hero__cta {
+    margin-top: 18px;
+  }
+
+  .lp-dossier {
+    margin-top: -96px;
+  }
+
+  .lp-dossier__card {
+    padding: 100px 20px 24px;
+  }
+
+  .lp-record {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lp-record__item,
+  .lp-record__item:nth-child(n) {
+    padding: 12px 0;
+    border-inline-start: 0;
+    border-top: 1px solid var(--gold);
+  }
+
+  .lp-record__item:first-child {
+    border-top: 0;
+  }
+
+  .lp-record__item--wide {
+    grid-column: auto;
+  }
+
+  .lp-dossier__foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-tally {
+    flex-direction: column;
+  }
+
+  .lp-register {
+    padding: 72px 0 64px;
+  }
+
+  .lp-lede {
+    font-size: 17px;
+  }
+
+  .lp-detail__quote {
+    font-size: 18px;
+  }
+
+  .lp-detail__inset {
+    max-width: none;
+  }
+
+  .lp-model {
+    padding-bottom: 72px;
+  }
+
+  .lp-chapter-mark {
+    margin-bottom: 32px;
+  }
+
+  .lp-plate__foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lp-notes {
+    padding: 48px 0;
+  }
+
+  .lp-notes__list li {
+    font-size: 16px;
+  }
+
+  .lp-closing__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding-block: 48px 40px;
+  }
+
+  .lp-closing__mark {
+    width: 52px;
+    height: 52px;
+  }
+
+  .lp-closing__cta {
+    margin-inline-start: 0;
+  }
+
+  .lp-footer__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
