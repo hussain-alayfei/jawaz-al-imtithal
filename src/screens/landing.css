@@ -1,5 +1,6 @@
-/* Landing page (v2, formal). Every class carries the hm- prefix. Colours, type, buttons and the
-   page container come from src/brand/tokens.css; this file only lays the page out. */
+/* Home page (v3). Mobile-first: base styles are for phones, then min-width steps at 768, 1024 and 1440.
+   Every class carries the hm- prefix. Colours, type, buttons and the page container come from
+   src/brand/tokens.css. Spacing follows 8 / 16 / 24 / 40 / 64 / 96. No scroll animation. */
 
 .hm {
   display: block;
@@ -14,87 +15,79 @@
 
 /* Type */
 .hm-h2 {
-  font-size: 30px;
+  font-size: clamp(24px, 2.2vw + 16px, 28px);
   font-weight: 700;
   line-height: 1.45;
+  text-wrap: balance;
 }
 
 .hm-h3 {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.5;
 }
 
 .hm-h4 {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.5;
-  color: var(--ink);
 }
 
-.hm-lede {
+.hm-lede,
+.hm-body {
   max-width: 64ch;
-  margin-block-start: 12px;
-  font-size: 18px;
-  line-height: 1.85;
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--ink-2);
 }
 
+.hm-lede {
+  margin-block-start: 8px;
+}
+
 .hm-note {
+  max-width: 64ch;
+  margin-block-start: 8px;
   font-size: 15px;
-  line-height: 1.85;
+  line-height: 1.7;
   color: var(--muted);
 }
 
 .hm-caption {
+  margin-block-start: 8px;
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.7;
   color: var(--muted);
 }
 
-/* No one-word last lines in running text. */
 .hm-lede,
+.hm-body,
 .hm-note,
 .hm-caption,
 .hm-hero__lede,
 .hm-step__body,
-.hm-limits__list li {
+.hm-limits li {
   text-wrap: pretty;
 }
 
-/* Sections */
+/* Sections: space and one hairline between them. */
 .hm-section {
-  padding-block: 96px;
+  padding-block: 64px;
+  border-block-start: 1px solid var(--line);
 }
 
 .hm-head {
-  margin-block-end: 48px;
+  margin-block-end: 40px;
 }
 
-.hm-head--action {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px 56px;
-}
-
-.hm-head__text {
-  flex: 1 1 560px;
+.hm-figure {
+  margin: 0;
   min-width: 0;
 }
 
-.hm-head__cta {
-  flex: none;
-}
-
-/* The real renders of the sample model: a 16:10 frame, cropped only at its edges. */
-.hm-figure {
-  margin: 0;
-}
-
+/* A real render of the sample model in a calm 16:9 frame. */
 .hm-render {
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -105,61 +98,175 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
 }
 
 /* 1. Hero */
 .hm-hero {
-  padding-block: 72px 96px;
+  padding-block: 40px 64px;
 }
 
 .hm-hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  align-items: center;
-  gap: 40px 72px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
 }
 
 .hm-hero__title {
-  font-size: clamp(32px, 3.4vw, 48px);
-  font-weight: 800;
+  font-size: clamp(32px, 2.4vw + 22px, 44px);
+  font-weight: 700;
   line-height: 1.35;
+  text-wrap: balance;
 }
 
 .hm-hero__lede {
   max-width: 34em;
-  margin-block-start: 20px;
-  font-size: 19px;
-  line-height: 1.85;
+  margin-block-start: 16px;
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--ink-2);
 }
 
-.hm-hero__actions {
+.hm-hero__cta {
+  width: 100%;
+  margin-block-start: 24px;
+}
+
+.hm-hero__cta:active,
+.hm-chip:active,
+.hm .btn:active {
+  transform: translateY(1px);
+}
+
+.hm-samples {
+  margin-block-start: 24px;
+}
+
+.hm-samples__lead {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.hm-samples__list {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 32px;
-  margin-block-start: 36px;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.hm-hero__figure .hm-caption {
-  margin-block-start: 12px;
+.hm-samples__list li {
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
 }
 
-/* 2. Clauses */
-.hm-clauses {
-  border-block-start: 1px solid var(--line);
+.hm-samples__list .hm-chip {
+  flex: 1 1 auto;
 }
 
+.hm-caption bdi {
+  white-space: nowrap;
+}
+
+/* Sample chips: one tap runs that sample. */
+.hm-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease),
+    background-color 160ms var(--ease);
+}
+
+.hm-chip:hover {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.hm-chip__label {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.hm-chip__note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* The render with the measurement card: under the image on phones, over its corner from 768px. */
+.hm-hero__frame {
+  position: relative;
+}
+
+.hm-measure {
+  margin-block-start: 8px;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.hm-measure__clause {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.hm-measure__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 16px;
+  margin-block-start: 8px;
+}
+
+.hm-measure__value {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--fail);
+}
+
+.hm-measure__unit {
+  font-size: 24px;
+}
+
+.hm-measure__required {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hm-measure__status {
+  margin-block-start: 8px;
+}
+
+/* 2. Clauses: two columns of table-like rows from 1024px. */
 .hm-clauses__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 48px 80px;
+  gap: 40px;
 }
 
 .hm-clauses__col .hm-h3 {
-  margin-block-end: 14px;
+  margin-block-end: 8px;
 }
 
 .hm-clause-list {
@@ -171,14 +278,15 @@
 
 .hm-clause {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: baseline;
   gap: 16px;
-  padding-block: 13px;
+  padding-block: 8px;
   border-block-end: 1px solid var(--line);
 }
 
 .hm-clause__no {
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
   color: var(--ink-2);
@@ -190,88 +298,82 @@
 }
 
 .hm-clauses__col .hm-note {
-  margin-block-start: 18px;
+  margin-block-start: 16px;
 }
 
 .hm-ref {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 14px;
-  margin-block-start: 56px;
-  padding-block-start: 20px;
-  border-block-start: 1px solid var(--line);
+  gap: 0 16px;
+  margin-block-start: 40px;
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.7;
   color: var(--muted);
 }
 
-.hm-ref .link {
-  font-size: 15px;
-}
-
-/* 3. How it works: the three real steps, numbered with plain figures. */
+/* 3. How it works: the one section on --surface. */
 .hm-how {
   background: var(--surface);
 }
 
 .hm-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 40px 0 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .hm-step {
-  padding-inline: 40px;
-  border-inline-start: 1px solid var(--line-strong);
-}
-
-.hm-step:first-child {
-  padding-inline-start: 0;
-  border-inline-start: 0;
-}
-
-.hm-step:last-child {
-  padding-inline-end: 0;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .hm-step__no {
-  display: block;
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--brand);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .hm-step__title {
-  margin-block-start: 14px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.5;
 }
 
 .hm-step__body {
-  margin-block-start: 6px;
+  margin-block-start: 8px;
   font-size: 16px;
   color: var(--ink-2);
 }
 
 /* 4. The 3D model */
-.hm-model__legend {
-  display: flex;
-  flex-wrap: wrap;
+.hm-model {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
   align-items: center;
-  gap: 8px 28px;
-  margin-block-start: 20px;
+}
+
+.hm-model__text .hm-h4 {
+  margin-block-start: 24px;
 }
 
 .hm-networks {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 24px;
-  margin: 0;
+  gap: 8px 24px;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
   font-size: 15px;
@@ -285,135 +387,126 @@
 }
 
 .hm-networks__dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex: none;
 }
 
-.hm-model__legend .hm-caption {
-  flex-basis: 100%;
+.hm-model__cta,
+.hm-twin__cta {
+  width: 100%;
+  margin-block-start: 24px;
 }
 
-/* 5 and 6. Short blocks: a title column beside the content. */
+/* 5 and 6. Short blocks: a title, then the content. */
 .hm-split {
   display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-  align-items: start;
-  gap: 20px 72px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
 }
 
-.hm-twin,
 .hm-limits {
-  padding-block: 80px;
-  border-block-start: 1px solid var(--line);
-}
-
-.hm-twin__body .hm-lede {
-  margin-block-start: 0;
-}
-
-.hm-twin__body .hm-note {
-  margin-block-start: 8px;
-}
-
-.hm-twin__cta {
-  margin-block-start: 28px;
-}
-
-.hm-limits__list {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-block-start: 1px solid var(--line-strong);
 }
 
-.hm-limits__list li {
-  padding-block: 14px;
+.hm-limits li {
+  padding-block: 8px;
   border-block-end: 1px solid var(--line);
   font-size: 16px;
+  line-height: 1.7;
   color: var(--ink-2);
 }
 
-/* Tablet and below: one column. */
-@media (max-width: 960px) {
-  .hm-hero__grid,
-  .hm-split,
-  .hm-clauses__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hm-hero__lede {
-    max-width: 40em;
-  }
+.hm-limits li:first-child {
+  padding-block-start: 0;
 }
 
-/* Phones */
-@media (max-width: 720px) {
-  .hm-section {
-    padding-block: 64px;
-  }
+.hm-limits li:last-child {
+  border-block-end: 0;
+}
 
+/* Tablet */
+@media (min-width: 768px) {
   .hm-hero {
-    padding-block: 40px 64px;
+    padding-block: 64px 96px;
   }
 
-  .hm-twin,
-  .hm-limits {
-    padding-block: 56px;
+  .hm-hero__cta,
+  .hm-model__cta,
+  .hm-twin__cta {
+    width: auto;
   }
 
-  .hm-h2 {
-    font-size: 26px;
+  .hm-samples__list li {
+    flex: 0 1 auto;
   }
 
-  .hm-lede,
-  .hm-hero__lede {
-    font-size: 17px;
-  }
-
-  .hm-head {
-    margin-block-end: 32px;
+  /* The card sits over the render's lower corner (the road), clear of the building. */
+  .hm-measure {
+    position: absolute;
+    inset-block-end: 16px;
+    inset-inline-end: 16px;
+    max-width: 300px;
+    margin: 0;
+    padding: 16px 24px;
   }
 
   .hm-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .hm-step {
     grid-template-columns: minmax(0, 1fr);
-    margin-block-start: 28px;
+    gap: 16px;
   }
 
-  .hm-step,
-  .hm-step:first-child,
-  .hm-step:last-child {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    column-gap: 12px;
-    padding-inline: 0;
-    padding-block: 20px;
-    border-inline-start: 0;
-    border-block-start: 1px solid var(--line-strong);
+  .hm-split {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: 24px 64px;
   }
 
-  .hm-step:first-child {
-    padding-block-start: 0;
-    border-block-start: 0;
+  .hm-twin__cta {
+    margin-block-start: 24px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .hm-section {
+    padding-block: 96px;
   }
 
-  .hm-step__no {
-    grid-row: span 2;
-    font-size: 30px;
+  .hm-hero__grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: 64px;
   }
 
-  .hm-step__title {
-    margin-block-start: 2px;
+  .hm-hero__lede {
     font-size: 18px;
   }
 
-  .hm-clause {
-    grid-template-columns: 56px minmax(0, 1fr);
-    gap: 12px;
+  .hm-clauses__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 64px;
   }
 
-  .hm-ref {
-    margin-block-start: 40px;
+  .hm-model {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 64px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .hm-hero {
+    padding-block: 96px;
+  }
+
+  .hm-measure__value {
+    font-size: 52px;
   }
 }
