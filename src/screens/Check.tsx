@@ -1,5 +1,4 @@
 import {
-  Fragment,
   useEffect,
   useId,
   useLayoutEffect,
@@ -7,29 +6,15 @@ import {
   useState,
   type ChangeEvent,
   type DragEvent,
-  type ReactNode,
-  type Ref,
+  type MouseEvent,
 } from "react";
-import {
-  Check as CheckIcon,
-  ChevronDown,
-  Circle,
-  CircleAlert,
-  CircleCheck,
-  CircleDot,
-  CircleX,
-  Download,
-  FileCheck2,
-  FileUp,
-  Info,
-  ShieldCheck,
-} from "lucide-react";
+import { ChevronDown, CircleAlert, CircleCheck, Download, FileUp, ShieldCheck } from "lucide-react";
 import { activityExamples, getAnalysisStages, type ActivityId } from "../data";
 import { runIfcCompliance } from "../ifc/pipeline";
 import type { ComplianceRun, IfcUpload, PipelineEvent, StageId, StageState } from "../ifc/types";
 import { copy } from "../content/copy";
 import { SAMPLE_FILES, sampleById, type SampleFile, type SampleId } from "../content/samples";
-import { Button, StatusMark } from "../brand/ui";
+import { StatusMark } from "../brand/ui";
 import { tallyOf } from "./results/findings";
 import {
   STAGE_IDS,
@@ -37,31 +22,39 @@ import {
   clausesWord,
   describeFailure,
   formatArea,
-  formatBytes,
   formatDuration,
   isAreaValid,
   parseArea,
   readUpload,
+  stagesDone,
   withFacilityDefaults,
   type CheckFailure,
 } from "./check/logic";
+import { Bidi, STROKE, StageIcon } from "./check/parts";
 import type { CheckProps } from "./types";
 import "./check.css";
 
 /* Strings this screen needs that copy.ts does not have. */
-const START_LABEL = "ابدأ الفحص";
 const AREA_UNIT = "م²";
 const AREA_ERROR = "أدخل مساحة أكبر من صفر.";
-const START_HINT = "أكمل الخطوتين السابقتين لبدء الفحص.";
+const AREA_FIRST = "أدخل مساحة الترخيص أعلاه أولًا، ثم اختر الملف.";
+const SETTINGS_LABEL = "بيانات الفحص";
+const DROP_TITLE = "اسحب ملف IFC هنا";
+const DROP_TITLE_TOUCH = "ارفع ملف IFC من جهازك";
+const DROP_OR = "أو";
+const CHOOSE = "اختر ملف IFC";
 const ANOTHER_FILE = "اختر ملفًا آخر";
+const NEXT_FILE = "فحص ملف آخر";
+const CANCEL = "إلغاء";
+const CANCELLED = "أُلغي الفحص.";
 const CHANGE_ACTIVITY = "تغيير النشاط";
 const LOADING_FILE = "جارٍ تحميل الملف";
 const SAMPLE_ERROR = "تعذر تحميل العينة. حاول مرة أخرى.";
-const STEP_DONE = "، مكتملة";
-const STEP_DONE_VISIBLE = "مكتملة";
-const PROGRESS_LABEL = "مراحل الفحص";
-const USE_SAMPLE = "افحص هذا الملف";
+const SAMPLES_TITLE = "أو جرّب مخططًا جاهزًا";
+const SAMPLES_HINT = "ضغطة واحدة تفحص العينة.";
 const DOWNLOAD = "تنزيل";
+const STAGES_LABEL = "مراحل الفحص";
+const stagesText = (done: number, total: number) => `${done} من ${total} مراحل`;
 const STAGE_STATE: Record<StageState, string> = {
   pending: "لم تبدأ",
   running: "جارية",
@@ -84,10 +77,6 @@ const LIBRARY_GROUPS = [
   { key: "restaurant", title: "حزمة المطعم", base: "/demo-bim/venues/restaurant/" },
 ] as const;
 
-const sm = 1.6;
-
-type Picked = { upload: IfcUpload; sampleId?: SampleId };
-
 type RunRequest = {
   key: number;
   upload: IfcUpload;
@@ -101,79 +90,14 @@ type StageView = { id: StageId; label: string; state: StageState; durationMs?: n
 
 type Outcome = { key: number; run?: ComplianceRun; failure?: CheckFailure };
 
-type Phase = "idle" | "running" | "done" | "error";
+/** What is being read before the run starts: a picked file or a sample. */
+type Loading = { name: string; sampleId?: SampleId };
 
-type MarkerState = "locked" | "active" | "done";
+/** A problem found before the run (file type/size, unreadable file, sample fetch, missing area). */
+type Problem = { message: string; area?: boolean };
 
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-}
-
-/** Bring a step into view and give focus to the control that continues the flow. */
-function reveal(section: HTMLElement | null, target: HTMLElement | null | undefined) {
-  section?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
-  target?.focus({ preventScroll: true });
-}
-
-/* Latin runs (IFC4, Revit, file names, ISO-10303-21) and «50 MB» keep their direction and stay on one line.
-   Dots and hyphens only join a run from inside, so a sentence's own full stop stays outside the <bdi>. */
-const LATIN_RUN = /\d+(?:\.\d+)?\s?MB|[A-Za-z]\w*(?:[.-]\w+)*(?:\s+[A-Za-z0-9]\w*(?:[.-]\w+)*)*/g;
-
-function Bidi({ text }: { text: string }): ReactNode {
-  const parts: ReactNode[] = [];
-  let last = 0;
-  for (const match of text.matchAll(LATIN_RUN)) {
-    const start = match.index ?? 0;
-    if (start > last) parts.push(text.slice(last, start));
-    parts.push(
-      <bdi key={start} dir="ltr" className="ck-nowrap">
-        {match[0]}
-      </bdi>,
-    );
-    last = start + match[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return <Fragment>{parts}</Fragment>;
-}
-
-function StageIcon({ state }: { state: StageState }) {
-  const props = { size: 20, strokeWidth: sm, "aria-hidden": true } as const;
-  if (state === "completed") return <CircleCheck {...props} />;
-  if (state === "running") return <CircleDot {...props} />;
-  if (state === "failed") return <CircleX {...props} />;
-  return <Circle {...props} />;
-}
-
-function PanelHead({
-  n,
-  state,
-  headingId,
-  title,
-  headingRef,
-}: {
-  n: number;
-  state: MarkerState;
-  headingId: string;
-  title: string;
-  headingRef?: Ref<HTMLHeadingElement>;
-}) {
-  return (
-    <header className="ck-panel__head">
-      <span className="ck-panel__no num" aria-hidden="true">
-        {n}
-      </span>
-      <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="ck-panel__title">
-        {title}
-        {state === "done" && <span className="sr-only">{STEP_DONE}</span>}
-      </h2>
-      {state === "done" && (
-        <span className="ck-panel__state" aria-hidden="true">
-          <CheckIcon size={18} strokeWidth={sm} />
-          {STEP_DONE_VISIBLE}
-        </span>
-      )}
-    </header>
-  );
 }
 
 export default function Check({
@@ -190,14 +114,13 @@ export default function Check({
 
   const [areaText, setAreaText] = useState(() => formatArea(facility.area));
   const [areaTouched, setAreaTouched] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const [picked, setPicked] = useState<Picked>();
-  const [loading, setLoading] = useState<"file" | SampleId>();
-  const [fileError, setFileError] = useState("");
+  const [loading, setLoading] = useState<Loading>();
+  const [problem, setProblem] = useState<Problem>();
   const [dragging, setDragging] = useState(false);
   const [request, setRequest] = useState<RunRequest>();
   const [stages, setStages] = useState<StageView[]>([]);
   const [outcome, setOutcome] = useState<Outcome>();
+  const [notice, setNotice] = useState("");
 
   const latest = useRef({ facility, activityId, onDone });
   useLayoutEffect(() => {
@@ -209,53 +132,38 @@ export default function Check({
   const autoHandled = useRef<SampleId | undefined>(undefined);
   const areaRef = useRef<HTMLInputElement>(null);
   const activityRef = useRef<HTMLSelectElement>(null);
-  const step1Ref = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const step2Ref = useRef<HTMLElement>(null);
-  const step2Heading = useRef<HTMLHeadingElement>(null);
-  const step3Ref = useRef<HTMLElement>(null);
-  const chooseRef = useRef<HTMLDivElement>(null);
-  const doneRef = useRef<HTMLDivElement>(null);
+  const zoneRef = useRef<HTMLElement>(null);
+  const chooseRef = useRef<HTMLButtonElement>(null);
+  const runHeadingRef = useRef<HTMLHeadingElement>(null);
+  const openRef = useRef<HTMLButtonElement>(null);
+  /** Where focus goes after the zone re-renders: the choose button (error, cancel) or the run heading. */
+  const focusNext = useRef<"choose" | "run" | undefined>(undefined);
 
-  const step1Valid = isAreaValid(facility.area);
-  const step2Valid = Boolean(picked) && !loading;
-  const ready = step1Valid && step2Valid;
-  const phase: Phase = !request
-    ? "idle"
-    : outcome?.key !== request.key
-      ? "running"
-      : outcome.run
-        ? "done"
-        : "error";
-  const running = phase === "running";
-  const showAreaError = areaTouched && !step1Valid;
-
-  const marker1: MarkerState = step1Valid && (confirmed || Boolean(picked)) ? "done" : "active";
-  const marker2: MarkerState = !step1Valid ? "locked" : step2Valid ? "done" : "active";
-  const marker3: MarkerState = !ready ? "locked" : phase === "done" ? "done" : "active";
-  const markers = [marker1, marker2, marker3] as const;
-  /* The step the visitor is on: the first one not yet complete (the last once everything is). */
-  const currentStep = marker1 !== "done" ? 1 : marker2 !== "done" ? 2 : 3;
-  const stepTitles = [copy.check.step1.title, copy.check.step2.title, copy.check.step3.title] as const;
+  const areaValid = isAreaValid(facility.area);
+  const running = Boolean(request) && outcome?.key !== request?.key;
+  const run = !running && !loading && outcome?.key === request?.key ? outcome?.run : undefined;
+  const failure = !running && !loading && outcome?.key === request?.key ? outcome?.failure : undefined;
+  const busy = running || Boolean(loading);
+  const view: "idle" | "progress" | "done" = busy ? "progress" : run ? "done" : "idle";
+  const showAreaError = areaTouched && !areaValid;
+  const done = stagesDone(stages);
 
   /* Keep the typed text when it already means the stored area (e.g. "284." while typing). */
   useEffect(() => {
     setAreaText((text) => (parseArea(text) === facility.area ? text : formatArea(facility.area)));
   }, [facility.area]);
 
-  /* A finished or running check belongs to one file, activity and area; changing any of them clears it. */
+  /* A finished check belongs to one activity and area; changing either clears it. */
   useEffect(() => {
     setRequest((current) => {
       if (!current) return current;
-      const stale =
-        current.upload !== picked?.upload ||
-        current.activityId !== activityId ||
-        current.facility.area !== facility.area;
+      const stale = current.activityId !== activityId || current.facility.area !== facility.area;
       return stale ? undefined : current;
     });
-  }, [picked, activityId, facility.area]);
+  }, [activityId, facility.area]);
 
-  /* The run itself. It only starts when a request is set (never on mount), and aborts on unmount. */
+  /* The run itself. It only starts when a request is set (never on mount), and aborts on unmount or cancel. */
   useEffect(() => {
     if (!request) return;
     const controller = new AbortController();
@@ -281,29 +189,43 @@ export default function Check({
       signal: controller.signal,
       onEvent,
     })
-      .then((run) => {
+      .then((result) => {
         if (controller.signal.aborted) return;
-        setOutcome({ key: request.key, run });
-        if (request.auto) latest.current.onDone(run);
+        setOutcome({ key: request.key, run: result });
+        setNotice(copy.check.step3.done);
+        if (request.auto) latest.current.onDone(result);
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
+        focusNext.current = "choose";
         setOutcome({ key: request.key, failure: describeFailure(error) });
       });
     return () => controller.abort();
   }, [request]);
 
-  /* A sample started from the landing page runs below the fold: bring its stages into view. */
+  /* Move focus to the control that continues the flow once the zone has re-rendered. */
   useEffect(() => {
-    if (request?.auto) reveal(step3Ref.current, undefined);
-  }, [request]);
-
-  /* After a check the visitor started by hand, the next useful control is «عرض النتائج». */
-  useEffect(() => {
-    if (phase === "done" && request && !request.auto) {
-      doneRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    if (view === "done" && request && !request.auto) {
+      openRef.current?.focus();
+      return;
     }
-  }, [phase, request]);
+    const target = focusNext.current;
+    if (!target) return;
+    if (target === "run" && view === "progress") {
+      focusNext.current = undefined;
+      runHeadingRef.current?.focus({ preventScroll: true });
+    } else if (target === "choose" && view === "idle") {
+      focusNext.current = undefined;
+      chooseRef.current?.focus({ preventScroll: true });
+    }
+  }, [view, request]);
+
+  /* A sample started from the landing page: keep its progress in view. */
+  useEffect(() => {
+    if (loading?.sampleId && autoHandled.current === loading.sampleId) {
+      zoneRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "nearest" });
+    }
+  }, [loading]);
 
   const begin = (upload: IfcUpload, auto: boolean) => {
     const { facility: current, activityId: activity } = latest.current;
@@ -320,58 +242,76 @@ export default function Check({
     });
   };
 
+  /** The area must be valid before a file is read; otherwise point at the field and stop. */
+  const areaReady = () => {
+    if (isAreaValid(latest.current.facility.area)) return true;
+    setAreaTouched(true);
+    setProblem({ message: AREA_FIRST, area: true });
+    areaRef.current?.focus();
+    return false;
+  };
+
+  /** Clear the previous run and show the progress panel while the file is read. */
+  const startLoading = (name: string, sampleId?: SampleId) => {
+    setProblem(undefined);
+    setNotice("");
+    setRequest(undefined);
+    setOutcome(undefined);
+    focusNext.current = "run";
+    setLoading({ name, sampleId });
+  };
+
   const takeFile = async (file: File | undefined) => {
-    if (!file || running) return;
+    if (!file || busy) return;
+    if (!areaReady()) return;
     const token = ++readToken.current;
-    setFileError("");
-    setPicked(undefined);
-    const problem = checkFileMeta(file.name, file.size);
-    if (problem) {
-      setLoading(undefined);
-      setFileError(problem);
+    const fault = checkFileMeta(file.name, file.size);
+    if (fault) {
+      setRequest(undefined);
+      setNotice("");
+      setProblem({ message: fault });
+      chooseRef.current?.focus();
       return;
     }
-    setLoading("file");
+    startLoading(file.name);
+    let upload: IfcUpload;
     try {
-      const upload = await readUpload(file);
-      if (token !== readToken.current) return;
-      setPicked({ upload });
+      upload = await readUpload(file);
     } catch {
       if (token !== readToken.current) return;
-      setFileError(copy.check.errors.parse);
+      setLoading(undefined);
+      focusNext.current = "choose";
+      setProblem({ message: copy.check.errors.parse });
+      return;
     }
-    if (token === readToken.current) setLoading(undefined);
+    if (token !== readToken.current) return;
+    setLoading(undefined);
+    begin(upload, false);
   };
 
   const takeSample = async (sample: SampleFile, auto = false) => {
-    if (running) return;
+    if (busy) return;
+    if (!areaReady()) return;
     const token = ++readToken.current;
-    setFileError("");
-    setPicked(undefined);
-    setLoading(sample.id);
+    startLoading(sample.fileName, sample.id);
     let upload: IfcUpload;
     try {
       const response = await fetch(sample.url);
       if (!response.ok) throw new Error(String(response.status));
       const file = new File([await response.blob()], sample.fileName, { lastModified: Date.now() });
-      const problem = checkFileMeta(file.name, file.size);
-      if (problem) throw new Error(problem);
+      const fault = checkFileMeta(file.name, file.size);
+      if (fault) throw new Error(fault);
       upload = await readUpload(file);
     } catch {
       if (token !== readToken.current) return;
       setLoading(undefined);
-      setFileError(SAMPLE_ERROR);
+      focusNext.current = "choose";
+      setProblem({ message: SAMPLE_ERROR });
       return;
     }
     if (token !== readToken.current) return;
     setLoading(undefined);
-    setPicked({ upload, sampleId: sample.id });
-    if (!auto) return;
-    if (!isAreaValid(latest.current.facility.area)) {
-      setAreaTouched(true);
-      return;
-    }
-    begin(upload, true);
+    begin(upload, auto);
   };
 
   /* A sample link (landing page, #/check?sample=): load the sample and run it once. The ref survives
@@ -387,400 +327,235 @@ export default function Check({
   const changeArea = (event: ChangeEvent<HTMLInputElement>) => {
     const text = event.target.value;
     setAreaText(text);
-    onFacilityChange({ ...facility, area: parseArea(text) });
-  };
-
-  const goToStep2 = () => {
-    setAreaTouched(true);
-    if (!step1Valid) {
-      areaRef.current?.focus();
-      return;
-    }
-    setConfirmed(true);
-    reveal(step2Ref.current, step2Heading.current);
+    const area = parseArea(text);
+    onFacilityChange({ ...facility, area });
+    if (problem?.area && isAreaValid(area)) setProblem(undefined);
   };
 
   const openPicker = () => fileInputRef.current?.click();
 
-  const start = () => {
-    if (running) return;
-    if (!ready) {
-      setAreaTouched(true);
-      if (!step1Valid) areaRef.current?.focus();
-      else reveal(step2Ref.current, chooseRef.current?.querySelector("button"));
-      return;
-    }
-    setConfirmed(true);
-    begin(picked!.upload, false);
-  };
-
-  const chooseAnother = () => {
+  const cancel = () => {
     readToken.current += 1;
-    setPicked(undefined);
-    setFileError("");
     setLoading(undefined);
-    reveal(step2Ref.current, chooseRef.current?.querySelector("button"));
+    setRequest(undefined);
+    setOutcome(undefined);
+    setProblem(undefined);
+    setNotice(CANCELLED);
+    focusNext.current = "choose";
   };
 
-  const onDragEnter = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    if (!running) setDragging(true);
+  const another = () => {
+    setRequest(undefined);
+    setOutcome(undefined);
+    setProblem(undefined);
+    setNotice("");
+    focusNext.current = "choose";
+    openPicker();
   };
-  const onDragOver = (event: DragEvent<HTMLDivElement>) => {
+
+  const onDragEnter = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = running ? "none" : "copy";
+    if (!busy) setDragging(true);
   };
-  const onDragLeave = (event: DragEvent<HTMLDivElement>) => {
+  const onDragOver = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = busy ? "none" : "copy";
+  };
+  const onDragLeave = (event: DragEvent<HTMLElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
   };
-  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+  const onDrop = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     setDragging(false);
-    if (!running) void takeFile(event.dataTransfer.files[0]);
+    if (!busy) void takeFile(event.dataTransfer.files[0]);
+  };
+  /* A click anywhere on the empty zone opens the picker too; the button stays the keyboard route. */
+  const onZoneClick = (event: MouseEvent<HTMLElement>) => {
+    if (view !== "idle" || (event.target as HTMLElement).closest("button, a, input")) return;
+    openPicker();
   };
 
-  const run = phase === "done" ? outcome?.run : undefined;
-  const failure = phase === "error" ? outcome?.failure : undefined;
   const tally = run ? tallyOf(run) : undefined;
-  const coverage = tally ? { verified: tally.verified, total: tally.total } : undefined;
+  const errorMessage = failure ? failure.headline : problem?.message;
+  const errorDetail = failure?.detail;
+  const showError = view === "idle" && Boolean(errorMessage);
+  const fileName = loading?.name ?? request?.upload.name ?? "";
+  const progressNow = loading ? 0 : done;
 
   return (
     <main className="ck">
       <div className="page">
         <div className="ck-inner">
-          <header className="ck-head fade-in">
+          <header className="ck-head">
             <h1 className="ck-title">{copy.check.title}</h1>
             <p className="ck-lede">{copy.check.lede}</p>
           </header>
 
-          <ol className="ck-progress fade-in" aria-label={PROGRESS_LABEL}>
-            {markers.map((state, index) => {
-              const n = index + 1;
-              const current = n === currentStep;
-              return (
-                <li
-                  key={n}
-                  className={`ck-progress__step ck-progress__step--${state}${current ? " is-current" : ""}`}
-                  aria-current={current ? "step" : undefined}
-                >
-                  <span className="ck-progress__line">
-                    <span className="ck-progress__no num">{n}</span>
-                  </span>
-                  <span className="ck-progress__label">
-                    {stepTitles[index]}
-                    {state === "done" && <span className="sr-only">{STEP_DONE}</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-
-          {/* The fade sits on this static wrapper: a panel's own class changes with its state, which would
-              drop the is-visible class the shell adds. */}
-          <div className="ck-steps fade-in">
-            {/* Step 1: activity and licence area */}
-            <section
-              ref={step1Ref}
-              aria-labelledby={id("s1")}
-              className={`ck-panel ck-panel--${marker1}${currentStep === 1 ? " is-current" : ""}`}
-            >
-              <PanelHead n={1} state={marker1} headingId={id("s1")} title={copy.check.step1.title} />
-              <div className="ck-panel__body">
-                <div className="ck-fields">
-                  <div className="ck-field">
-                    <label className="ck-label" htmlFor={id("activity")}>
-                      {copy.check.step1.activityLabel}
-                    </label>
-                    <div className="ck-control-wrap">
-                      <select
-                        ref={activityRef}
-                        id={id("activity")}
-                        className="ck-control ck-control--select"
-                        value={activityId}
-                        disabled={running}
-                        aria-describedby={id("activity-help")}
-                        onChange={(event) => onActivityChange(event.target.value as ActivityId)}
-                      >
-                        {activityExamples.map((example) => (
-                          <option key={example.id} value={example.id}>
-                            {example.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="ck-control-icon" size={18} strokeWidth={sm} aria-hidden="true" />
-                    </div>
-                    <p className="ck-help" id={id("activity-help")}>
-                      <Bidi text={copy.check.step1.activityHelp} />
-                    </p>
-                  </div>
-
-                  <div className="ck-field">
-                    <label className="ck-label" htmlFor={id("area")}>
-                      {copy.check.step1.areaLabel}
-                    </label>
-                    <div className="ck-control-wrap">
-                      <input
-                        ref={areaRef}
-                        id={id("area")}
-                        className="ck-control ck-control--suffix num"
-                        type="number"
-                        inputMode="decimal"
-                        min={1}
-                        step="any"
-                        required
-                        value={areaText}
-                        disabled={running}
-                        aria-invalid={showAreaError}
-                        aria-describedby={`${id("area-help")}${showAreaError ? ` ${id("area-error")}` : ""}`}
-                        onChange={changeArea}
-                        onBlur={() => setAreaTouched(true)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") goToStep2();
-                        }}
-                      />
-                      <span className="ck-suffix" aria-hidden="true">
-                        {AREA_UNIT}
-                      </span>
-                    </div>
-                    <p className="ck-help" id={id("area-help")}>
-                      {copy.check.step1.areaHelp}
-                    </p>
-                    {showAreaError && (
-                      <p className="ck-error" id={id("area-error")} role="alert">
-                        <CircleAlert size={16} strokeWidth={sm} aria-hidden="true" />
-                        {AREA_ERROR}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="ck-actions">
-                  <Button variant="secondary" onClick={goToStep2} disabled={running}>
-                    {copy.check.step1.next}
-                  </Button>
-                </div>
-              </div>
-            </section>
-
-            {/* Step 2: the plan file */}
-            <section
-              ref={step2Ref}
-              aria-labelledby={id("s2")}
-              className={`ck-panel ck-panel--${marker2}${currentStep === 2 ? " is-current" : ""}`}
-            >
-              <PanelHead
-                n={2}
-                state={marker2}
-                headingId={id("s2")}
-                title={copy.check.step2.title}
-                headingRef={step2Heading}
-              />
-              <div className="ck-panel__body">
-                <div
-                  className={`ck-drop${dragging ? " is-dragging" : ""}${picked ? " is-picked" : ""}`}
-                  onDragEnter={onDragEnter}
-                  onDragOver={onDragOver}
-                  onDragLeave={onDragLeave}
-                  onDrop={onDrop}
-                >
-                  <span className="ck-drop__icon" aria-hidden="true">
-                    {picked ? <FileCheck2 size={28} strokeWidth={sm} /> : <FileUp size={28} strokeWidth={sm} />}
-                  </span>
-                  <div className="ck-drop__text" aria-live="polite">
-                    {picked ? (
-                      <>
-                        <p className="ck-drop__file">
-                          <span className="sr-only">{copy.results.file}: </span>
-                          <bdi dir="ltr">{picked.upload.name}</bdi>
-                        </p>
-                        <p className="ck-drop__help">
-                          <bdi dir="ltr">{formatBytes(picked.upload.size)}</bdi>
-                        </p>
-                      </>
-                    ) : loading ? (
-                      <p className="ck-drop__help">{LOADING_FILE}</p>
-                    ) : (
-                      <>
-                        <h3 className="ck-drop__title">
-                          <Bidi text={copy.check.step2.dropTitle} />
-                        </h3>
-                        <p className="ck-drop__help">{copy.check.step2.dropHelp}</p>
-                      </>
-                    )}
-                  </div>
-                  <div ref={chooseRef} className="ck-drop__action">
-                    <Button variant="secondary" onClick={openPicker} disabled={running}>
-                      {picked ? ANOTHER_FILE : copy.check.step2.dropButton}
-                    </Button>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    className="sr-only"
-                    type="file"
-                    accept=".ifc"
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    disabled={running}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.target.value = "";
-                      void takeFile(file);
-                    }}
-                  />
-                </div>
-                {fileError && (
-                  <p className="ck-error ck-error--file" role="alert">
-                    <CircleAlert size={16} strokeWidth={sm} aria-hidden="true" />
-                    <span>
-                      <Bidi text={fileError} />
-                    </span>
-                  </p>
-                )}
-                <ul className="ck-notes">
-                  <li>
-                    <Info size={16} strokeWidth={sm} aria-hidden="true" />
-                    <span>
-                      <Bidi text={copy.check.step2.limits} />
-                    </span>
-                  </li>
-                  <li>
-                    <ShieldCheck size={16} strokeWidth={sm} aria-hidden="true" />
-                    <span>{copy.check.step2.privacy}</span>
-                  </li>
-                </ul>
-
-                <div className="ck-samples">
-                  <h3 className="ck-subtitle" id={id("samples")}>
-                    {copy.check.step2.samplesTitle}
-                  </h3>
-                  <p className="ck-help">
-                    <Bidi text={copy.check.step2.samplesNote} />
-                  </p>
-                  <ul className="ck-sample-list" aria-labelledby={id("samples")}>
-                    {SAMPLE_FILES.map((sample) => {
-                      const selected = picked?.sampleId === sample.id;
-                      const busy = loading === sample.id;
-                      return (
-                        <li key={sample.id} className={`ck-sample${selected ? " is-selected" : ""}`}>
-                          <div className="ck-sample__text">
-                            <span className="ck-sample__label" id={id(`sample-${sample.id}`)}>
-                              <Bidi text={sample.label} />
-                            </span>
-                            <span className="ck-sample__note">
-                              {busy ? LOADING_FILE : <Bidi text={sample.note} />}
-                            </span>
-                          </div>
-                          <div className="ck-sample__actions">
-                            <Button
-                              variant="secondary"
-                              size="small"
-                              className="ck-sample__use"
-                              icon={selected ? <CheckIcon size={16} strokeWidth={2} /> : undefined}
-                              aria-pressed={selected}
-                              aria-describedby={id(`sample-${sample.id}`)}
-                              disabled={running || busy}
-                              onClick={() => void takeSample(sample)}
-                            >
-                              {USE_SAMPLE}
-                            </Button>
-                            <a
-                              className="ck-download"
-                              href={sample.url}
-                              download={sample.fileName}
-                              title={sample.fileName}
-                            >
-                              <Download size={18} strokeWidth={sm} aria-hidden="true" />
-                              <span className="sr-only">
-                                {DOWNLOAD} <bdi dir="ltr">{sample.fileName}</bdi>
-                              </span>
-                            </a>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-
-                <details className="ck-library">
-                  <summary className="ck-library__summary">
-                    <span>{copy.check.step2.libraryTitle}</span>
-                    <ChevronDown className="ck-library__chevron" size={18} strokeWidth={sm} aria-hidden="true" />
-                  </summary>
-                  <div className="ck-library__body">
-                    <p className="ck-help">{copy.check.step2.libraryNote}</p>
-                    <div className="ck-library__groups">
-                      {LIBRARY_GROUPS.map((group) => (
-                        <div key={group.key} className="ck-library__group">
-                          <h4 className="ck-library__title" id={id(`lib-${group.key}`)}>
-                            {group.title}
-                          </h4>
-                          <ul className="ck-library__files" aria-labelledby={id(`lib-${group.key}`)}>
-                            {LIBRARY_FILES.map((file) => (
-                              <li key={file.name}>
-                                <a className="ck-library__file" href={`${group.base}${file.name}`} download={file.name}>
-                                  <Download size={16} strokeWidth={sm} aria-hidden="true" />
-                                  <span className="ck-library__file-text">
-                                    <span className="sr-only">{DOWNLOAD} </span>
-                                    <bdi dir="ltr" className="ck-library__file-name">
-                                      {file.name}
-                                    </bdi>
-                                    <span className="ck-library__file-label">
-                                      {file.label}
-                                      <span className="sr-only">، {group.title}</span>
-                                    </span>
-                                  </span>
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    <Button variant="secondary" className="ck-library__open" onClick={onTwin}>
-                      {copy.check.step2.libraryOpen}
-                    </Button>
-                  </div>
-                </details>
-              </div>
-            </section>
-
-            {/* Step 3: run and outcome */}
-            <section
-              ref={step3Ref}
-              aria-labelledby={id("s3")}
-              className={`ck-panel ck-panel--${marker3}${currentStep === 3 ? " is-current" : ""}`}
-            >
-              <PanelHead n={3} state={marker3} headingId={id("s3")} title={copy.check.step3.title} />
-              <div className="ck-panel__body">
-                {phase === "idle" && (
-                  <div className="ck-ready">
-                    {ready ? (
-                      <p className="ck-ready__file">
-                        <span>{copy.results.file}:</span> <bdi dir="ltr">{picked!.upload.name}</bdi>
-                      </p>
-                    ) : (
-                      <p className="ck-help" id={id("start-hint")}>
-                        {START_HINT}
-                      </p>
-                    )}
-                    <Button
-                      variant="primary"
-                      aria-disabled={!ready}
-                      aria-describedby={ready ? undefined : id("start-hint")}
-                      onClick={start}
+          <div className="ck-layout">
+            <div className="ck-main">
+              {/* Settings: activity and licence area, filled in already */}
+              <section className="ck-settings" aria-label={SETTINGS_LABEL}>
+                <div className="ck-field">
+                  <label className="ck-label" htmlFor={id("activity")}>
+                    {copy.check.step1.activityLabel}
+                  </label>
+                  <div className="ck-control-wrap">
+                    <select
+                      ref={activityRef}
+                      id={id("activity")}
+                      className="ck-control ck-control--select"
+                      value={activityId}
+                      disabled={busy}
+                      aria-describedby={id("activity-help")}
+                      onChange={(event) => onActivityChange(event.target.value as ActivityId)}
                     >
-                      {START_LABEL}
-                    </Button>
+                      {activityExamples.map((example) => (
+                        <option key={example.id} value={example.id}>
+                          {example.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="ck-control-icon" size={18} strokeWidth={STROKE} aria-hidden="true" />
+                  </div>
+                  <p className="ck-help" id={id("activity-help")}>
+                    <Bidi text={copy.check.step1.activityHelp} />
+                  </p>
+                </div>
+
+                <div className="ck-field">
+                  <label className="ck-label" htmlFor={id("area")}>
+                    {copy.check.step1.areaLabel}
+                  </label>
+                  <div className="ck-control-wrap">
+                    <input
+                      ref={areaRef}
+                      id={id("area")}
+                      className="ck-control ck-control--suffix num"
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      required
+                      value={areaText}
+                      disabled={busy}
+                      aria-invalid={showAreaError}
+                      aria-describedby={`${id("area-help")}${showAreaError ? ` ${id("area-error")}` : ""}`}
+                      onChange={changeArea}
+                      onBlur={() => setAreaTouched(true)}
+                    />
+                    <span className="ck-suffix" aria-hidden="true">
+                      {AREA_UNIT}
+                    </span>
+                  </div>
+                  <p className="ck-help" id={id("area-help")}>
+                    {copy.check.step1.areaHelp}
+                  </p>
+                  {showAreaError && (
+                    <p className="ck-error" id={id("area-error")} role="alert">
+                      <CircleAlert size={16} strokeWidth={STROKE} aria-hidden="true" />
+                      {AREA_ERROR}
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              {/* The drop zone; it turns into the progress panel and then the summary. */}
+              <section
+                ref={zoneRef}
+                aria-labelledby={id("zone-title")}
+                className={`ck-zone ck-zone--${view}${dragging ? " is-dragging" : ""}${showError ? " has-error" : ""}`}
+                onDragEnter={onDragEnter}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                onClick={onZoneClick}
+              >
+                <p className="sr-only" aria-live="polite">
+                  {notice}
+                </p>
+
+                {showError && (
+                  <div className="ck-alert" role="alert">
+                    <CircleAlert className="ck-alert__icon" size={22} strokeWidth={STROKE} aria-hidden="true" />
+                    <div className="ck-alert__text">
+                      <p className="ck-alert__title">
+                        <Bidi text={errorMessage!} />
+                      </p>
+                      {errorDetail && (
+                        <p className="ck-alert__detail">
+                          <Bidi text={errorDetail} />
+                        </p>
+                      )}
+                      {failure?.kind === "activity" && (
+                        <button type="button" className="link" onClick={() => activityRef.current?.focus()}>
+                          {CHANGE_ACTIVITY}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {phase !== "idle" && request && (
-                  <>
-                    <p className="ck-runline">
-                      {running ? <strong>{copy.check.step3.running}</strong> : <span>{copy.results.file}:</span>}{" "}
-                      <bdi dir="ltr">{request.upload.name}</bdi>
+                {view === "idle" && (
+                  <div className="ck-drop">
+                    <span className="ck-drop__icon" aria-hidden="true">
+                      <FileUp size={32} strokeWidth={STROKE} />
+                    </span>
+                    <h2 className="ck-drop__title" id={id("zone-title")}>
+                      <span className="ck-drop__title--pointer">{DROP_TITLE}</span>
+                      <span className="ck-drop__title--touch">{DROP_TITLE_TOUCH}</span>
+                    </h2>
+                    <span className="ck-drop__or" aria-hidden="true">
+                      {DROP_OR}
+                    </span>
+                    <button
+                      ref={chooseRef}
+                      type="button"
+                      className="btn btn--accent btn--large ck-drop__button"
+                      onClick={openPicker}
+                    >
+                      <FileUp size={20} strokeWidth={2} aria-hidden="true" />
+                      <span>{showError && !problem?.area ? ANOTHER_FILE : CHOOSE}</span>
+                    </button>
+                  </div>
+                )}
+
+                {view === "progress" && (
+                  <div className="ck-run">
+                    <div className="ck-run__head">
+                      <h2 className="ck-run__title" id={id("zone-title")} ref={runHeadingRef} tabIndex={-1}>
+                        {loading ? LOADING_FILE : copy.check.step3.running}
+                      </h2>
+                      <p className="ck-run__file">
+                        <span className="sr-only">{copy.results.file}: </span>
+                        <bdi dir="ltr">{fileName}</bdi>
+                      </p>
+                    </div>
+                    <div
+                      className="ck-bar"
+                      role="progressbar"
+                      aria-label={STAGES_LABEL}
+                      aria-valuemin={0}
+                      aria-valuemax={STAGE_IDS.length}
+                      aria-valuenow={progressNow}
+                      aria-valuetext={stagesText(progressNow, STAGE_IDS.length)}
+                    >
+                      <span
+                        className="ck-bar__fill"
+                        style={{ inlineSize: `${(progressNow / STAGE_IDS.length) * 100}%` }}
+                      />
+                    </div>
+                    <p className="ck-run__count num" aria-hidden="true">
+                      {stagesText(progressNow, STAGE_IDS.length)}
                     </p>
-                    <ol className="ck-stages" aria-live="polite">
-                      {stages.map((stage) => (
+                    <ol className="ck-stages" aria-live="polite" aria-label={STAGES_LABEL}>
+                      {(stages.length && !loading
+                        ? stages
+                        : STAGE_IDS.map((stageId, index) => ({
+                            id: stageId,
+                            label: getAnalysisStages(activityId)[index],
+                            state: "pending" as StageState,
+                            durationMs: undefined,
+                          }))
+                      ).map((stage) => (
                         <li key={stage.id} className={`ck-stage ck-stage--${stage.state}`}>
                           <span className="ck-stage__icon">
                             <StageIcon state={stage.state} />
@@ -795,67 +570,153 @@ export default function Check({
                         </li>
                       ))}
                     </ol>
-                  </>
+                    <div className="ck-run__actions">
+                      <button type="button" className="btn btn--secondary" onClick={cancel}>
+                        {CANCEL}
+                      </button>
+                    </div>
+                  </div>
                 )}
 
-                <div className="ck-outcome" aria-live="polite">
-                  {run && coverage && (
-                    <div className="ck-done" ref={doneRef}>
-                      <h3 className="ck-done__title">
-                        <CircleCheck size={22} strokeWidth={sm} aria-hidden="true" />
-                        {copy.check.step3.done}
-                      </h3>
-                      <p className="ck-done__scope">
-                        {copy.results.scope}:{" "}
-                        <strong className="num">
-                          {coverage.verified} من {coverage.total}
-                        </strong>{" "}
-                        {clausesWord(coverage.total)}
-                      </p>
-                      <ul className="ck-done__counts">
-                        <li>
-                          <StatusMark status="pass" label={`${tally?.passed ?? 0} ${copy.status.pass}`} />
-                        </li>
-                        <li>
-                          <StatusMark status="fail" label={`${tally?.failed ?? 0} ${copy.status.fail}`} />
-                        </li>
-                        <li>
-                          <StatusMark status="unknown" label={`${tally?.unknown ?? 0} ${copy.status.unknown}`} />
-                        </li>
-                      </ul>
-                      <Button variant="primary" onClick={() => onDone(run)}>
+                {view === "done" && run && tally && (
+                  <div className="ck-done">
+                    <h2 className="ck-done__title" id={id("zone-title")}>
+                      <CircleCheck size={24} strokeWidth={STROKE} aria-hidden="true" />
+                      {copy.check.step3.done}
+                    </h2>
+                    <p className="ck-done__file">
+                      <span className="sr-only">{copy.results.file}: </span>
+                      <bdi dir="ltr">{request?.upload.name}</bdi>
+                    </p>
+                    <p className="ck-done__scope">
+                      <span className="ck-done__scope-label">{copy.results.scope}</span>
+                      <span className="ck-done__figure num">
+                        {tally.verified} من {tally.total}
+                      </span>
+                      <span className="ck-done__unit">{clausesWord(tally.total)}</span>
+                    </p>
+                    <ul className="ck-done__counts">
+                      <li>
+                        <StatusMark status="fail" label={`${tally.failed} ${copy.status.fail}`} />
+                      </li>
+                      <li>
+                        <StatusMark status="pass" label={`${tally.passed} ${copy.status.pass}`} />
+                      </li>
+                      <li>
+                        <StatusMark status="unknown" label={`${tally.unknown} ${copy.status.unknown}`} />
+                      </li>
+                    </ul>
+                    <div className="ck-done__actions">
+                      <button ref={openRef} type="button" className="btn btn--primary btn--large" onClick={() => onDone(run)}>
                         {copy.check.step3.open}
-                      </Button>
+                      </button>
+                      <button type="button" className="link" onClick={another}>
+                        {NEXT_FILE}
+                      </button>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {failure && (
-                    <div className="ck-fail" role="alert">
-                      <CircleAlert className="ck-fail__icon" size={22} strokeWidth={sm} aria-hidden="true" />
-                      <div className="ck-fail__text">
-                        <h3 className="ck-fail__title">
-                          <Bidi text={failure.headline} />
-                        </h3>
-                        {failure.detail && (
-                          <p className="ck-fail__detail">
-                            <Bidi text={failure.detail} />
-                          </p>
-                        )}
-                        {failure.kind === "activity" ? (
-                          <Button variant="secondary" onClick={() => reveal(step1Ref.current, activityRef.current)}>
-                            {CHANGE_ACTIVITY}
-                          </Button>
-                        ) : (
-                          <Button variant="secondary" onClick={chooseAnother}>
-                            {ANOTHER_FILE}
-                          </Button>
-                        )}
-                      </div>
+                <input
+                  ref={fileInputRef}
+                  className="sr-only"
+                  type="file"
+                  accept=".ifc"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  disabled={busy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    void takeFile(file);
+                  }}
+                />
+              </section>
+
+              <p className="ck-notes">
+                <ShieldCheck size={16} strokeWidth={STROKE} aria-hidden="true" />
+                <span>
+                  <Bidi text={copy.check.step2.limits} /> {copy.check.step2.privacy}
+                </span>
+              </p>
+            </div>
+
+            <aside className="ck-side">
+              <section className="ck-samples" aria-labelledby={id("samples")}>
+                <h2 className="ck-subtitle" id={id("samples")}>
+                  {SAMPLES_TITLE}
+                </h2>
+                <p className="ck-help">
+                  {SAMPLES_HINT} <Bidi text={copy.check.step2.samplesNote} />
+                </p>
+                <ul className="ck-chips">
+                  {SAMPLE_FILES.map((sample) => {
+                    const current = loading?.sampleId === sample.id;
+                    return (
+                      <li key={sample.id} className={`ck-chip${current ? " is-busy" : ""}`}>
+                        <button
+                          type="button"
+                          className="ck-chip__run"
+                          aria-describedby={id(`note-${sample.id}`)}
+                          disabled={busy}
+                          onClick={() => void takeSample(sample)}
+                        >
+                          <span className="ck-chip__label">
+                            <Bidi text={sample.label} />
+                          </span>
+                          <span className="ck-chip__note" id={id(`note-${sample.id}`)}>
+                            <Bidi text={sample.note} />
+                          </span>
+                        </button>
+                        <a className="ck-chip__download" href={sample.url} download={sample.fileName} title={sample.fileName}>
+                          <Download size={18} strokeWidth={STROKE} aria-hidden="true" />
+                          <span className="sr-only">
+                            {DOWNLOAD} <bdi dir="ltr">{sample.fileName}</bdi>
+                          </span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              <details className="ck-library">
+                <summary className="ck-library__summary">
+                  <span>{copy.check.step2.libraryTitle}</span>
+                  <ChevronDown className="ck-library__chevron" size={18} strokeWidth={STROKE} aria-hidden="true" />
+                </summary>
+                <div className="ck-library__body">
+                  <p className="ck-help">{copy.check.step2.libraryNote}</p>
+                  {LIBRARY_GROUPS.map((group) => (
+                    <div key={group.key} className="ck-library__group">
+                      <h3 className="ck-library__title" id={id(`lib-${group.key}`)}>
+                        {group.title}
+                      </h3>
+                      <ul className="ck-library__files" aria-labelledby={id(`lib-${group.key}`)}>
+                        {LIBRARY_FILES.map((file) => (
+                          <li key={file.name}>
+                            <a className="ck-library__file" href={`${group.base}${file.name}`} download={file.name}>
+                              <Download size={16} strokeWidth={STROKE} aria-hidden="true" />
+                              <span className="sr-only">{DOWNLOAD} </span>
+                              <bdi dir="ltr" className="ck-library__file-name">
+                                {file.name}
+                              </bdi>
+                              <span className="ck-library__file-label">
+                                {file.label}
+                                <span className="sr-only">، {group.title}</span>
+                              </span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  )}
+                  ))}
+                  <button type="button" className="btn btn--secondary ck-library__open" onClick={onTwin}>
+                    {copy.check.step2.libraryOpen}
+                  </button>
                 </div>
-              </div>
-            </section>
+              </details>
+            </aside>
           </div>
         </div>
       </div>

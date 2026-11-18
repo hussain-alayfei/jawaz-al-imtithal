@@ -133,7 +133,7 @@ try {
   await page
     .locator('input[type="file"]')
     .setInputFiles(path.join(projectDirectory, "test-fixtures", "ifc", "restaurant", "submission-v1.ifc"));
-  await page.getByRole("button", { name: "ابدأ الفحص" }).click();
+  // Choosing the file starts the check straight away.
   const openResults = page.getByRole("button", { name: "عرض النتائج" });
   await openResults.waitFor({ timeout: 120_000 });
   await openResults.click();

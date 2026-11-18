@@ -9,6 +9,7 @@ import {
   describeFailure,
   formatDuration,
   parseArea,
+  stagesDone,
   withFacilityDefaults,
 } from "./logic";
 
@@ -68,5 +69,12 @@ describe("looksLikeStep", () => {
     expect(looksLikeStep(enc.encode("ISO-10303-21;\nHEADER;"))).toBe(true);
     expect(looksLikeStep(enc.encode("﻿  ISO-10303-21;"))).toBe(true);
     expect(looksLikeStep(enc.encode("this is not an ifc file"))).toBe(false);
+  });
+
+  it("counts finished stages for the progress bar", () => {
+    expect(stagesDone([])).toBe(0);
+    expect(
+      stagesDone([{ state: "completed" }, { state: "completed" }, { state: "running" }, { state: "pending" }]),
+    ).toBe(2);
   });
 });

@@ -1,199 +1,76 @@
-/* فحص جديد (v2, formal): a three-step e-service form on one page. Every class is prefixed ck-.
-   Colours, type, buttons and status marks come from src/brand/tokens.css. */
+/* فحص جديد (v3): settings row, then one large drop zone that becomes the progress panel and the summary.
+   Mobile-first; every class is prefixed ck-. Colours, type and buttons come from src/brand/tokens.css. */
 
 .ck {
   display: block;
-  padding-block: 56px 96px;
+  padding-block: 24px 64px;
   background: var(--paper);
 }
 
 .ck-inner {
-  max-width: 960px;
+  max-width: 1120px;
 }
 
-/* Page title */
+/* Title */
 .ck-head {
-  margin-block-end: 36px;
+  margin-block-end: 20px;
 }
 
 .ck-title {
-  font-size: clamp(32px, 3vw, 44px);
-  font-weight: 800;
-  line-height: 1.35;
+  font-size: clamp(30px, 2.4vw + 20px, 42px);
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
 }
 
 .ck-lede {
   max-width: 60ch;
-  margin-block-start: 10px;
-  font-size: 18px;
-  line-height: 1.85;
+  margin-block-start: 6px;
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--ink-2);
-}
-
-/* No one-word last lines in running text. */
-.ck-lede,
-.ck-help,
-.ck-drop__help,
-.ck-notes li,
-.ck-fail__detail {
   text-wrap: pretty;
 }
 
-/* Step indicator: plain numbers joined by a thin line; the current step in the brand colour. */
-.ck-progress {
+.ck-nowrap {
+  white-space: nowrap;
+}
+
+/* Layout: one column on phones; samples move to a side column on wide screens. */
+.ck-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  margin: 0 0 32px;
-  padding: 0;
-  list-style: none;
+  gap: 28px;
 }
 
-.ck-progress__step {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.ck-progress__line {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.ck-progress__line::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  margin-inline-end: 14px;
-  background: var(--line-strong);
-}
-
-.ck-progress__step:last-child .ck-progress__line::after {
-  display: none;
-}
-
-.ck-progress__no {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--muted);
-}
-
-.ck-progress__label {
-  padding-inline-end: 24px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.ck-progress__step--done .ck-progress__no,
-.ck-progress__step--done .ck-progress__label {
-  color: var(--ink-2);
-}
-
-.ck-progress__step.is-current .ck-progress__no,
-.ck-progress__step.is-current .ck-progress__label {
-  color: var(--brand);
-}
-
-/* Panels */
-.ck-steps {
+.ck-main {
   display: grid;
-  gap: 24px;
-}
-
-.ck-panel {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-}
-
-.ck-panel.is-current {
-  border-color: var(--line-strong);
-}
-
-.ck-panel__head {
-  display: flex;
-  align-items: center;
   gap: 16px;
-  min-height: 72px;
-  padding-block: 14px;
-  padding-inline: 28px;
-  border-block-end: 1px solid var(--line);
-}
-
-.ck-panel__no {
-  flex: none;
-  min-width: 14px;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--muted);
-}
-
-.ck-panel--done .ck-panel__no {
-  color: var(--ink-2);
-}
-
-.ck-panel.is-current .ck-panel__no {
-  color: var(--brand);
-}
-
-.ck-panel__title {
-  flex: 1;
   min-width: 0;
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1.5;
 }
 
-.ck-panel__title:focus {
-  outline: none;
-}
-
-.ck-panel__title:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.ck-panel--locked .ck-panel__title {
-  color: var(--muted);
-}
-
-.ck-panel__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--brand);
-}
-
-.ck-panel__body {
-  padding: 28px;
-}
-
-/* Step 1: labelled fields */
-.ck-fields {
+.ck-side {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 28px;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Settings row */
+.ck-settings {
+  display: grid;
+  gap: 14px;
 }
 
 .ck-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .ck-label {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
   color: var(--ink);
 }
@@ -204,16 +81,16 @@
 
 .ck-control {
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   margin: 0;
-  padding-block: 10px;
-  padding-inline: 16px;
+  padding-block: 8px;
+  padding-inline: 14px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 400;
   line-height: 1.4;
   transition: border-color 160ms var(--ease);
@@ -241,26 +118,18 @@
 
 .ck-control--select {
   appearance: none;
-  padding-inline-end: 48px;
+  padding-inline-end: 44px;
   cursor: pointer;
 }
 
 .ck-control--suffix {
-  padding-inline-end: 56px;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.ck-control--suffix::-webkit-outer-spin-button,
-.ck-control--suffix::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
+  padding-inline-end: 52px;
 }
 
 .ck-control-icon,
 .ck-suffix {
   position: absolute;
-  inset-inline-end: 16px;
+  inset-inline-end: 14px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -271,131 +140,382 @@
 }
 
 .ck-suffix {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--muted);
 }
 
 .ck-help {
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.6;
   color: var(--muted);
+  text-wrap: pretty;
 }
 
 .ck-error {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   font-size: 14px;
-  font-weight: 700;
-  line-height: 1.75;
+  font-weight: 600;
+  line-height: 1.6;
   color: var(--fail);
 }
 
 .ck-error svg {
   flex: none;
-  margin-block-start: 4px;
+  margin-block-start: 3px;
 }
 
-.ck-error--file {
-  margin-block-start: 12px;
-}
-
-.ck-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  margin-block-start: 28px;
-}
-
-.ck-nowrap {
-  white-space: nowrap;
-}
-
-/* Step 2: drop zone (1px solid border, brand on drag-over) */
-.ck-drop {
+/* The zone: drop target, then progress panel, then summary. Same frame throughout. */
+.ck-zone {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 216px;
-  padding: 28px 24px;
-  border: 1px solid var(--line-strong);
+  min-height: clamp(280px, 42vh, 400px);
+  border: 2px solid var(--line-strong);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  text-align: center;
   transition:
     border-color 160ms var(--ease),
     background-color 160ms var(--ease);
 }
 
-.ck-drop.is-dragging {
+.ck-zone--idle {
+  cursor: pointer;
+}
+
+.ck-zone--idle:hover,
+.ck-zone.is-dragging {
   border-color: var(--brand);
+}
+
+.ck-zone.is-dragging {
   background: var(--brand-tint);
 }
 
+.ck-zone.has-error {
+  border-color: var(--fail);
+}
+
+.ck-zone--progress,
+.ck-zone--done {
+  background: var(--paper);
+  cursor: default;
+}
+
+/* Error next to the zone (inside its frame, above the button) */
+.ck-alert {
+  display: flex;
+  gap: 10px;
+  margin: 16px 16px 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--fail-tint);
+  color: var(--ink);
+  cursor: default;
+}
+
+.ck-alert__icon {
+  flex: none;
+  margin-block-start: 2px;
+  color: var(--fail);
+}
+
+.ck-alert__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ck-alert__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.ck-alert__detail {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.ck-alert .link {
+  justify-self: start;
+  min-height: 36px;
+}
+
+/* Idle: icon, title, the one main button */
+.ck-drop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 16px;
+  text-align: center;
+}
+
 .ck-drop__icon {
-  display: inline-flex;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
   margin-block-end: 6px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--line);
   color: var(--brand);
 }
 
-.ck-drop__text {
-  max-width: 100%;
-}
-
 .ck-drop__title {
-  font-size: 19px;
+  font-size: clamp(20px, 1vw + 16px, 24px);
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-.ck-drop__help {
-  font-size: 15px;
-  line-height: 1.75;
+/* Phones cannot drag a file: say "upload from your device" there. */
+.ck-drop__title--touch {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .ck-drop__title--pointer,
+  .ck-drop__or {
+    display: none;
+  }
+
+  .ck-drop__title--touch {
+    display: inline;
+  }
+}
+
+.ck-drop__or {
+  font-size: 14px;
   color: var(--muted);
 }
 
-.ck-drop__file {
-  max-width: 100%;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--ink);
-  overflow-wrap: anywhere;
+.ck-drop__button {
+  width: 100%;
+  max-width: 320px;
+  margin-block-start: 10px;
 }
 
-.ck-drop__action {
-  margin-block-start: 14px;
+.ck-drop__button:active {
+  transform: translateY(1px);
 }
 
 .ck-notes {
-  display: grid;
-  gap: 4px;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
-.ck-notes li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-wrap: pretty;
 }
 
 .ck-notes svg {
   flex: none;
-  margin-block-start: 4px;
+  margin-block-start: 3px;
+}
+
+/* Running: file, bar, stages, cancel */
+.ck-run {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 16px;
+}
+
+.ck-run__head {
+  display: grid;
+  gap: 2px;
+}
+
+.ck-run__title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ck-run__title:focus {
+  outline: none;
+}
+
+.ck-run__file,
+.ck-done__file {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.ck-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.ck-bar__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 4px;
+  background: var(--brand);
+  transition: inline-size 240ms var(--ease);
+}
+
+.ck-run__count {
+  margin-block-start: -6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.ck-stages {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--line);
+}
+
+.ck-stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding-block: 6px;
+  border-block-end: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.ck-stage__icon {
+  display: inline-flex;
+}
+
+.ck-stage--completed {
   color: var(--ink-2);
 }
 
-/* Ready samples */
+.ck-stage--completed .ck-stage__icon {
+  color: var(--pass);
+}
+
+.ck-stage--running {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ck-stage--running .ck-stage__icon {
+  color: var(--brand);
+}
+
+.ck-stage--failed {
+  color: var(--fail);
+  font-weight: 600;
+}
+
+.ck-stage__time {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ck-run__actions {
+  display: flex;
+}
+
+.ck-run__actions .btn {
+  width: 100%;
+}
+
+/* Done: summary with the measured scope as the large figure */
+.ck-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 16px;
+}
+
+.ck-done__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ck-done__title svg {
+  flex: none;
+  color: var(--pass);
+}
+
+.ck-done__scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-block-start: 6px;
+}
+
+.ck-done__scope-label {
+  flex-basis: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ck-done__figure {
+  font-size: clamp(36px, 3vw + 24px, 52px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.ck-done__unit {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.ck-done__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ck-done__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  margin-block-start: auto;
+  padding-block-start: 14px;
+}
+
+.ck-done__actions .link {
+  justify-content: center;
+}
+
+/* Samples: compact chips, one tap runs the sample */
 .ck-samples {
-  margin-block-start: 36px;
+  display: grid;
+  gap: 8px;
 }
 
 .ck-subtitle {
@@ -404,81 +524,94 @@
   line-height: 1.5;
 }
 
-.ck-samples > .ck-help {
-  margin-block-start: 2px;
-}
-
-.ck-sample-list {
-  margin: 14px 0 0;
+.ck-chips {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
-  border-block-start: 1px solid var(--line);
 }
 
-.ck-sample {
+.ck-chip {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 24px;
-  padding-block: 14px;
-  border-block-end: 1px solid var(--line);
-}
-
-.ck-sample__text {
-  display: flex;
-  flex-direction: column;
+  align-items: stretch;
   min-width: 0;
-}
-
-.ck-sample__label {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.6;
-}
-
-.ck-sample.is-selected .ck-sample__label {
-  color: var(--brand);
-}
-
-.ck-sample__note {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-
-.ck-sample__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
-
-.ck-sample__use[aria-pressed="true"] {
-  --btn-bg: var(--brand-tint);
-  --btn-fg: var(--brand);
-  --btn-border: var(--brand);
-}
-
-.ck-download {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid transparent;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  color: var(--brand);
+  background: var(--paper);
   transition: border-color 160ms var(--ease);
 }
 
-.ck-download:hover {
-  border-color: var(--line-strong);
+.ck-chip:hover {
+  border-color: var(--brand);
 }
 
-/* The digital twin's illustrative BIM library, collapsed under the samples */
+.ck-chip.is-busy {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.ck-chip__run {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 0;
+  border-start-start-radius: var(--radius);
+  border-end-start-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.ck-chip__run:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ck-chip__run:active:not(:disabled) {
+  background: var(--brand-tint);
+}
+
+.ck-chip__label {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--brand);
+}
+
+.ck-chip__note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.ck-chip__download {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  border-inline-start: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.ck-chip__download:hover {
+  color: var(--brand);
+  background: var(--surface);
+}
+
+/* Digital twin library: collapsed */
 .ck-library {
-  margin-block-start: 28px;
-  border-block: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
 }
 
 .ck-library__summary {
@@ -486,26 +619,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 56px;
-  padding-block: 10px;
-  color: var(--brand);
-  font-size: 16px;
-  font-weight: 700;
-  list-style: none;
+  min-height: 48px;
+  padding-inline: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-2);
   cursor: pointer;
+  list-style: none;
 }
 
 .ck-library__summary::-webkit-details-marker {
   display: none;
 }
 
-.ck-library__summary:focus-visible {
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
 .ck-library__chevron {
   flex: none;
+  transition: transform 160ms var(--ease);
 }
 
 .ck-library[open] .ck-library__chevron {
@@ -513,21 +642,19 @@
 }
 
 .ck-library__body {
-  padding-block: 0 24px;
+  display: grid;
+  gap: 14px;
+  padding: 4px 14px 16px;
 }
 
-.ck-library__groups {
+.ck-library__group {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px 32px;
-  margin-block-start: 18px;
+  gap: 4px;
 }
 
 .ck-library__title {
-  margin-block-end: 4px;
   font-size: 15px;
   font-weight: 700;
-  line-height: 1.6;
 }
 
 .ck-library__files {
@@ -538,232 +665,36 @@
 
 .ck-library__file {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   min-height: 44px;
-  padding-block: 6px;
-  color: var(--ink);
+  font-size: 14px;
+  color: var(--ink-2);
   text-decoration: none;
 }
 
-.ck-library__file svg {
-  flex: none;
-  margin-block-start: 3px;
-  color: var(--brand);
-}
-
-.ck-library__file-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
+.ck-library__file:hover .ck-library__file-name {
+  text-decoration: underline;
 }
 
 .ck-library__file-name {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.6;
+  font-weight: 600;
   color: var(--brand);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
-}
-
-.ck-library__file:hover .ck-library__file-name {
-  text-decoration-thickness: 2px;
 }
 
 .ck-library__file-label {
-  font-size: 13px;
-  line-height: 1.6;
   color: var(--muted);
 }
 
 .ck-library__open {
-  margin-block-start: 22px;
+  justify-self: start;
 }
 
-/* Step 3: run and outcome */
-.ck-ready {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px 24px;
-}
-
-.ck-ready__file,
-.ck-runline {
-  min-width: 0;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--ink-2);
-  overflow-wrap: anywhere;
-}
-
-/* A file name moves to the next line whole rather than breaking at its hyphens. */
-.ck-ready__file bdi,
-.ck-runline bdi {
-  display: inline-block;
-  max-width: 100%;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.ck-runline strong {
-  color: var(--ink);
-}
-
-.ck-stages {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  border-block-start: 1px solid var(--line);
-}
-
-.ck-stage {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding-block: 8px;
-  border-block-end: 1px solid var(--line);
-}
-
-/* The outcome below brings its own divider. */
-.ck-stage:last-child {
-  border-block-end: 0;
-}
-
-.ck-stage__icon {
-  display: inline-flex;
-  flex: none;
-  color: var(--muted);
-}
-
-.ck-stage--running .ck-stage__icon,
-.ck-stage--completed .ck-stage__icon {
-  color: var(--brand);
-}
-
-.ck-stage--failed .ck-stage__icon {
-  color: var(--fail);
-}
-
-.ck-stage__label {
-  flex: 1;
-  min-width: 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.ck-stage--running .ck-stage__label {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.ck-stage--completed .ck-stage__label {
-  color: var(--ink);
-}
-
-.ck-stage--failed .ck-stage__label {
-  font-weight: 700;
-  color: var(--fail);
-}
-
-.ck-stage__time {
-  flex: none;
-  font-size: 14px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.ck-done,
-.ck-fail {
-  margin-block-start: 24px;
-  padding-block-start: 24px;
-  border-block-start: 1px solid var(--line);
-}
-
-.ck-done__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.ck-done__title svg {
-  flex: none;
-  color: var(--brand);
-}
-
-.ck-done__scope {
-  margin-block-start: 6px;
-  font-size: 16px;
-  color: var(--ink-2);
-}
-
-.ck-done__scope strong {
-  color: var(--ink);
-}
-
-.ck-done__counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 28px;
-  margin: 16px 0 24px;
-  padding: 0;
-  list-style: none;
-}
-
-.ck-fail {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.ck-fail__icon {
-  flex: none;
-  margin-block-start: 4px;
-  color: var(--fail);
-}
-
-.ck-fail__text {
-  min-width: 0;
-}
-
-.ck-fail__title {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--ink);
-}
-
-.ck-fail__detail {
-  margin-block-start: 4px;
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
-.ck-fail .btn {
-  margin-block-start: 16px;
-}
-
-/* Tablet */
-@media (max-width: 860px) {
-  .ck-library__groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Phones */
-@media (max-width: 640px) {
+/* 768+: settings side by side, buttons sized to content */
+@media (min-width: 768px) {
   .ck {
-    padding-block: 32px 64px;
+    padding-block: 40px 88px;
   }
 
   .ck-head {
@@ -774,61 +705,67 @@
     font-size: 17px;
   }
 
-  .ck-progress {
-    margin-block-end: 24px;
-  }
-
-  .ck-progress__label {
-    padding-inline-end: 10px;
-    font-size: 13px;
-  }
-
-  .ck-progress__line {
-    gap: 10px;
-  }
-
-  .ck-progress__line::after {
-    margin-inline-end: 10px;
-  }
-
-  .ck-steps {
-    gap: 16px;
-  }
-
-  .ck-panel__head {
-    min-height: 64px;
-    gap: 12px;
-    padding-inline: 18px;
-  }
-
-  .ck-panel__title {
-    font-size: 19px;
-  }
-
-  .ck-panel__body {
-    padding: 20px 18px 24px;
-  }
-
-  .ck-fields {
-    grid-template-columns: minmax(0, 1fr);
+  .ck-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
   }
 
   .ck-drop {
-    min-height: 0;
-    padding: 24px 16px;
+    padding: 40px 32px;
   }
 
-  .ck-library__groups {
+  .ck-drop__button {
+    width: auto;
+    min-width: 240px;
+  }
+
+  .ck-alert {
+    margin: 20px 20px 0;
+  }
+
+  .ck-run,
+  .ck-done {
+    padding: 28px 32px;
+  }
+
+  .ck-run__actions .btn {
+    width: auto;
+  }
+
+  .ck-done__actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ck-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 1024+: samples and library in a side column next to the zone */
+@media (min-width: 1024px) {
+  .ck-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+    gap: 40px;
+    align-items: start;
+  }
+
+  .ck-zone {
+    min-height: 400px;
+  }
+
+  .ck-side {
+    padding-block-start: 4px;
+  }
+
+  .ck-chips {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .ck-ready {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ck-ready .btn {
-    width: 100%;
+@media (min-width: 1440px) {
+  .ck {
+    padding-block-start: 56px;
   }
 }

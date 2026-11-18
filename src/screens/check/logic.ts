@@ -141,3 +141,8 @@ export function clausesWord(total: number): string {
   if (rest >= 11) return "بندًا";
   return "بند";
 }
+
+/** How many of the run's stages have finished, for the determinate progress bar. */
+export function stagesDone(stages: readonly { state: string }[]): number {
+  return stages.filter((stage) => stage.state === "completed").length;
+}
