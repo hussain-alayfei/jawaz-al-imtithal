@@ -32,12 +32,12 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
               </a>
             </li>
             <li>
-              <a href="#/" onClick={go("how")}>
+              <a href="#/how" onClick={go("how")}>
                 {copy.site.nav.how}
               </a>
             </li>
             <li>
-              <a href="#/" onClick={go("model")}>
+              <a href="#/model" onClick={go("model")}>
                 {copy.site.nav.model}
               </a>
             </li>
@@ -55,6 +55,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
             <li>
               <a href={REQUIREMENTS_URL} target="_blank" rel="noreferrer">
                 {copy.site.footer.referenceLink}
+                <span className="sr-only">، يفتح في صفحة جديدة</span>
               </a>
             </li>
             <li className="site-footer__note">{copy.site.footer.referenceNote}</li>

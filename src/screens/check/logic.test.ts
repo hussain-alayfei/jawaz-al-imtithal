@@ -60,3 +60,13 @@ describe("check screen helpers", () => {
     expect(clausesWord(10)).toBe("بنود");
   });
 });
+
+describe("looksLikeStep", () => {
+  it("accepts an IFC STEP header and rejects other bytes before the check starts", async () => {
+    const { looksLikeStep } = await import("./logic");
+    const enc = new TextEncoder();
+    expect(looksLikeStep(enc.encode("ISO-10303-21;\nHEADER;"))).toBe(true);
+    expect(looksLikeStep(enc.encode("﻿  ISO-10303-21;"))).toBe(true);
+    expect(looksLikeStep(enc.encode("this is not an ifc file"))).toBe(false);
+  });
+});

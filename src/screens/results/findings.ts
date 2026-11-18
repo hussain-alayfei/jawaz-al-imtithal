@@ -29,13 +29,24 @@ export interface FindingGroup {
   items: Finding[];
 }
 
+/** Numeric clause order (3.1 < 4.1.3 < 4.9.1 < 4.10.1), stable for equal numbers. */
+function byClauseNumber(a: Finding, b: Finding): number {
+  const left = (clauseOf(a).number?.match(/\d+/g) ?? []).map(Number);
+  const right = (clauseOf(b).number?.match(/\d+/g) ?? []).map(Number);
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    const diff = (left[index] ?? 0) - (right[index] ?? 0);
+    if (diff) return diff;
+  }
+  return 0;
+}
+
 /** Clause groups by status, then Mowaem's data checks as their own group. */
 export function groupFindings(findings: Finding[]): FindingGroup[] {
   const clauses = findings.filter((finding) => !isDataCheck(finding));
   const groups: FindingGroup[] = STATUS_ORDER.map((status) => ({
     key: status,
     status,
-    items: clauses.filter((finding) => finding.status === status),
+    items: clauses.filter((finding) => finding.status === status).sort(byClauseNumber),
   })).filter((group) => group.items.length > 0);
   const data = findings.filter(isDataCheck);
   if (data.length > 0) groups.push({ key: "data", items: data });

@@ -164,7 +164,7 @@
   transition: background-color 160ms var(--ease), color 160ms var(--ease);
 }
 
-.vw-seg:hover:not(:disabled) {
+.vw-seg:hover:not(:disabled):not([aria-pressed="true"]) {
   background: var(--surface);
 }
 

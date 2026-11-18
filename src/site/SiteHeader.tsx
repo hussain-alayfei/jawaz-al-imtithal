@@ -21,9 +21,9 @@ const LINKS: { target: NavTarget; label: string }[] = [
 
 const HREF: Record<NavTarget, string> = {
   home: "#/",
-  how: "#/",
-  clauses: "#/",
-  model: "#/",
+  how: "#/how",
+  clauses: "#/clauses",
+  model: "#/model",
   twin: "#/twin",
   check: "#/check",
 };

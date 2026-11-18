@@ -1,4 +1,4 @@
-import { Edges, Html, Line, OrbitControls } from "@react-three/drei";
+import { Html, Line, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { Check, Crosshair, Layers, LayoutGrid, Minus, Scissors, X } from "lucide-react";
@@ -801,6 +801,9 @@ function Highlight({
     return undefined;
   }, [stepId, model]);
   useEffect(() => () => subset?.geometry.dispose(), [subset]);
+  // Plain thin edges: drei's fat-line Edges could streak across the canvas from some angles.
+  const outline = useMemo(() => (subset ? new THREE.EdgesGeometry(subset.geometry, 25) : undefined), [subset]);
+  useEffect(() => () => outline?.dispose(), [outline]);
   if (!subset) return null;
   const color = status ? STATUS_HEX[status] : SELECT_HEX;
   const unclipped = subset.isSpace || service;
@@ -817,7 +820,11 @@ function Highlight({
         side={THREE.DoubleSide}
         clippingPlanes={unclipped ? [] : [plane]}
       />
-      <Edges threshold={25} color={color} />
+      {outline && (
+        <lineSegments geometry={outline} renderOrder={5}>
+          <lineBasicMaterial color={color} toneMapped={false} clippingPlanes={unclipped ? [] : [plane]} />
+        </lineSegments>
+      )}
     </mesh>
   );
 }
@@ -929,6 +936,9 @@ function Markers({
               className={`vw-pin vw-pin--${marker.status}`}
               title={name}
               aria-label={name}
+              // Pins can sit outside the canvas when the camera is close; the register already gives
+              // keyboard access to every finding, so pins stay out of the tab order.
+              tabIndex={-1}
               onClick={(event) => {
                 // The pin sits in the canvas container: without this, the scene also sees the click
                 // as a miss and clears the selection the pin just made.
@@ -1524,7 +1534,7 @@ export default function IfcModelViewer({
               )}
               <div className="vw__selection-copy">
                 <small>{selectedTitle ?? "عنصر من الملف"}</small>
-                <strong><bdi>{selected.name ?? selected.ifcType}</bdi></strong>
+                <strong><bdi>{facts.spaces.find((space) => space.expressId === selected.expressId)?.longName ?? selected.name ?? selected.ifcType}</bdi></strong>
                 <span>
                   <bdi dir="ltr">{selected.ifcType}</bdi>
                   <bdi dir="ltr" className="vw__guid">{selected.globalId}</bdi>

@@ -22,9 +22,17 @@ export function checkFileMeta(name: string, size: number): string | undefined {
   return undefined;
 }
 
+/** True when the bytes start like an IFC STEP file (ISO-10303-21), ignoring a BOM or leading space. */
+export function looksLikeStep(bytes: Uint8Array): boolean {
+  const start = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? 3 : 0;
+  const head = new TextDecoder("latin1").decode(bytes.subarray(start, start + 512)).trimStart();
+  return head.startsWith("ISO-10303-21");
+}
+
 export async function readUpload(file: File): Promise<IfcUpload> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!bytes.byteLength) throw new Error("EMPTY_FILE");
+  if (!looksLikeStep(bytes)) throw new Error("NOT_STEP");
   return { name: file.name, size: bytes.byteLength, bytes, lastModified: file.lastModified };
 }
 

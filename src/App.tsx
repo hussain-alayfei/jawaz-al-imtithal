@@ -42,6 +42,12 @@ function routeFromHash(hash: string): Route {
   return "landing";
 }
 
+/** "#/how", "#/clauses", "#/model": the landing page scrolled to that section (shareable links). */
+function sectionFromHash(hash: string): string | undefined {
+  const match = /^#\/(how|clauses|model)$/.exec(hash);
+  return match ? `home-${match[1]}` : undefined;
+}
+
 /** "#/check?sample=tiles" opens the check page and runs that ready sample (used by links and captures). */
 function sampleFromHash(hash: string): SampleId | undefined {
   const query = hash.split("?")[1];
@@ -83,7 +89,7 @@ export default function App() {
   const [autoSample, setAutoSample] = useState<SampleId | undefined>(() => sampleFromHash(window.location.hash));
   const [run, setRun] = useState<ComplianceRun>();
   const [toast, setToast] = useState("");
-  const [pendingSection, setPendingSection] = useState<string>();
+  const [pendingSection, setPendingSection] = useState<string | undefined>(() => sectionFromHash(window.location.hash));
   /* Where «العودة» in the twin studio leads: the last page visited inside the site. */
   const returnRoute = useRef<Route>("landing");
   useEffect(() => {
@@ -98,6 +104,8 @@ export default function App() {
         const sample = sampleFromHash(window.location.hash);
         if (sample) setAutoSample(sample);
       }
+      const section = sectionFromHash(window.location.hash);
+      if (next === "landing" && section) setPendingSection(section);
       setRoute(next);
     };
     window.addEventListener("hashchange", onHashChange);
@@ -154,11 +162,14 @@ export default function App() {
   const navigate = (target: NavTarget) => {
     if (target === "check") return startCheck();
     if (target === "twin") return go("twin");
-    go("landing");
     if (target === "home") {
+      go("landing");
       window.scrollTo({ top: 0 });
       return;
     }
+    const hash = `#/${target}`;
+    if (window.location.hash !== hash) window.history.pushState(null, "", hash);
+    setRoute("landing");
     setPendingSection(`home-${target}`);
   };
 

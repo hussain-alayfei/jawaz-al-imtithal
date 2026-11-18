@@ -156,7 +156,7 @@ describe("standard IFC restaurant plans against the ministry's restaurant requir
       expect(item.actual).toContain("غير قابل للتحقق من الملف");
     }
     // the services model is read, but SBC compliance of the ventilation needs airflow figures
-    expect(finding(run, "MOMAH-REST-4.7.1-VENT").actual).toContain("أنظمة تهوية وتكييف");
+    expect(finding(run, "MOMAH-REST-4.7.1-VENT").actual).toContain("للتهوية والتكييف");
     expect(finding(run, "MOMAH-REST-4.7.1-VENT").elementName).toMatch(/hood/i);
     expect(run.coverage).toEqual({ verified: 11, total: 14 });
     expect(run.scenario).toBe("review");

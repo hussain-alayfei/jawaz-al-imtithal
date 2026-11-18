@@ -12,6 +12,16 @@ import type {
 } from "./model";
 import { atLevel, distanceToSpace, doorSides, spaceGap } from "./plan";
 
+/** Arabic count of systems: نظام واحد، نظامان، 3 أنظمة، 12 نظامًا. */
+function systemsCount(n: number): string {
+  if (n === 1) return "نظام واحد";
+  if (n === 2) return "نظامان";
+  const tail = n % 100;
+  if (tail >= 3 && tail <= 10) return `${n} أنظمة`;
+  if (tail >= 11) return `${n} نظامًا`;
+  return `${n} نظام`;
+}
+
 /*
  * Restaurant rules for standard IFC files, one per requirement in ./requirements.ts (the
  * ministry's "اشتراطات المطاعم"). Each rule reads only what a normal BIM export contains:
@@ -436,7 +446,7 @@ export function evaluateStandardRestaurant(
     unknown(
       "MOMAH-REST-4.3.2-FACADE",
       facts.systems.length
-        ? `يحتوي الملف نموذج خدمات (${facts.systems.length} أنظمة)، لكن الحكم بظهور التمديدات ووحدات التكييف على الواجهة أو السطح يحتاج تحليل خطوط الرؤية، ولم يُفعّل بعد`
+        ? `يحتوي الملف نموذج خدمات (${systemsCount(facts.systems.length)})، لكن الحكم بظهور التمديدات ووحدات التكييف على الواجهة أو السطح يحتاج تحليل خطوط الرؤية، ولم يُفعّل بعد`
         : "النموذج المعماري لا يحتوي نموذج خدمات يحدد مواقع وحدات التكييف والتمديدات، فلا يثبت غيابها عن الواجهة",
     ),
   );
@@ -452,7 +462,7 @@ export function evaluateStandardRestaurant(
     unknown(
       "MOMAH-REST-4.7.1-VENT",
       hvac.length
-        ? `يحتوي الملف ${hvac.length} أنظمة تهوية وتكييف (${hvacNames.slice(0, 3).join("، ")}${hvac.length > 3 ? "…" : ""})، لكن مطابقة تصميمها لكود البناء السعودي تحتاج معدلات تدفق الهواء ومتطلبات الكود، ولم تُطابق بعد`
+        ? `يحتوي الملف ${systemsCount(hvac.length)} للتهوية والتكييف (${hvacNames.slice(0, 3).join("، ")}${hvac.length > 3 ? "…" : ""})، لكن مطابقة تصميمها لكود البناء السعودي تحتاج معدلات تدفق الهواء ومتطلبات الكود، ولم تُطابق بعد`
         : ventilation
           ? `${ventilation.name ?? "عنصر التهوية"} موجود، لكن لا توجد شبكة تهوية (مجارٍ ومراوح) مسجلة كنظام في الملف`
           : "لا يوجد عنصر تهوية في المطبخ",
