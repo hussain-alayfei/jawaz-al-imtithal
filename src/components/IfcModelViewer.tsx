@@ -1,9 +1,11 @@
 import { Edges, Html, Line, OrbitControls, PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Crosshair, LayoutGrid, RotateCcw, ScanLine, Scissors } from "lucide-react";
+import { Check, Crosshair, LayoutGrid, Minus, RotateCcw, ScanLine, Scissors, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Sky } from "three/examples/jsm/objects/Sky.js";
+import { IconButton, StatusGlyph } from "../brand/ui";
+import { copy } from "../content/copy";
 import type { ResultStatus } from "../data";
 import type {
   Box3,
@@ -15,6 +17,7 @@ import type {
 import { elementAtFace } from "./ifcViewer/picking";
 import { RIYADH, solarPosition, sunVector, VIEW_TIME } from "./ifcViewer/sun";
 import { plasterTexture, sandTexture, terrazzoTexture, woodTexture } from "./ifcViewer/textures";
+import "./ifcViewer/viewer.css";
 
 /*
  * Draws the uploaded IFC file itself: every triangle comes from web-ifc's reading of the
@@ -45,11 +48,17 @@ export interface IfcModelViewerProps {
   onSelectFinding?: (ruleId: string) => void;
 }
 
+/* Identity colours («ختم»), lifted where needed so they still read on lit 3D surfaces. */
 const STATUS_HEX: Record<ResultStatus, string> = {
-  pass: "#15704f",
-  fail: "#c2412b",
-  unknown: "#b07514",
+  pass: "#25935F",
+  fail: "#A3283A",
+  unknown: "#4A5560",
 };
+const PIN_ICON: Record<ResultStatus, typeof Check> = { pass: Check, fail: X, unknown: Minus };
+/* Local strings (missing from copy.ts). */
+const SOURCE_NOTE = "مبني من هندسة الملف نفسه";
+const CONTEXT_NOTE = "السماء والأرض للسياق فقط، شمس الرياض 10:30";
+const TOOLS_LABEL = "أدوات العارض";
 const CAP_COLOR = new THREE.Color("#2c3133");
 const CUT_HEIGHT = 1.45;
 const NO_CUT = 1e5;
@@ -468,9 +477,9 @@ function DimensionLine({
             color="#16211d" lineWidth={2} dashed dashSize={0.06} gapSize={0.05} depthTest={false} />
         )}
         <Html position={head.clone().add(new THREE.Vector3(0, 0.18, 0))} center zIndexRange={[20, 10]}>
-          <div className={`ifc-dimension ifc-dimension--${status}`} dir="rtl" data-testid="ifc-dimension">
+          <div className={`vw-dim vw-dim--${status}`} dir="rtl" data-testid="ifc-dimension">
             <strong>{value.toFixed(2)} م</strong>
-            {limit !== undefined && <span>الحد {limit.toFixed(2)} م</span>}
+            {limit !== undefined && <span>{copy.results.detail.required} {limit.toFixed(2)} م</span>}
           </div>
         </Html>
       </group>
@@ -496,9 +505,9 @@ function DimensionLine({
       <Line points={[a.clone().sub(tick), a.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
       <Line points={[b.clone().sub(tick), b.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
       <Html position={mid} center zIndexRange={[20, 10]}>
-        <div className={`ifc-dimension ifc-dimension--${status}`} dir="rtl" data-testid="ifc-dimension">
+        <div className={`vw-dim vw-dim--${status}`} dir="rtl" data-testid="ifc-dimension">
           <strong>{value.toFixed(2)} م</strong>
-          {limit !== undefined && <span>الحد {limit.toFixed(2)} م</span>}
+          {limit !== undefined && <span>{copy.results.detail.required} {limit.toFixed(2)} م</span>}
         </div>
       </Html>
     </group>
@@ -524,15 +533,23 @@ function Markers({
         const c = boxCenter(box);
         if (box.min[1] > cutY) return null;
         const top = Math.min(box.max[1], cutY) + 0.45;
+        const Icon = PIN_ICON[marker.status];
+        const name = [marker.label, marker.title].filter(Boolean).join(" ");
         return (
           <Html key={`${marker.ruleId}-${marker.stepId}`} position={[c.x, top, c.z]} center zIndexRange={[30, 20]}>
             <button
               type="button"
-              className={`ifc-pin ifc-pin--${marker.status}`}
-              title={marker.title}
-              onClick={() => onSelectFinding?.(marker.ruleId)}
+              className={`vw-pin vw-pin--${marker.status}`}
+              title={name}
+              aria-label={name}
+              onClick={(event) => {
+                // The pin sits in the canvas container: without this, the scene also sees the click
+                // as a miss and clears the selection the pin just made.
+                event.stopPropagation();
+                onSelectFinding?.(marker.ruleId);
+              }}
             >
-              {marker.label}
+              <Icon size={16} strokeWidth={3} aria-hidden="true" />
             </button>
           </Html>
         );
@@ -551,7 +568,7 @@ function SpaceLabels({ facts, show }: { facts: StandardFacts; show: (expressId: 
         const arabic = text.split("/").map((t) => t.trim()).find((t) => /[؀-ۿ]/.test(t));
         return (
           <Html key={space.expressId} position={[c.x, space.bbox.min[1] + 0.15, c.z]} center zIndexRange={[15, 5]}>
-            <span className="ifc-space-label">
+            <span className="vw-space">
               {arabic ?? text}
               {space.netFloorArea !== undefined && <small>{space.netFloorArea.toFixed(1)} م²</small>}
             </span>
@@ -762,11 +779,14 @@ export default function IfcModelViewer({
   }, []);
 
   const statusClass = selectedStatus ?? "file";
-  const elementCount = facts.products.length;
+  const view = (next: ViewPreset) => {
+    setPreset(next);
+    setNonce((n) => n + 1);
+  };
 
   return (
-    <div className="viewer ifc-viewer" data-testid="ifc-model-viewer">
-      <div className="viewer__canvas" aria-label={`عارض ثلاثي الأبعاد لهندسة الملف ${fileName}`}>
+    <div className="vw" data-testid="ifc-model-viewer">
+      <div className="vw__canvas" aria-label={`عارض ثلاثي الأبعاد لهندسة الملف ${fileName}`}>
         <Canvas
           shadows="percentage"
           dpr={CAPTURE ? 1 : dpr}
@@ -828,71 +848,70 @@ export default function IfcModelViewer({
         </Canvas>
       </div>
 
-      <div className="viewer__toolbar" aria-label="أدوات العارض">
-        <button type="button" onClick={() => { setPreset("iso"); setNonce((n) => n + 1); }}
-          title="المنظور العام" aria-label="المنظور العام" data-testid="ifc-view-iso">
-          <RotateCcw size={17} />
-        </button>
-        <button type="button" className={preset === "top" ? "is-active" : ""}
-          onClick={() => { setPreset("top"); setNonce((n) => n + 1); }}
-          title="المسقط الأفقي" aria-label="المسقط الأفقي" data-testid="ifc-view-top">
-          <ScanLine size={18} />
-        </button>
-        <button type="button" disabled={!focusBox}
-          onClick={() => { setPreset("focus"); setNonce((n) => n + 1); }}
-          title="التركيز على العنصر المحدد" aria-label="التركيز على العنصر المحدد" data-testid="ifc-view-focus">
-          <Crosshair size={18} />
-        </button>
-        <button type="button" className={cut ? "is-active" : ""} aria-pressed={cut}
-          onClick={() => setCut((v) => !v)}
-          title="قص الجدران لرؤية الداخل" aria-label="قص الجدران لرؤية الداخل" data-testid="ifc-cut">
-          <Scissors size={17} />
-        </button>
+      <p className="vw__meta" data-testid="ifc-viewer-source" title={fileName}>
+        <strong>{copy.model.title}</strong>
+        <span>{SOURCE_NOTE}</span>
+      </p>
+
+      <ul className="vw__legend">
+        <li><i className="vw__dot vw__dot--fail" aria-hidden="true" />{copy.status.fail}</li>
+        <li><i className="vw__dot vw__dot--unknown" aria-hidden="true" />{copy.status.unknown}</li>
+        <li><i className="vw__dot vw__dot--pass" aria-hidden="true" />{copy.status.pass}</li>
+        <li className="vw__legend-note">{CONTEXT_NOTE}</li>
+      </ul>
+
+      <div className="vw__tools" role="toolbar" aria-label={TOOLS_LABEL}>
+        <IconButton label="المنظور العام" onClick={() => view("iso")} data-testid="ifc-view-iso">
+          <RotateCcw size={18} strokeWidth={1.6} />
+        </IconButton>
+        <IconButton label="المسقط الأفقي" aria-pressed={preset === "top"} onClick={() => view("top")}
+          data-testid="ifc-view-top">
+          <ScanLine size={18} strokeWidth={1.6} />
+        </IconButton>
+        <IconButton label="التركيز على العنصر المحدد" disabled={!focusBox} onClick={() => view("focus")}
+          data-testid="ifc-view-focus">
+          <Crosshair size={18} strokeWidth={1.6} />
+        </IconButton>
+        <IconButton label="قص الجدران لرؤية الداخل" aria-pressed={cut} onClick={() => setCut((v) => !v)}
+          data-testid="ifc-cut">
+          <Scissors size={18} strokeWidth={1.6} />
+        </IconButton>
         {levels.length > 1 && (
-          <select className="ifc-level" value={level} aria-label="الدور المعروض في المقطع"
+          <select className="vw-level" value={level} aria-label="الدور المعروض في المقطع"
             onChange={(event) => { setLevel(Number(event.target.value)); setCut(true); }} data-testid="ifc-level">
             {levels.map((l, i) => (
               <option key={l.id} value={i}>{l.name}</option>
             ))}
           </select>
         )}
-        <button type="button" className={showSpaces ? "is-active" : ""} aria-pressed={showSpaces}
-          onClick={() => setShowSpaces((v) => !v)}
-          title="المساحات وأسماؤها" aria-label="المساحات وأسماؤها" data-testid="ifc-spaces">
-          <LayoutGrid size={17} />
-        </button>
-      </div>
-
-      <div className="viewer__meta" data-testid="ifc-viewer-source">
-        <span className="viewer__live-dot" />
-        <span>
-          مبني من هندسة الملف: <bdi>{fileName}</bdi> • {elementCount} عنصرًا • {geometry.triangles.toLocaleString("en-US")} مثلثًا
-        </span>
+        <IconButton label="المساحات وأسماؤها" aria-pressed={showSpaces} onClick={() => setShowSpaces((v) => !v)}
+          data-testid="ifc-spaces">
+          <LayoutGrid size={18} strokeWidth={1.6} />
+        </IconButton>
       </div>
 
       {selected && (
-        <div className={`viewer__selection viewer__selection--${statusClass}`} data-testid="ifc-selection">
-          <div className="viewer__selection-copy">
+        <div className={`vw__selection vw__selection--${statusClass}`} data-testid="ifc-selection">
+          {selectedStatus && (
+            <span className={`status status--${selectedStatus}`}>
+              <StatusGlyph status={selectedStatus} size={22} />
+            </span>
+          )}
+          <div className="vw__selection-copy">
             <small>{selectedTitle ?? "عنصر من الملف"}</small>
-            <strong>{selected.name ?? selected.ifcType}</strong>
+            <strong><bdi>{selected.name ?? selected.ifcType}</bdi></strong>
             <span>
-              {selected.ifcType} • <code dir="ltr">{selected.globalId}</code>
+              <bdi dir="ltr">{selected.ifcType}</bdi>
+              <bdi dir="ltr" className="vw__guid">{selected.globalId}</bdi>
             </span>
             {measurement && (
               <span>
-                القياس: {measurement.value.toFixed(2)} م ({measurement.source})
+                {copy.results.detail.measured} {measurement.value.toFixed(2)} م، {measurement.source}
               </span>
             )}
           </div>
         </div>
       )}
-
-      <div className="viewer__legend ifc-viewer__legend">
-        <span><i style={{ background: STATUS_HEX.fail }} /> غير مطابق</span>
-        <span><i style={{ background: STATUS_HEX.unknown }} /> غير قابل للتحقق</span>
-        <span><i style={{ background: STATUS_HEX.pass }} /> مطابق</span>
-        <small>السماء والأرض للسياق فقط • شمس الرياض 10:30</small>
-      </div>
     </div>
   );
 }

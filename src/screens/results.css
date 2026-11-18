@@ -1,0 +1,695 @@
+/* Results screen («ختم»): palm bar, file record with the seal, a register of clauses beside the
+   model framed in a gold double hairline. Prefix: rs-. */
+
+.rs {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 680px;
+  background: var(--paper);
+}
+
+/* Palm bar */
+.rs-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 64px;
+  padding-inline: 28px;
+  background: var(--palm);
+  color: #ffffff;
+}
+
+.rs-bar__brand {
+  min-height: 44px;
+  color: #ffffff;
+}
+
+.rs-bar__ref {
+  margin-inline-start: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--stone);
+  text-align: end;
+}
+
+/* File record */
+.rs-record {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 10px 28px;
+  border-block-end: 3px double var(--gold);
+  background: var(--paper);
+}
+
+.rs-cells {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.rs-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 60px;
+  padding-inline: 20px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.rs-cell:first-child {
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+
+.rs-cell dt {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.rs-cell dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-cell--file dd {
+  max-width: 300px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.rs-scope {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-inline-start: 24px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.rs-scope__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rs-scope__label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.rs-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rs-counts .status {
+  font-size: 14px;
+  gap: 8px;
+}
+
+.rs-counts .status__glyph {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.rs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+/* Register beside the model */
+.rs-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: clamp(360px, 34%, 540px) minmax(0, 1fr);
+}
+
+.rs-register {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-inline-end: 1px solid var(--gold);
+  background: var(--paper);
+}
+
+.rs-empty {
+  padding: 56px 24px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.rs-group__head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding-inline: 24px;
+  border-block-end: 1px solid var(--gold);
+  background: var(--paper);
+}
+
+.rs-group + .rs-group .rs-group__head {
+  border-block-start: 1px solid var(--gold);
+}
+
+.rs-group__head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+}
+
+.rs-group--fail h3 {
+  color: var(--burgundy);
+}
+
+.rs-group--unknown h3 {
+  color: var(--slate);
+}
+
+.rs-group--pass h3 {
+  color: var(--green);
+}
+
+.rs-group__note {
+  padding: 8px 24px;
+  border-block-end: 1px solid var(--line-soft);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.rs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 24px;
+  border: 0;
+  border-block-end: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease);
+}
+
+.rs-row:hover {
+  background: var(--stone-soft);
+}
+
+.rs-row:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Rows scrolled into view stop below the sticky group heading. */
+.rs-row {
+  scroll-margin-block-start: 60px;
+}
+
+.rs-row__no {
+  flex: none;
+  /* Wide enough for sub-clauses such as "4.10.1 (2)", so titles stay aligned. */
+  min-width: 84px;
+  font-weight: 600;
+  color: var(--palm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-row__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-row__value {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--green);
+}
+
+.rs-row__value--fail {
+  color: var(--burgundy);
+}
+
+.is-selected .rs-row {
+  align-items: baseline;
+  padding-block: 16px 6px;
+  border-block-end: 0;
+  background: var(--stone);
+}
+
+.is-selected .rs-row__no {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.is-selected .rs-row__title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Selected clause */
+.rs-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px 24px 20px;
+  border-block-end: 1px solid var(--line);
+  background: var(--stone);
+}
+
+.rs-label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.rs-meas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 0;
+  border-block: 1px solid var(--gold);
+}
+
+.rs-meas > div {
+  min-width: 0;
+  padding-block: 8px 10px;
+}
+
+.rs-meas > div:first-child {
+  padding-inline-end: 18px;
+}
+
+.rs-meas > div + div {
+  padding-inline-start: 18px;
+  border-inline-start: 1px solid var(--gold);
+}
+
+.rs-meas dt {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.rs-meas dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.rs-meas__num {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--palm);
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-meas__num small {
+  margin-inline-start: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+}
+
+.rs-meas__num--fail {
+  color: var(--burgundy);
+}
+
+.rs-meas__note {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.rs-meas__note--lead {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.rs-quote {
+  margin: 0;
+}
+
+.rs-quote blockquote {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.85;
+  color: var(--palm);
+}
+
+.rs-quote__cite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 16px;
+}
+
+.rs-quote__cite cite {
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.6;
+  color: var(--slate);
+}
+
+.rs-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px 24px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--gold);
+}
+
+.rs-element__name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.rs-element__class {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.rs-guid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 6px;
+}
+
+.rs-guid__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.45;
+}
+
+.rs-guid__label {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.rs-guid__value {
+  font-size: 14px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.rs-guid .icon-btn {
+  flex: none;
+}
+
+.rs-action p:last-child {
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.rs-detail__model {
+  align-self: flex-start;
+}
+
+.rs-register__basis {
+  display: none;
+}
+
+/* Model */
+.rs-model {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px 20px 20px;
+  background: var(--paper);
+}
+
+.rs-frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    0 0 0 4px var(--paper),
+    0 0 0 5px var(--gold);
+  background: var(--stone-soft);
+}
+
+.rs-frame__state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.rs-frame__state--none {
+  color: var(--palm);
+}
+
+.rs-frame__state--none p {
+  max-width: 28ch;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Tabs (phones only) */
+.rs-tabs {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-block-end: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.rs-tab {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid rgba(15, 59, 46, 0.28);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  color: var(--palm);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.rs-tab[aria-selected="true"] {
+  border-color: var(--palm);
+  background: var(--palm);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(217, 183, 106, 0.35);
+}
+
+/* Narrow desktops: keep the record on one line by dropping the triangle count (secondary) and
+   tightening the cells. */
+@media (min-width: 861px) and (max-width: 1360px) {
+  .rs-record {
+    gap: 12px 16px;
+  }
+
+  .rs-cell {
+    padding-inline: 14px;
+  }
+
+  .rs-cell--model {
+    display: none;
+  }
+
+  .rs-cell--file dd {
+    max-width: 230px;
+  }
+
+  .rs-scope {
+    padding-inline-start: 16px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .rs-main {
+    grid-template-columns: minmax(320px, 42%) minmax(0, 1fr);
+  }
+
+  .rs-bar__ref {
+    font-size: 13px;
+  }
+}
+
+/* Phones and narrow tablets: one pane at a time, register first. */
+@media (max-width: 860px) {
+  .rs {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .rs-bar {
+    min-height: 56px;
+    padding-inline: 16px;
+  }
+
+  .rs-bar__ref {
+    display: none;
+  }
+
+  .rs-record {
+    gap: 14px;
+    padding: 12px 16px 16px;
+  }
+
+  .rs-cells {
+    flex-wrap: wrap;
+    width: 100%;
+    row-gap: 6px;
+  }
+
+  .rs-cell {
+    min-height: 0;
+    padding-inline: 14px;
+  }
+
+  .rs-cell--file {
+    flex-basis: 100%;
+    padding-inline: 0;
+  }
+
+  .rs-cell--file + .rs-cell {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .rs-cell--file dd {
+    max-width: none;
+  }
+
+  .rs-scope {
+    width: 100%;
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .rs-actions {
+    width: 100%;
+    margin-inline-start: 0;
+  }
+
+  .rs-actions .btn {
+    flex: 1;
+  }
+
+  .rs-main {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .rs-register {
+    overflow: visible;
+    border-inline-end: 0;
+  }
+
+  .rs-group__head {
+    position: static;
+    padding-inline: 16px;
+  }
+
+  .rs-row {
+    scroll-margin-block-start: 76px;
+  }
+
+  .rs-group__note,
+  .rs-row,
+  .rs-detail {
+    padding-inline: 16px;
+  }
+
+  .rs-register__basis {
+    display: block;
+    padding: 16px 16px 28px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .rs-model {
+    height: calc(100dvh - 72px);
+    min-height: 440px;
+    max-height: 760px;
+    padding: 14px 16px 18px;
+  }
+
+  .rs-pane.is-off {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .rs-meas__num {
+    font-size: 26px;
+  }
+
+  .rs-actions .btn {
+    padding-inline-end: 14px;
+  }
+}
