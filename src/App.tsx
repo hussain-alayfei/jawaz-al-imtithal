@@ -78,6 +78,7 @@ const Viewer3D = lazy(() =>
     default: module.Viewer3D,
   })),
 );
+const IfcModelViewer = lazy(() => import("./components/IfcModelViewer"));
 const EngineeringTwinStudio = lazy(() =>
   import("./components/EngineeringTwinStudio").then((module) => ({
     default: module.EngineeringTwinStudio,
@@ -418,7 +419,9 @@ function Dashboard({
                 </span>
                 <span className="recent-project__status">
                   <i />{" "}
-                  {run.summary.score === 100
+                  {run.coverage
+                    ? `تم التحقق من ${run.coverage.verified} من ${run.coverage.total} قواعد`
+                    : run.summary.score === 100
                     ? "مستوفٍ لقواعد العرض"
                     : "يحتاج معالجة"}
                 </span>
@@ -435,10 +438,17 @@ function Dashboard({
                   </p>
                 </div>
                 <div className="recent-project__metrics">
-                  <span>
-                    <strong>{run.summary.score}%</strong>
-                    مؤشر الجاهزية
-                  </span>
+                  {run.coverage ? (
+                    <span>
+                      <strong>{run.coverage.verified}/{run.coverage.total}</strong>
+                      قواعد تم التحقق منها
+                    </span>
+                  ) : (
+                    <span>
+                      <strong>{run.summary.score}%</strong>
+                      مؤشر الجاهزية
+                    </span>
+                  )}
                   <span className="metric-fail">
                     <strong>{run.summary.failed}</strong>
                     ملاحظات
@@ -821,6 +831,16 @@ function ModelUpload({
     });
   };
 
+  const loadSample = async (path: string, name: string) => {
+    try {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(String(response.status));
+      await processFile(new File([await response.blob()], name));
+    } catch {
+      setError("تعذر تحميل الملف التجريبي. نزّله ثم ارفعه يدويًا.");
+    }
+  };
+
   const drop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
@@ -831,10 +851,39 @@ function ModelUpload({
     <WizardShell
       current={2}
       title="أضف النموذج الهندسي"
-      description="ارفع ملف IFC دلاليًا؛ سيجري التحقق والاستخراج وتطبيق القواعد من محتواه."
+      description="ارفع ملف IFC من أي برنامج BIM (IFC2X3 أو IFC4)؛ يقرأ موائم الجدران والأبواب والغرف وأبعادها من الملف نفسه ويطبق القواعد عليها."
       onHome={onHome}
       onNew={onNew}
     >
+      <section className="real-plans" aria-label="مخططات IFC حقيقية للتجربة" data-testid="real-plans">
+        <div className="real-plans__head">
+          <strong>جرّب على مخطط IFC حقيقي</strong>
+          <p>
+            مخطط المطعم نموذج هندسي تجريبي بُني بمكتبة IfcOpenShell: جدران بفتحات فعلية وأبواب وغرف بمساحاتها وأثاث، وليس مشروعًا منفذًا. النسختان متطابقتان إلا في عرض باب الطوارئ. ملف الدوبلكس تصدير حقيقي من Revit لم يُعدّ لموائم.
+          </p>
+        </div>
+        <div className="real-plans__list">
+          {([
+            ["/samples/restaurant/restaurant-exit-0.75m.ifc", "restaurant-exit-0.75m.ifc", "مطعم: باب الطوارئ 0.75 م", "المتوقع: عرض المخرج غير مطابق للحد التجريبي"],
+            ["/samples/restaurant/restaurant-exit-0.95m.ifc", "restaurant-exit-0.95m.ifc", "مطعم: باب الطوارئ 0.95 م", "نفس المخطط بعد تعديل الباب فقط"],
+            ["/samples/external/Duplex_A_20110907.ifc", "Duplex_A_20110907.ifc", "دوبلكس سكني من Revit 2011", "buildingSMART • CC BY 4.0 • ملف خارجي مستقل"],
+          ] as const).map(([path, name, title, note]) => (
+            <div className="real-plans__item" key={name}>
+              <span>
+                <strong>{title}</strong>
+                <small>{note}</small>
+              </span>
+              <button type="button" className="button button--small button--primary"
+                disabled={reading} onClick={() => void loadSample(path, name)} data-testid={`use-sample-${name}`}>
+                افحص هذا الملف
+              </button>
+              <a href={path} download={name} className="button button--small button--outline" aria-label={`تنزيل ${name}`}>
+                <Download size={14} />
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
       <section className="bim-upload-kit" aria-label="ملفات BIM التجريبية">
         <div className="bim-upload-kit__head">
           <div><strong>مكتبة BIM التجريبية الجاهزة</strong>
@@ -856,7 +905,7 @@ function ModelUpload({
               <FileText size={16}/><span><strong dir="ltr">{filename}</strong><small>{label}</small></span><Download size={15}/>
             </a>)}
         </div>
-        <small>ملفات الاستكشاف منفصلة عن رفع نموذج الامتثال أدناه؛ محرك الفحص الحالي يتطلب عقد IFC دلاليًا خاصًا، ولا يحوّل هذه الملفات إلى هندسة BIM.</small>
+        <small>ملفات الاستكشاف هذه تخص التوأم الرقمي التوضيحي، وليست مخططات للفحص. للفحص استخدم المخططات الحقيقية أعلاه أو ملفك.</small>
       </section>
       <section className="bim-venue-packs" aria-label="حزم BIM للمقهى والمطعم">
         {([
@@ -1410,13 +1459,33 @@ function AnalysisScreen({
 function SummaryStrip({
   scenario,
   findings,
+  coverage,
 }: {
   scenario: Scenario;
   findings: Finding[];
+  coverage?: { verified: number; total: number };
 }) {
   const summary = calculateSummary(findings, scenario);
   return (
     <div className="summary-strip">
+      {coverage ? (
+      <div className="summary-overview" data-testid="coverage-overview">
+        <div
+          className="score-ring"
+          style={{ "--score": Math.round((coverage.verified / coverage.total) * 100) } as React.CSSProperties}
+          aria-label={`تم التحقق من ${coverage.verified} من ${coverage.total} قواعد من بيانات الملف`}
+        >
+          <strong>{coverage.verified}/{coverage.total}</strong>
+        </div>
+        <span>
+          <strong>نطاق التحقق من الملف</strong>
+          <b>{coverage.verified} من {coverage.total} قواعد</b>
+          <small>
+            لا نعرض نسبة جاهزية لملف IFC قياسي: {coverage.total - coverage.verified} قواعد بلا دليل في الملف
+          </small>
+        </span>
+      </div>
+      ) : (
       <div className="summary-overview">
         <div
           className={`score-ring ${
@@ -1435,6 +1504,7 @@ function SummaryStrip({
           </small>
         </span>
       </div>
+      )}
       <div className="summary-counts" aria-label="ملخص نتائج القواعد">
         <div className="summary-stat summary-stat--pass">
           <span>{statusIcon("pass", 18)}</span>
@@ -1449,13 +1519,15 @@ function SummaryStrip({
         <div className="summary-stat summary-stat--unknown">
           <span>{statusIcon("unknown", 18)}</span>
           <strong>{summary.unknown}</strong>
-          <small>غير مكتمل</small>
+          <small>{coverage ? "غير قابل للتحقق" : "غير مكتمل"}</small>
         </div>
       </div>
       <div className="summary-message">
         <ShieldCheck size={19} />
         <span>
-          {summary.failed || summary.unknown
+          {coverage
+            ? `${summary.failed} ملاحظة مثبتة من هندسة الملف وبياناته • ${summary.unknown} قواعد تحتاج بيانات لا يحملها الملف.`
+            : summary.failed || summary.unknown
             ? `عالج ${summary.failed} من الملاحظات وأكمل ${summary.unknown} من المعلومات قبل التقديم.`
             : "اكتملت قواعد العرض العشر دون ملاحظات أو معلومات ناقصة."}
         </span>
@@ -1655,6 +1727,12 @@ function FindingDetail({
   );
 }
 
+/** Standard-IFC findings link elements as "STEP-<expressId>". */
+function stepIdOf(elementId?: string): number | undefined {
+  const match = /^STEP-(\d+)$/.exec(elementId ?? "");
+  return match ? Number(match[1]) : undefined;
+}
+
 function Workspace({
   run,
   onReport,
@@ -1673,7 +1751,10 @@ function Workspace({
   notify: (message: string) => void;
 }) {
   const { activityId, facility, findings, scenario } = run;
-  const firstUnresolved = findings.find((finding) => finding.status !== "pass");
+  // A proven failure is shown first; a rule without evidence comes after it.
+  const firstUnresolved =
+    findings.find((finding) => finding.status === "fail") ??
+    findings.find((finding) => finding.status !== "pass");
   const activity = activityExamples.find((item) => item.id === activityId);
   const [filter, setFilter] = useState<ResultFilter>(() =>
     findings.some((finding) => finding.status !== "pass") ? "action" : "all",
@@ -1688,7 +1769,9 @@ function Workspace({
   const [mobileTab, setMobileTab] = useState<"model" | "findings">("model");
 
   useEffect(() => {
-    const unresolved = findings.find((finding) => finding.status !== "pass");
+    const unresolved =
+      findings.find((finding) => finding.status === "fail") ??
+      findings.find((finding) => finding.status !== "pass");
     setSelectedRule(unresolved?.ruleId);
     setSelectedElement(unresolved?.elementId);
     setFindingsView("list");
@@ -1801,7 +1884,7 @@ function Workspace({
         </div>
       </header>
 
-      <SummaryStrip scenario={scenario} findings={findings} />
+      <SummaryStrip scenario={scenario} findings={findings} coverage={run.coverage} />
 
       <div className="mobile-workspace-tabs">
         <button
@@ -1835,6 +1918,28 @@ function Workspace({
               </div>
             }
           >
+            {run.source === "standard-ifc" && run.standard ? (
+              <IfcModelViewer
+                key={run.file.sha256}
+                fileName={run.file.name}
+                facts={run.standard.facts}
+                geometry={run.standard.geometry}
+                selectedStepId={selectedFinding?.elementStepId ?? stepIdOf(selectedElement)}
+                selectedStatus={selectedFinding?.status}
+                selectedTitle={selectedFinding?.shortTitle}
+                selectedRuleId={selectedFinding?.ruleId}
+                measurement={selectedFinding ? run.standard.measurements[selectedFinding.ruleId] : undefined}
+                markers={findingMarkers.flatMap((marker) => {
+                  const stepId = stepIdOf(marker.elementId);
+                  return stepId === undefined ? [] : [{ ...marker, stepId }];
+                })}
+                onSelectStep={(stepId) => selectElement(stepId === undefined ? "" : `STEP-${stepId}`)}
+                onSelectFinding={(ruleId) => {
+                  const target = findings.find((finding) => finding.ruleId === ruleId);
+                  if (target) selectFinding(target);
+                }}
+              />
+            ) : (
             <Viewer3D
               key={`${activityId}-${scenario}`}
               activityId={activityId}
@@ -1852,6 +1957,7 @@ function Workspace({
                 setMobileTab("findings");
               }}
             />
+            )}
           </Suspense>
         </section>
 
@@ -2080,8 +2186,11 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
 <p>موائم • نسخة تجريبية</p>
 <h1>تقرير جاهزية الطلب</h1>
 <p class="meta">${escapeHtml(facility.projectName)} • ${escapeHtml(facility.city)} • ${escapeHtml(generatedAt)}</p>
-<div class="summary"><span><strong>${summary.score}</strong>مؤشر الجاهزية</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>ملاحظة</span><span><strong>${summary.unknown}</strong>غير مكتمل</span></div>
-<p>طريقة الحساب: ${summary.passed} قاعدة مطابقة ÷ ${findings.length} قواعد × 100 = ${summary.score}</p>
+${run.coverage
+  ? `<div class="summary"><span><strong>${run.coverage.verified}/${run.coverage.total}</strong>قواعد تم التحقق منها من الملف</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>غير مطابق</span><span><strong>${summary.unknown}</strong>غير قابل للتحقق</span></div>
+<p>ملف IFC قياسي: لا تُعرض نسبة جاهزية، لأن ${summary.unknown} قواعد لا دليل لها في الملف ولا تُحتسب مطابقة.</p>`
+  : `<div class="summary"><span><strong>${summary.score}</strong>مؤشر الجاهزية</span><span><strong>${summary.passed}</strong>مطابق</span><span><strong>${summary.failed}</strong>ملاحظة</span><span><strong>${summary.unknown}</strong>غير مكتمل</span></div>
+<p>طريقة الحساب: ${summary.passed} قاعدة مطابقة ÷ ${findings.length} قواعد × 100 = ${summary.score}</p>`}
 <p>الملف: ${escapeHtml(metadata.fileName)} • ${escapeHtml(metadata.schema)} • ${metadata.elements} عنصرًا</p>
 <p>بصمة الملف SHA-256: ${escapeHtml(run.file.sha256)}</p>
 <table><thead><tr><th>القاعدة</th><th>الحالة</th><th>النتيجة</th><th>المرصود</th><th>المتوقع</th><th>مرجع STEP</th><th>الإجراء المقترح</th></tr></thead><tbody>${rows}</tbody></table>
@@ -2162,6 +2271,23 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
         </section>
 
         <section className="report-summary">
+          {run.coverage ? (
+          <div className="report-score">
+            <span>
+              <strong>{run.coverage.verified}/{run.coverage.total}</strong>
+              <small>قواعد</small>
+            </span>
+            <div>
+              <h2>نطاق التحقق من ملف IFC</h2>
+              <p>
+                تم الحكم على {run.coverage.verified} قواعد من بيانات الملف نفسه. القواعد الباقية لا دليل لها في الملف، فلا تُحتسب مطابقة ولا تُعرض نسبة جاهزية.
+              </p>
+              <small className="report-score-method">
+                {summary.passed} مطابق • {summary.failed} غير مطابق • {summary.unknown} غير قابل للتحقق من الملف
+              </small>
+            </div>
+          </div>
+          ) : (
           <div className="report-score">
             <span>
               <strong>{summary.score}</strong>
@@ -2180,6 +2306,7 @@ th{background:#eef3ef}.notice{margin-top:26px;padding:14px;border:1px solid #d7d
               </small>
             </div>
           </div>
+          )}
           <div className="report-summary__stats">
             <span className="report-stat report-stat--pass">
               <strong>{summary.passed}</strong> مطابق

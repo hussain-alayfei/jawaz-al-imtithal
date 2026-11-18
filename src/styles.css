@@ -4892,3 +4892,187 @@ code,
 .bim-venue-packs__links a:hover {border-color:#6e9a7b;background:#dcebe0;}
 .bim-venue-packs__card>small {display:block;margin-top:10px;font-size:11px;color:#76592f;line-height:1.7;}
 @media(max-width:760px){.bim-venue-packs{grid-template-columns:1fr;}}
+
+/* ---- Viewer of the uploaded IFC geometry (standard IFC files) ---- */
+.ifc-viewer {
+  background: #dcd6cb;
+}
+
+.ifc-viewer .viewer__meta {
+  max-width: calc(100% - 300px);
+}
+
+.ifc-viewer .viewer__meta span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ifc-viewer__legend {
+  flex-wrap: wrap;
+  max-width: min(420px, calc(100% - 26px));
+}
+
+.ifc-viewer__legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.ifc-viewer__legend small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ifc-dimension {
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 12px;
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.ifc-dimension strong {
+  font-size: 14px;
+}
+
+.ifc-dimension span {
+  color: var(--muted);
+}
+
+.ifc-dimension--fail {
+  color: var(--fail);
+}
+
+.ifc-dimension--pass {
+  color: var(--pass);
+}
+
+.ifc-dimension--unknown {
+  color: var(--unknown);
+}
+
+.ifc-pin {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font: 600 12px/1 var(--font-ui);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(22, 33, 29, 0.35);
+}
+
+.ifc-pin--fail {
+  background: var(--fail);
+}
+
+.ifc-pin--unknown {
+  background: var(--unknown);
+}
+
+.ifc-pin--pass {
+  background: var(--pass);
+}
+
+.ifc-space-label {
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+
+.ifc-space-label small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .ifc-viewer .viewer__meta {
+    max-width: calc(100% - 26px);
+    top: 62px;
+  }
+
+  .ifc-viewer__legend {
+    display: none;
+  }
+}
+
+/* ---- Real IFC plans on the upload screen ---- */
+.real-plans {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-right: 3px solid var(--pass);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  background: var(--paper);
+}
+
+.real-plans__head strong {
+  font-size: var(--fs-md);
+}
+
+.real-plans__head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.real-plans__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.real-plans__item {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.real-plans__item > span {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+}
+
+.real-plans__item small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.ifc-level {
+  height: 38px;
+  max-width: 150px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  background: transparent;
+}
