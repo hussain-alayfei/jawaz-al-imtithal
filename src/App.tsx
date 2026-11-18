@@ -11,7 +11,6 @@ import { SAMPLE_FILES, type SampleId } from "./content/samples";
 import Landing from "./screens/Landing";
 import { SiteHeader, type NavTarget } from "./site/SiteHeader";
 import { SiteFooter } from "./site/SiteFooter";
-import { useFadeIn } from "./site/useFadeIn";
 import Check from "./screens/Check";
 
 /* The results and report screens pull in the 3D viewer and web-ifc, so they load on demand. */
@@ -95,7 +94,6 @@ export default function App() {
   useEffect(() => {
     if (route !== "twin") returnRoute.current = route;
   }, [route]);
-  useFadeIn();
 
   useEffect(() => {
     const onHashChange = () => {
