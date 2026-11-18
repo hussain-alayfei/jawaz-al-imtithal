@@ -49,14 +49,14 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
  return <section className="bim-library" data-testid="bim-demo-library" aria-label="ملفات BIM النموذجية">
    <div className="bim-library__intro">
      <div className="bim-library__title"><FolderOpen size={18}/><strong>ملفات BIM الجاهزة</strong></div>
-     <p>٤ ملفات IFC4 مملوءة ببيانات توضيحية لخمس طوابق. اختر ملفًا لاستعراض عناصره داخل التوأم الرقمي.</p>
+     <p>4 ملفات IFC4 مملوءة ببيانات توضيحية لخمس طوابق. اختر ملفًا لاستعراض عناصره داخل التوأم الرقمي.</p>
      <span className="bim-library__demo"><Info size={13}/> تجربة دلالية اصطناعية؛ المجسم مولّد بالكود وليس من هندسة IFC</span>
    </div>
    {!manifest && !error && <div className="bim-library__loading"><LoaderCircle size={15}/> فتح الفهرس…</div>}
    <div className="bim-library__files">
     {manifest?.files.map(f=><article className={"bim-library__file"+(active===f.id?" is-loaded":"")} key={f.id} data-file={f.name}>
       <div className="bim-library__file-head">
-       <span className="bim-library__file-icon" style={{borderColor:f.color,color:f.color}}><FileCode2 size={18}/></span>
+       <span className="bim-library__file-icon" aria-hidden="true"><FileCode2 size={18}/></span>
        <span><strong dir="ltr">{f.name}</strong><small>{f.label}</small></span>
        <b>{f.count}</b>
       </div>
@@ -74,7 +74,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
    </div>
    <article className="bim-library__file bim-library__asset" data-file="FurnitureDemo.gltf">
      <div className="bim-library__file-head">
-       <span className="bim-library__file-icon" style={{borderColor:"#97d1a9",color:"#97d1a9"}}><FileCode2 size={18}/></span>
+       <span className="bim-library__file-icon" aria-hidden="true"><FileCode2 size={18}/></span>
        <span><strong dir="ltr">FurnitureDemo.gltf</strong><small>أثاث ثلاثي الأبعاد (اختياري)</small></span>
        <b>3D</b>
      </div>
@@ -94,7 +94,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
      <header><span><FileText size={14}/><strong>عناصر {file.name}</strong></span><b>{listed.length} عنصر</b></header>
      <label>عرض العناصر حسب الدور
        <select aria-label="تصفية عناصر BIM حسب الدور" value={floor} onChange={e=>setFloor(e.target.value)}>
-        <option value="all">جميع الأدوار (٥)</option>
+        <option value="all">جميع الأدوار (5)</option>
         {[0,1,2,3,4].map(n=><option value={n} key={n}>الدور {n+1}</option>)}
        </select>
      </label>

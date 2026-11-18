@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, ShieldAlert, XCircle } from "lucide-react";
 import { SERVICE_META, type ServiceKey } from "./EngineeringNetworks3D";
-import { getVenueEngineeringElements, getVenueMetrics, VENUE_DISCIPLINES, type VenueBimElement } from "./VenueEngineeringData";
+import { getVenueEngineeringElements, getVenueMetrics, type VenueBimElement } from "./VenueEngineeringData";
 import type { VenueKind } from "./VenueScene3D";
 
 type VenueManifest={version:string;kind:VenueKind;files:{id:string;name:string;label:string;desc:string;count:number;elements:VenueBimElement[]}[]};
@@ -44,17 +44,16 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
  return <section className="bim-library venue-bim" data-testid={"venue-bim-"+kind}>
   <div className="bim-library__intro">
    <div className="bim-library__title"><FolderOpen size={18}/><strong>ملفات {kind==="cafe"?"المقهى":"المطعم"} الهندسية</strong></div>
-   <p>٤ ملفات IFC4 خاصة بهذه المنشأة، تحتوي بيانات معمارية وإنشائية وتمديدات وحريق لطابق واحد.</p>
+   <p>4 ملفات IFC4 خاصة بهذه المنشأة، تحتوي بيانات معمارية وإنشائية وتمديدات وحريق لطابق واحد.</p>
    <span className="bim-library__demo"><Info size={13}/> بيانات دلالية تجريبية؛ ليست مخططات مصدقة ولا هندسة IFC مستوردة.</span>
   </div>
   <div className="venue-bim__metric"><strong>{total??"—"}</strong><span>عنصر تجريبي مرتبط بمشهد {kind==="cafe"?"المقهى":"المطعم"}</span></div>
   {!manifest&&!error&&<p className="bim-library__loading"><LoaderCircle size={14}/> فتح ملفات التجربة…</p>}
   <div className="bim-library__files">
    {manifest?.files.map(f=>{
-    const def=VENUE_DISCIPLINES.find(d=>d.id===f.id);
     return <article className={"bim-library__file"+(active===f.id?" is-loaded":"")} key={f.id} data-file={f.name}>
      <div className="bim-library__file-head">
-      <span className="bim-library__file-icon" style={{borderColor:def?.color,color:def?.color}}><FileCode2 size={18}/></span>
+      <span className="bim-library__file-icon" aria-hidden="true"><FileCode2 size={18}/></span>
       <span><strong dir="ltr">{f.name}</strong><small>{f.label}</small></span><b>{f.count}</b>
      </div>
      <p>{f.desc}</p>
@@ -69,7 +68,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
    })}
   </div>
   <article className="bim-library__file" data-file="FurnitureDemo.gltf">
-    <div className="bim-library__file-head"><span className="bim-library__file-icon"><FileCode2 size={17}/></span>
+    <div className="bim-library__file-head"><span className="bim-library__file-icon" aria-hidden="true"><FileCode2 size={18}/></span>
       <span><strong dir="ltr">FurnitureDemo.gltf</strong><small>ملف أثاث هندسي اختياري</small></span><b>3D</b></div>
     <p>قطعة أثاث نموذجية مستقلة بصيغة glTF، ليست المصدر الفعلي لمجسمات المنشأة المعروضة.</p>
     <div className="bim-library__file-actions"><a href={"/demo-bim/venues/"+kind+"/FurnitureDemo.gltf"} download="FurnitureDemo.gltf">

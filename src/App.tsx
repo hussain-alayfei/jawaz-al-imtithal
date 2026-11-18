@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   activityExamples,
   defaultFacility,
@@ -84,6 +84,11 @@ export default function App() {
   const [run, setRun] = useState<ComplianceRun>();
   const [toast, setToast] = useState("");
   const [pendingSection, setPendingSection] = useState<string>();
+  /* Where «العودة» in the twin studio leads: the last page visited inside the site. */
+  const returnRoute = useRef<Route>("landing");
+  useEffect(() => {
+    if (route !== "twin") returnRoute.current = route;
+  }, [route]);
   useFadeIn();
 
   useEffect(() => {
@@ -227,7 +232,7 @@ export default function App() {
             activityId={run ? run.activityId : activityId}
             floors={run ? run.facility.floors : facility.floors}
             findingsCount={run ? run.findings.filter((finding) => finding.status === "fail").length : 0}
-            onClose={() => (window.history.length > 1 ? window.history.back() : go("landing"))}
+            onClose={() => go(returnRoute.current)}
           />
         </Suspense>
       )}

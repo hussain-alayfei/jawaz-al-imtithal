@@ -1,13 +1,13 @@
 import {
-  Activity, ArrowLeft, Box, Building2, Check, ChevronDown, Compass,
-  Eye, EyeOff, Focus, Layers3, Maximize2, Move3d,
-  RotateCcw, ShieldAlert, ShieldCheck, Sofa, X,
+  Activity, Check, EyeOff, Focus, Info, Layers3, Maximize2, Minimize2, Move3d,
+  RotateCcw, Sofa, X,
 } from "lucide-react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Grid, Html, OrbitControls, useGLTF } from "@react-three/drei";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import * as THREE from "three";
-import type { ActivityId } from "../data";
+import { BrandMark, Button, IconButton } from "../brand/ui";
+import { activityExamples, getDefaultFacility, type ActivityId } from "../data";
 import { InteriorFitout3D, getActivityRooms, getInteriorItems, getFloorTitle, type RoomFilter } from "./InteriorFitout3D";
 import { DemoBimPanel, type DemoFileElement } from "./DemoBimPanel";
 import { DetailedServiceNetwork3D, getDetailPoint, getDetailPoints } from "./DetailedServiceNetwork3D";
@@ -38,15 +38,31 @@ const FLOOR_LIST: { key: Floor; label: string; en: string }[] = [
   { key: "roof", label: "السطح والخدمات", en: "RF" },
 ];
 const SYSTEM_LIST: { key: Utility; label: string; color: string }[] = [
-  { key: "all", label: "إظهار جميع الأنظمة", color: "#80c9a6" },
+  { key: "all", label: "إظهار جميع الأنظمة", color: "#0f3b2e" },
   { key: "electricity", label: "الكهرباء", color: SERVICE_META.electricity.color },
   { key: "water", label: "المياه", color: SERVICE_META.water.color },
   { key: "drainage", label: "الصرف الصحي", color: SERVICE_META.drainage.color },
   { key: "hvac", label: "التكييف والتهوية", color: SERVICE_META.hvac.color },
   { key: "fire", label: "الحريق والسلامة", color: SERVICE_META.fire.color },
   { key: "grounding", label: "التأريض", color: SERVICE_META.grounding.color },
-  { key: "architecture", label: "العمارة فقط (إخفاء الشبكات)", color: "#a9b0af" },
+  { key: "architecture", label: "العمارة فقط (إخفاء الشبكات)", color: "#8a8f8c" },
 ];
+
+/* Studio wording that copy.ts does not carry (the studio is the only place it appears). */
+const TWIN_TITLE = "التوأم الرقمي";
+const TWIN_NOTE = "مشاهد توضيحية، وليست نتيجة فحص المطابقة.";
+const TWIN_CLOSE = "العودة";
+type SceneKey = "building" | VenueKind;
+const SCENES: { key: SceneKey; label: string }[] = [
+  { key: "cafe", label: "المقهى" },
+  { key: "restaurant", label: "المطعم" },
+  { key: "building", label: "العمارة" },
+];
+type SideSection = "floors" | "systems" | "rooms" | "view";
+const VIEW_PRESETS: [Preset, string][] = [["iso", "منظور"], ["top", "علوي"], ["front", "واجهة"], ["inside", "داخلي"]];
+/** Line icons across the studio share one weight (BUILD-V2: lucide, strokeWidth 1.6). */
+const ICON = { size: 18, strokeWidth: 1.6, "aria-hidden": true } as const;
+const ICON_SM = { size: 16, strokeWidth: 1.6, "aria-hidden": true } as const;
 const ALL_VISIBLE: ServiceVisibility = {
   electricity: true, water: true, drainage: true, hvac: true, fire: true, grounding: true,
 };
@@ -271,6 +287,9 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
   selected: string | null; onSelect: (id: string) => void; preset: Preset; nonce: number;
   activity: ActivityId; floorCount: number; roomFilter: RoomFilter; furniture: boolean; labels: boolean;
 }) {
+  /* On phones the camera rig stands 1.48 times further back; the fog moves with it so the building
+     stays as legible as on a desktop. */
+  const fogScale = useThree((state) => state.size.width) < 661 ? 1.48 : 1;
   const custom = CUSTOM_NODES.find(node => node.id === selected);
   const sourceNode = findServiceNode(selected);
   const upper = selected?.startsWith("UPPER-") ? selected.split("-") : null;
@@ -284,7 +303,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
     ?? (upper ? [-6.8, upperY, -4.7] : null);
   return <>
     <color attach="background" args={["#d2ddd9"]} />
-    <fog attach="fog" args={["#d2ddd9", 42, 76]} />
+    <fog attach="fog" args={["#d2ddd9", 42 * fogScale, 76 * fogScale]} />
     <ambientLight intensity={0.4} />
     <hemisphereLight args={["#f9fcf7", "#827c73", 1.2]} />
     <directionalLight castShadow position={[15, 21, 14]} intensity={2.25}
@@ -333,7 +352,8 @@ interface Props {
   onClose: () => void;
 }
 export function EngineeringTwinStudio({ projectName, activityName, activityId, floors, findingsCount, onClose }: Props) {
-  const [scene,setScene] = useState<"building"|VenueKind>("cafe");
+  const uid = useId();
+  const [scene,setScene] = useState<SceneKey>("cafe");
   const isBuilding = scene==="building";
   const venueSpots = isBuilding ? [] : VENUE_SPOTS[scene];
   const currentVenue = isBuilding ? null : VENUE_META[scene];
@@ -341,10 +361,17 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const floorCount = 5;
   void floors;
   const availableFloors = FLOOR_LIST;
+  /* The five-storey building can be fitted out for any of the four activities (restaurant, cafe,
+     clinic, salon). It starts with the activity chosen on the check page. */
+  const [activity,setActivity] = useState<ActivityId>(activityId);
+  const activityLabel = activityExamples.find(item=>item.id===activity)?.label ?? activityName;
+  const buildingName = activity===activityId ? projectName : getDefaultFacility(activity).projectName;
   const [system, setSystem] = useState<Utility>("all");
   const [floor, setFloor] = useState<Floor>("all");
-  const rooms = getActivityRooms(activityId, Math.max(0, levelOf(floor)));
-  const [sideSection, setSideSection] = useState<"floors"|"systems"|"rooms"|"view">("systems");
+  const floorLevel = Math.max(0, levelOf(floor));
+  const floorTitle = floor==="all" ? "المبنى كاملًا" : floor==="roof" ? "السطح والخدمات" : getFloorTitle(activity,floorLevel);
+  const rooms = getActivityRooms(activity, floorLevel);
+  const [sideSection, setSideSection] = useState<SideSection>("systems");
   const [roomFilter, setRoomFilter] = useState<RoomFilter>("all");
   const [furniture, setFurniture] = useState(true);
   const [labels, setLabels] = useState(false);
@@ -355,16 +382,25 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [preset, setPreset] = useState<Preset>("iso");
   const [selected, setSelected] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<"files"|"items"|"analysis">("items");
   const [mobileInspectorOpen,setMobileInspectorOpen] = useState(false);
-  const chooseScene = (next:"building"|VenueKind) => {
+  const [isFullscreen,setIsFullscreen] = useState(false);
+  const canFullscreen = typeof document !== "undefined" && document.fullscreenEnabled !== false;
+  const chooseScene = (next:SceneKey) => {
+    inspectorRef.current?.scrollTo({ top: 0 });
     setScene(next);setSideSection("systems");setInspectorTab("items");
     setSystem("all");setVisible(ALL_VISIBLE);setFloor("all");
     setGhost(true);setFurniture(true);setSelected(null);setPreset("iso");
     setMobileInspectorOpen(false);setNonce(n=>n+1);
   };
+  const chooseActivity = (next:ActivityId) => {
+    setActivity(next);setRoomFilter("all");setSelected(null);setNonce(n=>n+1);
+  };
   const overlayRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const inspectorToggleRef = useRef<HTMLButtonElement>(null);
+  const inspectorCloseRef = useRef<HTMLButtonElement>(null);
+  const inspectorRef = useRef<HTMLElement>(null);
   const selectedCustom = CUSTOM_NODES.find(x => x.id === selected);
   const selectedNode = findServiceNode(selected);
   const detailedNode = getDetailPoint(selected);
@@ -372,9 +408,9 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const upperSystem = selectedUpper && SERVICE_KEYS.includes(selectedUpper[2] as ServiceKey)
     ? selectedUpper[2] as ServiceKey : null;
   const selectedRoom = selected?.startsWith("ROOM-")
-    ? getActivityRooms(activityId, Number(selected.split("-")[1])).find(r => r.key === selected.split("-")[2])
+    ? getActivityRooms(activity, Number(selected.split("-")[1])).find(r => r.key === selected.split("-")[2])
     : null;
-  const selectedFurniture = isBuilding ? [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activityId,n)).find(item=>item.id===selected) : undefined;
+  const selectedFurniture = isBuilding ? [0,1,2,3,4].filter(n=>n<floorCount).flatMap(n=>getInteriorItems(activity,n)).find(item=>item.id===selected) : undefined;
   const selectedVenueSpot = isBuilding ? undefined : getVenueSpot(selected);
   const selectedVenueElement = isBuilding ? undefined : getVenueElement(scene,selected);
   const inspected = selectedVenueElement && !selectedVenueSpot ? {
@@ -401,6 +437,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       label: selectedRoom.name, description: "حيز معماري تجريبي ضمن النموذج الإجرائي، وليس مساحة مستخرجة من IFC.",
       position: [0, 0, 0] as Vec3,
     } : null);
+  const inspectedSystem = inspected ? SYSTEM_LIST.find(x => x.key === inspected.system) : undefined;
 
   const setFocusSystem = useCallback((key: Utility) => {
     setSystem(key);
@@ -451,15 +488,40 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     setFurniture(true); setLabels(false); setGhost(true); setExploded(false); setFlow(true);
     setPreset("iso"); setSelected(null); setNonce(n => n + 1);
   };
+  const openInspector = (tab:"files"|"items"|"analysis") => {
+    setInspectorTab(tab);setMobileInspectorOpen(true);
+  };
+  const closeInspector = useCallback(() => {
+    setMobileInspectorOpen(false);
+    inspectorToggleRef.current?.focus({ preventScroll: true });
+  }, []);
+  /* The studio replaces the page: move focus to its title so keyboard and screen-reader users start here. */
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true });
+  }, []);
+  useEffect(() => {
+    if (mobileInspectorOpen) inspectorCloseRef.current?.focus({ preventScroll: true });
+  }, [mobileInspectorOpen]);
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    /* Escape closes the panel that is open over the scene first, then leaves the studio. */
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (overlayRef.current?.querySelector(".twin-studio__inspector.is-mobile-open")) {
+        closeInspector();
+        return;
+      }
+      onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = bodyOverflow; window.removeEventListener("keydown", onKey); };
-  }, [onClose]);
+  }, [onClose, closeInspector]);
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement) && document.fullscreenElement === overlayRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   const totalVisible = SERVICE_KEYS.filter(key => visible[key]).length;
   const countEquipment = totalVisible
     ? isBuilding
@@ -473,45 +535,62 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       else await overlayRef.current.requestFullscreen();
     } catch { /* Fullscreen depends on the browser context. */ }
   };
+  const sideTabs: [SideSection, string][] = [
+    ["floors", isBuilding ? "الأدوار" : "المناطق"],
+    ["systems", "الأنظمة"],
+    ["rooms", "الغرف"],
+    ["view", "العرض"],
+  ];
+  const viewSwitches = [
+    ["شفافية الجدران", ghost, setGhost, EyeOff],
+    ...(isBuilding ? [["تفكيك الطوابق", exploded, setExploded, Move3d] as const] : []),
+    ["إظهار الأثاث والتجهيزات", furniture, setFurniture, Sofa],
+    ...(isBuilding ? [["إظهار أسماء الغرف", labels, setLabels, Focus] as const] : []),
+    ["تحريك تدفق الخدمات", flow, setFlow, Activity],
+  ] as const;
+  const titleId = uid + "-title";
+  const panelId = uid + "-panel";
   return (
     <div className="twin-studio" ref={overlayRef} role="dialog" aria-modal="true"
-      aria-label="استوديو التوأم الرقمي الهندسي" dir="rtl">
+      aria-labelledby={titleId} dir="rtl" data-focus={selected !== null || preset === "inside" ? "true" : undefined}>
       <header className="twin-studio__top">
-        <div className="twin-studio__brand">
-          <span className="twin-studio__brand-icon"><Building2 size={22}/></span>
-          <div><strong>موائم <b>/</b> الاستوديو الهندسي</strong><small>VENUE DIGITAL TWIN · EXPLORE</small></div>
+        <div className="twin-studio__heading">
+          <BrandMark className="twin-studio__mark" />
+          <div className="twin-studio__titles">
+            <h1 id={titleId} ref={titleRef} tabIndex={-1}>{TWIN_TITLE}</h1>
+            <p className="twin-studio__note">{TWIN_NOTE}</p>
+          </div>
         </div>
-        <nav className="twin-studio__scene-switcher" aria-label="التنقل بين نماذج المنشآت" data-testid="venue-scene-switcher">
-          {([["cafe","المقهى"],["restaurant","المطعم"],["building","العمارة"]] as const)
-           .map(([key,label])=><button type="button" key={key} data-scene={key}
+        <div className="twin-studio__scene-switcher" role="group" aria-label="اختيار المشهد" data-testid="venue-scene-switcher">
+          {SCENES.map(({key,label})=><button type="button" key={key} data-scene={key}
              className={scene===key?"is-active":""} aria-pressed={scene===key}
              onClick={()=>chooseScene(key)}>{label}</button>)}
-        </nav>
+        </div>
         <div className="twin-studio__top-actions">
-          <button type="button" onClick={reset} title="إعادة الإعدادات"><RotateCcw size={17}/><span>إعادة ضبط</span></button>
-          <button type="button" onClick={() => void fullScreen()} title="ملء الشاشة"><Maximize2 size={17}/></button>
-          <button type="button" className="twin-studio__close" onClick={onClose} title="العودة إلى نتائج الفحص">
-            <ArrowLeft size={17}/><span>العودة للفحص</span>
+          <button type="button" className="twin-studio__reset" onClick={reset} aria-label="إعادة ضبط المشهد">
+            <RotateCcw {...ICON}/><span>إعادة الضبط</span>
           </button>
+          {canFullscreen && <IconButton className="twin-studio__fullscreen" label={isFullscreen?"إنهاء ملء الشاشة":"ملء الشاشة"}
+            aria-pressed={isFullscreen} onClick={() => void fullScreen()}>
+            {isFullscreen ? <Minimize2 {...ICON}/> : <Maximize2 {...ICON}/>}
+          </IconButton>}
+          <Button variant="secondary" size="small" className="twin-studio__close" onClick={onClose}
+            aria-keyshortcuts="Escape">{TWIN_CLOSE}</Button>
         </div>
       </header>
       <div className="twin-studio__layout">
-        <aside className="twin-studio__systems" aria-label="أنظمة المبنى">
+        <aside className="twin-studio__systems" aria-label="عناصر التحكم في المشهد">
           <div className="twin-studio__side-nav" role="tablist" aria-label="أقسام التحكم في التوأم الرقمي">
-            {([
-              ["floors",isBuilding?"الأدوار":"المناطق"],
-              ["systems","الأنظمة"],
-              ["rooms","الغرف"],
-              ["view","العرض"],
-            ] as const).map(([key,label])=><button type="button" key={key}
-              role="tab" aria-selected={sideSection===key}
+            {sideTabs.map(([key,label])=><button type="button" key={key} id={uid+"-tab-"+key}
+              role="tab" aria-selected={sideSection===key} aria-controls={panelId}
               onClick={()=>setSideSection(key)}>{label}</button>)}
           </div>
-          {sideSection==="systems" && <section className="twin-studio__side-panel" aria-label="الأنظمة الهندسية">
-          <div className="twin-studio__section-heading"><Layers3 size={17}/> <span>الشبكات الهندسية</span><small>{totalVisible}/6</small></div>
+          <section id={panelId} className="twin-studio__side-panel" role="tabpanel" aria-labelledby={uid+"-tab-"+sideSection}>
+          {sideSection==="systems" && <>
+          <h2 className="twin-studio__section-heading">الشبكات الهندسية<small className="num">{totalVisible}/6</small></h2>
           <div className="twin-studio__systems-intro" data-testid="network-visibility-summary">
             <strong>{totalVisible===6 ? "جميع الشبكات ظاهرة الآن" : totalVisible===0 ? "عرض معماري فقط" : "عرض "+SYSTEM_LIST.find(s=>s.key===system)?.label}</strong>
-            <span>{totalVisible===6 ? "كل التمديدات مفعّلة. اختر شبكة أدناه لعزلها والتركيز عليها." : "اضغط إظهار جميع الأنظمة لاستعادة الشبكات الست معًا."}</span>
+            <span>{totalVisible===6 ? "اختر شبكة لعزلها والتركيز عليها." : "اختر «إظهار جميع الأنظمة» لاستعادة الشبكات الست معًا."}</span>
           </div>
           <div className="twin-studio__system-list">
             {SYSTEM_LIST.map(item => (
@@ -520,69 +599,75 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 style={{ "--system-color": item.color } as CSSProperties}
                 data-network-visible={item.key==="all" ? totalVisible===6 : item.key==="architecture" ? totalVisible===0 : visible[item.key]}
                 onClick={() => setFocusSystem(item.key)} aria-pressed={system === item.key}>
-                <span className="twin-studio__system-bullet" />
+                <span className="twin-studio__system-bullet" aria-hidden="true" />
                 <span className="twin-studio__system-name">{item.label}</span>
-                {item.key!=="all" && item.key!=="architecture" && visible[item.key] ? <span className="twin-studio__system-state">ظاهر</span> : null}
-                {system === item.key ? <Check size={15}/> : <span className="twin-studio__system-arrow">◂</span>}
+                {item.key!=="all" && item.key!=="architecture" && visible[item.key] ? <span className="sr-only">، ظاهر</span> : null}
+                {system === item.key ? <Check {...ICON_SM}/> : null}
               </button>
             ))}
           </div>
-          </section>}
-          {sideSection==="floors" && <section className="twin-studio__side-panel" aria-label="اختيار الدور">
-          <div className="twin-studio__section-heading"><Box size={17}/> <span>{isBuilding?"اختر الدور":"مناطق المنشأة"}</span></div>
+          </>}
+          {sideSection==="floors" && <>
+          <h2 className="twin-studio__section-heading">{isBuilding?"اختر الدور":"مناطق المنشأة"}</h2>
+          {isBuilding && <label className="twin-studio__field">
+            <span>نشاط المبنى</span>
+            <select value={activity} onChange={e=>chooseActivity(e.target.value as ActivityId)}>
+              {activityExamples.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+            </select>
+          </label>}
           <div className="twin-studio__floor-list">
             {isBuilding ? availableFloors.map(item => (
               <button type="button" key={item.key} className={floor === item.key ? "is-active" : ""}
+                aria-pressed={floor === item.key}
                 onClick={() => { setFloor(item.key); setSelected(null); setNonce(n => n + 1); }}>
-                <small>{item.en}</small><span>{item.label}</span>
-                {item.key!=="all" && item.key!=="roof" && <em>{getFloorTitle(activityId,Math.max(0,levelOf(item.key)))}</em>}
+                <span>{item.label}</span>
+                {item.key!=="all" && item.key!=="roof" && <em>{getFloorTitle(activity,Math.max(0,levelOf(item.key)))}</em>}
               </button>
-            )) : venueSpots.map((spot,i)=><button type="button" key={spot.id}
-              className={selected===spot.id?"is-active":""} onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
-              <small>{String(i+1).padStart(2,"0")}</small><span>{spot.title}</span><em>{spot.description}</em>
+            )) : venueSpots.map(spot=><button type="button" key={spot.id}
+              className={selected===spot.id?"is-active":""} aria-pressed={selected===spot.id}
+              onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
+              <span>{spot.title}</span><em>{spot.description}</em>
             </button>)}
           </div>
-          </section>}
-          {sideSection==="rooms" && <section className="twin-studio__side-panel" aria-label="الغرف والأثاث">
-          <div className="twin-studio__section-heading"><Building2 size={17}/> <span>تصفية غرف الدور</span></div>
-          <p className="twin-studio__section-note">{isBuilding?(floor==="all"?"اختر دورًا لرؤية غرفه":"غرف "+getFloorTitle(activityId,Math.max(0,levelOf(floor)))):"اختر مساحة للتركيز عليها داخل المشهد"}</p>
+          </>}
+          {sideSection==="rooms" && <>
+          <h2 className="twin-studio__section-heading">{isBuilding?"تصفية غرف الدور":"مساحات المنشأة"}</h2>
+          <p className="twin-studio__section-note">{isBuilding?(floor==="all"||floor==="roof"?"تظهر غرف الدور الأرضي. اختر دورًا من «الأدوار» لعرض غرفه.":"غرف "+floorTitle):"اختر مساحة للتركيز عليها داخل المشهد."}</p>
           {isBuilding ? <div className="twin-studio__room-filter" data-testid="twin-room-filters">
             <button type="button" className={roomFilter === "all" ? "is-active" : ""}
               aria-pressed={roomFilter==="all"} onClick={() => {setRoomFilter("all");setSelected(null);setNonce(n=>n+1);}}>
-              <span>جميع الغرف</span><small>04</small>
+              <span>جميع الغرف</span>
             </button>
             {rooms.map(room => (
               <button type="button" key={room.key} className={roomFilter === room.key ? "is-active" : ""}
                 aria-pressed={roomFilter===room.key}
-                onClick={() => {setRoomFilter(room.key);setSelected("ROOM-"+Math.max(0,levelOf(floor))+"-"+room.key);setNonce(n=>n+1);}}>
-                <span>{room.name}</span><small>{room.key==="reception"?"01":room.key==="hall"?"02":room.key==="office"?"03":"04"}</small>
+                onClick={() => {
+                  if (floor==="roof") setFloor("ground");
+                  setRoomFilter(room.key);setSelected("ROOM-"+floorLevel+"-"+room.key);setNonce(n=>n+1);
+                }}>
+                <span>{room.name}</span>
               </button>
             ))}
           </div> : <div className="twin-studio__room-filter" data-testid="venue-room-filters">
-            {venueSpots.map((spot,i)=><button type="button" key={spot.id}
+            {venueSpots.map(spot=><button type="button" key={spot.id}
               className={selected===spot.id?"is-active":""} aria-pressed={selected===spot.id}
               onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
-              <span>{spot.title}</span><small>{String(i+1).padStart(2,"0")}</small>
+              <span>{spot.title}</span>
             </button>)}
           </div>}
-          </section>}
-          {sideSection==="view" && <section className="twin-studio__side-panel" aria-label="إعدادات المشهد">
-          <div className="twin-studio__section-heading"><Eye size={17}/> <span>إعدادات المشهد</span></div>
+          </>}
+          {sideSection==="view" && <>
+          <h2 className="twin-studio__section-heading">إعدادات المشهد</h2>
           <div className="twin-studio__switches">
-            {([
-              ["شفافية الجدران", ghost, setGhost, EyeOff],
-              ...(isBuilding ? [["تفكيك الطوابق", exploded, setExploded, Move3d] as const] : []),
-              ["إظهار الأثاث والتجهيزات", furniture, setFurniture, Sofa],
-              ...(isBuilding ? [["إظهار أسماء الغرف", labels, setLabels, Focus] as const] : []),
-              ["تحريك تدفق الخدمات", flow, setFlow, Activity],
-            ] as const).map(([label, value, setter, Icon]) => (
+            {viewSwitches.map(([label, value, setter, Icon]) => (
               <label key={label} className="twin-studio__switch">
-                <span><Icon size={15}/>{label}</span>
+                <span><Icon {...ICON_SM}/>{label}</span>
                 <input type="checkbox" checked={value} onChange={(e) => setter(e.target.checked)} />
               </label>
             ))}
           </div>
-          </section>}
+          </>}
+          </section>
         </aside>
         <main className="twin-studio__viewport" aria-label="المشهد الهندسي ثلاثي الأبعاد">
           <div className="twin-studio__canvas">
@@ -596,7 +681,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               onPointerMissed={() => setSelected(null)}>
               {scene==="building"
                 ? <Model floor={floor} selectedSystem={system} visible={visible}
-                  ghost={ghost} exploded={exploded} flow={flow} activity={activityId}
+                  ghost={ghost} exploded={exploded} flow={flow} activity={activity}
                   floorCount={floorCount} roomFilter={roomFilter} furniture={furniture} labels={labels}
                   selected={selected} onSelect={setSelected} preset={preset} nonce={nonce} />
                 : <VenueScene3D kind={scene} visible={visible} ghost={ghost} furniture={furniture}
@@ -604,69 +689,64 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
 
             </Canvas>
           </div>
-          <div className="twin-studio__overlay-title">
-            <small>{isBuilding?"مبنى توضيحي · 5 أدوار":"منشأة تجريبية · دور واحد"}</small>
-            <strong>{isBuilding?(floor==="all"?"المبنى كاملًا":getFloorTitle(activityId,Math.max(0,levelOf(floor)))):currentVenue?.title}</strong>
-            <span>{SYSTEM_LIST.find(x => x.key === system)?.label}</span>
+          <div className="twin-studio__hud">
+            <div className="twin-studio__overlay-title">
+              <small>{isBuilding?"عمارة توضيحية · 5 أدوار · "+activityLabel:"منشأة تجريبية · دور واحد"}</small>
+              <strong>{isBuilding?floorTitle:currentVenue?.title}</strong>
+              <span>{SYSTEM_LIST.find(x => x.key === system)?.label}</span>
+            </div>
+            <div className="twin-studio__hud-end">
+              <button type="button" ref={inspectorToggleRef} className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
+                aria-expanded={mobileInspectorOpen}
+                onClick={()=>mobileInspectorOpen?closeInspector():openInspector("files")}>
+                <Layers3 {...ICON_SM}/> التفاصيل والملفات
+              </button>
+              {totalVisible>0 && <div className="twin-studio__network-legend" data-testid="network-color-legend" role="group" aria-label="دليل ألوان الشبكات الظاهرة">
+                <strong>{totalVisible===6?"جميع التمديدات":"التمديدات الظاهرة"} <span className="num">{totalVisible}/6</span></strong>
+                <div>{SERVICE_KEYS.filter(key=>visible[key]).map(key=><button key={key} type="button" title={"عرض "+SERVICE_META[key].label+" فقط"}
+                  onClick={()=>setFocusSystem(key)}>
+                  <span style={{background:SERVICE_META[key].color}} aria-hidden="true"/>{SERVICE_META[key].label}
+                </button>)}</div>
+              </div>}
+            </div>
+            {isBuilding && <div className="twin-studio__mobile-floors" role="group" aria-label="اختيار الدور والغرفة">
+              <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); setNonce(n=>n+1); }}>
+                {availableFloors.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+              </select>
+              <select value={roomFilter} aria-label="الغرفة" onChange={e=>{setRoomFilter(e.target.value as RoomFilter);setSelected(null);}}>
+                <option value="all">جميع الغرف</option>
+                {rooms.map(r=><option key={r.key} value={r.key}>{r.name}</option>)}
+              </select>
+              <IconButton label="شفافية الجدران" aria-pressed={ghost} onClick={() => setGhost(v => !v)}><EyeOff {...ICON}/></IconButton>
+              <IconButton label="تفكيك الطوابق" aria-pressed={exploded} onClick={() => setExploded(v => !v)}><Move3d {...ICON}/></IconButton>
+            </div>}
           </div>
-          <div className="twin-studio__north"><Compass size={21}/><span>ش</span></div>
-          <button type="button" className="twin-studio__mobile-bim" data-testid="mobile-bim-files"
-            onClick={()=>{setInspectorTab("files");setMobileInspectorOpen(v=>!v);}}>
-            <Layers3 size={15}/> {isBuilding?"ملفات IFC (٤)":"ملفات المنشأة والتحليلات"}
-          </button>
-          <div className="twin-studio__view-controls">
-            {([["iso","منظور"], ["top","علوي"], ["front","واجهة"], ["inside","داخلي"]] as [Preset, string][]).map(([key, label]) =>
-              <button type="button" key={key} className={preset === key ? "is-active" : ""}
+          <div className="twin-studio__view-controls" role="group" aria-label="زاوية العرض">
+            {VIEW_PRESETS.map(([key, label]) =>
+              <button type="button" key={key} className={preset === key ? "is-active" : ""} aria-pressed={preset === key}
                 onClick={() => {setPreset(key); setSelected(null); setNonce(n => n + 1);}}>{label}</button>)}
           </div>
-          <div className="twin-studio__scene-hint"><span className="twin-studio__hint-dot"/> <span>دور بالكاميرا · قرّب · اختر شبكة ثم نقطة تمديد أو غرفة</span></div>
-          <div className="twin-studio__viewport-stats">
-            <span>{isBuilding?"5 STOREYS":"1 STOREY · "+(scene==="cafe"?"CAFE":"RESTAURANT")}</span><span>◦</span><span>DEMO / NOT AS-BUILT</span>
-          </div>
-          {totalVisible>0 && <div className="twin-studio__network-legend" data-testid="network-color-legend" aria-label="دليل ألوان الشبكات الظاهرة">
-            <strong><Layers3 size={13}/> {totalVisible===6?"جميع التمديدات":"التمديدات الظاهرة"} · {totalVisible}/6</strong>
-            <div>{SERVICE_KEYS.filter(key=>visible[key]).map(key=><button key={key} type="button" title={"عرض "+SERVICE_META[key].label+" فقط"}
-              onClick={()=>setFocusSystem(key)}>
-              <span style={{background:SERVICE_META[key].color}}/>{SERVICE_META[key].label}
-            </button>)}</div>
-          </div>}
-          {isBuilding && <div className="twin-studio__mobile-floors" aria-label="اختيار الدور والغرفة">
-            <select value={floor} aria-label="الدور" onChange={e => { setFloor(e.target.value as Floor); setSelected(null); }}>
-              {availableFloors.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
-            </select>
-            <select value={roomFilter} aria-label="الغرفة" onChange={e=>{setRoomFilter(e.target.value as RoomFilter);setSelected(null);}}>
-              <option value="all">جميع الغرف</option>
-              {rooms.map(r=><option key={r.key} value={r.key}>{r.name}</option>)}
-            </select>
-            <button type="button" aria-pressed={ghost} onClick={() => setGhost(v => !v)} title="شفافية الجدران"><EyeOff size={17}/></button>
-            <button type="button" aria-pressed={exploded} onClick={() => setExploded(v => !v)} title="فصل الطوابق"><Move3d size={17}/></button>
-          </div>}
-          {inspected && <div className="twin-studio__mobile-selection" dir="rtl">
-            <button type="button" aria-label="إغلاق تفاصيل العنصر" onClick={() => setSelected(null)}><X size={16}/></button>
+          {inspected && <div className="twin-studio__mobile-selection" dir="rtl" role="status">
+            <button type="button" aria-label="إغلاق تفاصيل العنصر" onClick={() => setSelected(null)}><X {...ICON_SM}/></button>
             <strong>{inspected.label}</strong><span>{inspected.description}</span>
           </div>}
-          {menuOpen && <div className="twin-studio__mobile-menu">
-            {SYSTEM_LIST.map(item => <button key={item.key} type="button" onClick={() => {setFocusSystem(item.key); setMenuOpen(false);}}>{item.label}</button>)}
-          </div>}
         </main>
-        <aside className={"twin-studio__inspector"+(mobileInspectorOpen?" is-mobile-open":"")} aria-label="تفاصيل العناصر">
-          {mobileInspectorOpen && <button type="button" className="twin-studio__mobile-inspector-close"
-            onClick={()=>setMobileInspectorOpen(false)} aria-label="إغلاق ملفات BIM">✕ إغلاق الملفات</button>}
-          <div className="twin-studio__section-heading"><Focus size={17}/><span>تفاصيل النموذج</span><span className="twin-studio__live"/></div>
+        <aside ref={inspectorRef} className={"twin-studio__inspector"+(mobileInspectorOpen?" is-mobile-open":"")} aria-label="تفاصيل العناصر">
+          {mobileInspectorOpen && <button type="button" ref={inspectorCloseRef} className="twin-studio__mobile-inspector-close"
+            onClick={closeInspector}><X {...ICON_SM}/> إغلاق التفاصيل</button>}
           <div className="twin-studio__inspector-hero">
-            <span>{isBuilding?"FIVE-STOREY BIM EXPLORER":"SINGLE-STOREY VENUE · DEMO"}</span>
-            <h2>{isBuilding?projectName:currentVenue?.title}</h2>
-            <p>{isBuilding ? (floor==="all"?"المبنى كاملًا":getFloorTitle(activityId,Math.max(0,levelOf(floor)))+" · "+"نموذج "+activityName+" تجريبي.")
-                        : currentVenue?.subtitle}</p>
+            <span>تفاصيل النموذج</span>
+            <h2>{isBuilding?buildingName:currentVenue?.title}</h2>
+            <p>{isBuilding ? floorTitle+" · نموذج "+activityLabel+" تجريبي." : currentVenue?.subtitle}</p>
           </div>
-          <div className="twin-studio__mini-stats">
-            <div><strong>{isBuilding?"05":"01"}</strong><small>أدوار تمثيلية</small></div>
-            <div><strong>{isBuilding?"08":"06"}</strong><small>شبكات هندسية</small></div>
-            <div><strong>{isBuilding?countEquipment.toString().padStart(2,"0"):getVenueMetrics(scene).total}</strong>
-              <small>{isBuilding?"عناصر خدمة ظاهرة":"عناصر هندسية مفهرسة"}</small></div>
-          </div>
+          <dl className="twin-studio__mini-stats">
+            <div><dt>الأدوار</dt><dd className="num">{isBuilding?5:1}</dd></div>
+            <div><dt>الشبكات</dt><dd className="num">6</dd></div>
+            <div><dt>{isBuilding?"العناصر الظاهرة":"العناصر"}</dt>
+              <dd className="num">{isBuilding?countEquipment:getVenueMetrics(scene).total}</dd></div>
+          </dl>
           <div className="twin-studio__inspector-tabs" role="group" aria-label="قسم تفاصيل التوأم الرقمي">
-            <button type="button" onClick={()=>setInspectorTab("items")} aria-pressed={inspectorTab==="items"}>العناصر والتجهيزات</button>
+            <button type="button" onClick={()=>setInspectorTab("items")} aria-pressed={inspectorTab==="items"}>العناصر</button>
             <button type="button" onClick={()=>setInspectorTab("files")} aria-pressed={inspectorTab==="files"}>ملفات BIM</button>
             {!isBuilding&&<button type="button" onClick={()=>setInspectorTab("analysis")} aria-pressed={inspectorTab==="analysis"}>التحليلات</button>}
           </div>
@@ -676,47 +756,44 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             : !isBuilding&&inspectorTab==="analysis"
               ? <VenueAnalysisPanel key={scene} kind={scene} onSystem={showVenueSystem} onPick={showVenueElement}/>
             : <>
+          <h3 className="twin-studio__section-heading">{inspected ? "العنصر المحدد" : "دليل الأنظمة"}</h3>
+          {inspected ? <div className="twin-studio__selection">
+            <span className="twin-studio__selection-tag">
+              <span style={{background: inspectedSystem?.color}} aria-hidden="true"/>{inspectedSystem?.label}</span>
+            <h4>{inspected.label}</h4>
+            <code dir="ltr">{inspected.id}</code>
+            <p>{inspected.description}</p>
+            <button type="button" className="twin-studio__text-button" onClick={() => setSelected(null)}><X {...ICON_SM}/> مسح التحديد</button>
+          </div> : <div className="twin-studio__guidance">
+            <strong>اختر شبكة، ثم اضغط أحد عناصرها</strong>
+            <p>اسحب لتدوير المشهد وقرّب بالعجلة، ثم استكشف الأنابيب واللوحات والمعدات ومسارات الخدمات داخل كل طابق.</p>
+          </div>}
           {!isBuilding&&<div className="twin-studio__venue-spot-list" data-testid="venue-inspector-spots">
-            <div className="twin-studio__section-heading"><Building2 size={16}/><span>مناطق المنشأة</span></div>
-            {venueSpots.map((spot,i)=><button key={spot.id} type="button" className={selected===spot.id?"is-active":""}
+            <h3 className="twin-studio__section-heading">مناطق المنشأة</h3>
+            {venueSpots.map(spot=><button key={spot.id} type="button" className={selected===spot.id?"is-active":""}
+              aria-pressed={selected===spot.id}
               onClick={()=>{setSelected(spot.id);setNonce(n=>n+1);}}>
-              <small>{String(i+1).padStart(2,"0")}</small><strong>{spot.title}</strong>
+              <strong>{spot.title}</strong>
               <span>{spot.description}</span>
             </button>)}
           </div>}
           {isBuilding && <>
-          <div className="twin-studio__rail-divider" />
-          <div className="twin-studio__section-heading"><Sofa size={17}/><span>أثاث وتجهيزات الغرف</span><small>{getInteriorItems(activityId,0).length}</small></div>
+          <h3 className="twin-studio__section-heading">أثاث وتجهيزات الغرف<small className="num">{getInteriorItems(activity,floorLevel).length}</small></h3>
           <div className="twin-studio__inventory" data-testid="twin-inventory">
-            {getInteriorItems(activityId, Math.max(0,levelOf(floor)))
+            {getInteriorItems(activity, floorLevel)
               .filter(item=>roomFilter==="all"||roomFilter===item.room)
               .map(item=><button type="button" key={item.id} className={selected===item.id?"is-active":""}
+                aria-pressed={selected===item.id}
                 onClick={()=>{setSelected(item.id);setFurniture(true);if(floor==="roof")setFloor("ground");setNonce(n=>n+1);}}
                 title={item.description}>
                 <span>{item.title}</span><small>{rooms.find(r=>r.key===item.room)?.name}</small>
               </button>)}
           </div>
-          </>}
-          <div className="twin-studio__rail-divider" />
-          <div className="twin-studio__section-heading"><Box size={17}/><span>{inspected ? "العنصر المحدد" : "دليل الأنظمة"}</span></div>
-          {inspected ? <div className="twin-studio__selection">
-            <span className="twin-studio__selection-tag" style={{color: SYSTEM_LIST.find(x => x.key === inspected.system)?.color}}>
-              {SYSTEM_LIST.find(x => x.key === inspected.system)?.label}</span>
-            <h3>{inspected.label}</h3>
-            <code dir="ltr">{inspected.id}</code>
-            <p>{inspected.description}</p>
-            <button type="button" onClick={() => setSelected(null)}><X size={15}/> مسح التحديد</button>
-          </div> : <div className="twin-studio__guidance">
-            <span className="twin-studio__guidance-symbol"><Focus size={23}/></span>
-            <strong>اختر شبكة، ثم اضغط أحد عناصرها</strong>
-            <p>يمكنك استكشاف الأنابيب واللوحات والمعدات ومسارات الخدمات داخل كل طابق.</p>
-          </div>}
-          {isBuilding ? <>
-          <div className="twin-studio__rail-divider"/>
-          <div className="twin-studio__section-heading"><Layers3 size={17}/><span>نقاط الخدمات التفصيلية</span></div>
+          <h3 className="twin-studio__section-heading">نقاط الخدمات التفصيلية</h3>
           <div className="twin-studio__inventory">
-            {getDetailPoints(Math.max(0,levelOf(floor))).filter(p=>system==="all"||system==="architecture"||p.system===system)
-              .map(point=><button type="button" key={point.id} onClick={()=>{
+            {getDetailPoints(floorLevel).filter(p=>system==="all"||system==="architecture"||p.system===system)
+              .map(point=><button type="button" key={point.id} className={selected===point.id?"is-active":""}
+                aria-pressed={selected===point.id} onClick={()=>{
                 setSelected(point.id);setFloor(LEVEL_KEYS[point.floor]);setSystem(point.system);
                 setVisible(Object.fromEntries(SERVICE_KEYS.map(k=>[k,k===point.system])) as ServiceVisibility);
                 setGhost(true);setNonce(n=>n+1);
@@ -724,21 +801,21 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 <span>{point.label}</span><small>{point.specification}</small>
               </button>)}
           </div>
-          </> : <div className="twin-studio__venue-quick-links">
-            <button type="button" onClick={()=>setInspectorTab("analysis")}><ShieldCheck size={15}/> مراجعة الأنظمة الهندسية</button>
-            <button type="button" onClick={()=>setInspectorTab("files")}><Layers3 size={15}/> الملفات والعناصر المرتبطة</button>
+          </>}
+          {!isBuilding && <div className="twin-studio__venue-quick-links">
+            <button type="button" className="link" onClick={()=>setInspectorTab("analysis")}>مراجعة الأنظمة الهندسية</button>
+            <button type="button" className="link" onClick={()=>setInspectorTab("files")}>الملفات والعناصر المرتبطة</button>
           </div>}
           </>}
-          <div className="twin-studio__rail-divider"/>
-          <div className="twin-studio__section-heading"><ShieldCheck size={17}/><span>حالة الدليل</span></div>
-          <div className="twin-studio__evidence">
-            <div><span>نتائج الفحص الفعلية</span><strong>{findingsCount} قواعد</strong></div>
-            <div><span>مصدر هندسة هذا المشهد</span><strong>إجرائي تجريبي</strong></div>
-            <div><span>حالة الربط مع IFC</span><strong>{isBuilding?"غير مرتبط هندسيًا":"معرّفات تجريبية فقط"}</strong></div>
-          </div>
-          <div className="twin-studio__disclaimer"><ShieldAlert size={18}/>
-            <p>مشاهد المقهى والمطعم والعمارة أمثلة ثلاثية الأبعاد مولّدة بالكود، وليست هندسة IFC أو مخططات تنفيذ. نتائج الفحص الأصلية مستقلة عنها.</p>
-          </div>
+          <h3 className="twin-studio__section-heading">حالة الدليل</h3>
+          <dl className="twin-studio__evidence">
+            <div><dt>مصدر هندسة المشهد</dt><dd>إجرائي تجريبي</dd></div>
+            <div><dt>الربط مع IFC</dt><dd>{isBuilding?"غير مرتبط هندسيًا":"معرّفات تجريبية فقط"}</dd></div>
+            <div><dt>نتائج الفحص</dt><dd>{findingsCount>0?<><span className="num">{findingsCount}</span> غير مطابق في آخر فحص، ولا تُعرض هنا</>:"مستقلة عن هذا المشهد"}</dd></div>
+          </dl>
+          <p className="twin-studio__disclaimer"><Info {...ICON_SM}/>
+            <span>مشاهد المقهى والمطعم والعمارة أمثلة ثلاثية الأبعاد مولّدة بالكود، وليست هندسة IFC أو مخططات تنفيذ. نتائج الفحص الأصلية مستقلة عنها.</span>
+          </p>
         </aside>
       </div>
     </div>

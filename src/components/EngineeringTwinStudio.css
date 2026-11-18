@@ -1,630 +1,1838 @@
-/* Full-screen, diagram-first digital twin. No external font or asset requests. */
+/* Digital twin studio (v2): a full-screen tool on the formal site palette.
+   Light rails, 1px hairlines, Almarai, the one brand green and neutral greys from src/brand/tokens.css.
+   The six network colours appear only as small keys, because they are what tells the networks apart in
+   the scene. Floating panels over the canvas are the only elements with a (subtle) shadow. */
+
 .twin-studio {
-  --tw-ink: #e7ece9;
-  --tw-muted: #97aaa5;
-  --tw-line: #2a3b3a;
-  --tw-bg: #142321;
-  --tw-panel: #182b29;
+  --tw-rail: 264px;
+  --tw-inspector: 320px;
+  --tw-float: 0 1px 2px rgb(22 22 22 / 0.06), 0 6px 18px rgb(22 22 22 / 0.08);
   position: fixed;
   z-index: 9000;
   inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  direction: rtl;
-  font-family: "IBM Plex Sans Arabic", "IBM Plex Sans", Tahoma, sans-serif;
-  color: var(--tw-ink);
-  background: var(--tw-bg);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
   isolation: isolate;
 }
-.twin-studio * { box-sizing: border-box; }
-.twin-studio button { cursor: pointer; font: inherit; }
-.twin-studio button:focus-visible, .twin-studio input:focus-visible { outline: 2px solid #7aceb5; outline-offset: 2px; }
+
+/* What the twin used to get from the deleted global stylesheet. Zero specificity, so the shared
+   .btn / .icon-btn / .link primitives still win. */
+:where(.twin-studio) :where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+:where(.twin-studio) :where(button) {
+  cursor: pointer;
+}
+
+:where(.twin-studio) :where(a) {
+  color: inherit;
+}
+
+:where(.twin-studio) :where(code) {
+  font-family: var(--font);
+}
+
+.twin-studio :where(h1, h2, h3, h4) {
+  letter-spacing: 0;
+}
+
+/* Plain line icons, one weight everywhere (including the BIM panels). */
+.twin-studio .lucide {
+  flex: none;
+  stroke-width: 1.6;
+}
+
+.twin-studio :focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- Header strip */
+
 .twin-studio__top {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: "title switch actions";
+  align-items: center;
+  gap: 12px 24px;
+  min-height: var(--header-h);
+  padding-block: 10px;
+  padding-inline: 24px;
+  background: var(--paper);
+  border-block-end: 1px solid var(--line);
+}
+
+.twin-studio__heading {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.twin-studio__mark {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  color: var(--brand);
+}
+
+.twin-studio__titles {
+  min-width: 0;
+}
+
+.twin-studio__titles h1 {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.twin-studio__titles h1:focus {
+  outline: none;
+}
+
+.twin-studio__note {
+  margin-block-start: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.twin-studio__scene-switcher {
+  grid-area: switch;
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.twin-studio__scene-switcher button {
+  min-width: 104px;
+  min-height: 44px;
+  padding-inline: 20px;
+  border: 0;
+  border-inline-start: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.twin-studio__scene-switcher button:first-child {
+  border-inline-start: 0;
+}
+
+.twin-studio__scene-switcher button:hover {
+  background: var(--surface);
+}
+
+.twin-studio__scene-switcher button.is-active {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.twin-studio__scene-switcher button:focus-visible {
+  outline-offset: -4px;
+}
+
+.twin-studio__scene-switcher button.is-active:focus-visible {
+  outline-color: var(--brand-ink);
+}
+
+.twin-studio__top-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.twin-studio__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.twin-studio__reset:hover {
+  background: var(--surface);
+  color: var(--brand);
+}
+
+.twin-studio__close {
+  min-width: 96px;
+}
+
+/* ---------------------------------------------------------------- Layout and rails */
+
+.twin-studio__layout {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--tw-rail) minmax(0, 1fr) var(--tw-inspector);
+}
+
+.twin-studio__systems,
+.twin-studio__inspector {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.twin-studio__systems {
+  border-inline-end: 1px solid var(--line);
+}
+
+.twin-studio__inspector {
+  padding: 20px;
+  border-inline-start: 1px solid var(--line);
+}
+
+/* Section tabs: underlined, like the site navigation. */
+.twin-studio__side-nav {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-inline: 8px;
+  background: var(--paper);
+  border-block-end: 1px solid var(--line);
+}
+
+.twin-studio__side-nav button {
+  min-height: 48px;
+  margin-block-end: -1px;
+  padding-inline: 4px;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.twin-studio__side-nav button:hover {
+  color: var(--ink);
+}
+
+.twin-studio__side-nav button[aria-selected="true"] {
+  color: var(--brand);
+  border-block-end-color: var(--brand);
+}
+
+.twin-studio__side-nav button:focus-visible {
+  outline-offset: -3px;
+}
+
+.twin-studio__side-panel {
+  padding: 20px 16px 28px;
+}
+
+.twin-studio__section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.twin-studio__section-heading small {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.twin-studio__section-note,
+.twin-studio__systems-intro {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.twin-studio__systems-intro {
+  display: grid;
+  gap: 2px;
+}
+
+.twin-studio__systems-intro strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* Lists in the rails: rows divided by hairlines, the chosen row tinted. */
+.twin-studio__system-list,
+.twin-studio__floor-list,
+.twin-studio__room-filter,
+.twin-studio__switches {
+  display: grid;
+  border-block-start: 1px solid var(--line);
+}
+
+.twin-studio__system,
+.twin-studio__floor-list button,
+.twin-studio__room-filter button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-block-end: 1px solid var(--line);
+  background: none;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: start;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.twin-studio__system:hover,
+.twin-studio__floor-list button:hover,
+.twin-studio__room-filter button:hover {
+  background: var(--surface);
+}
+
+.twin-studio__system.is-active,
+.twin-studio__floor-list button.is-active,
+.twin-studio__room-filter button.is-active {
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.twin-studio__system:first-child {
+  font-weight: 700;
+}
+
+.twin-studio__system-bullet {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--system-color);
+}
+
+/* A hidden network keeps its colour as an outline only. */
+.twin-studio__system[data-network-visible="false"] .twin-studio__system-bullet {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--system-color);
+}
+
+.twin-studio__system-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.twin-studio__system > .lucide {
+  color: var(--brand);
+}
+
+.twin-studio__floor-list button {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+}
+
+.twin-studio__floor-list button span {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.twin-studio__floor-list button.is-active span {
+  color: var(--brand);
+}
+
+.twin-studio__floor-list button em {
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.twin-studio__field {
+  display: grid;
+  gap: 6px;
+  margin-block-end: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.twin-studio__field select,
+.twin-studio__mobile-floors select,
+.bim-library__content select {
+  width: 100%;
+  min-height: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.twin-studio__switch {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 4px;
+  border-block-end: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.twin-studio__switch > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.twin-studio__switch > span .lucide {
+  color: var(--muted);
+}
+
+.twin-studio__switch input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
   flex: none;
-  min-height: 76px;
-  padding: 11px 24px;
-  background: #11201e;
-  border-bottom: 1px solid var(--tw-line);
+  accent-color: var(--brand);
+  cursor: pointer;
 }
-.twin-studio__brand { display: flex; align-items: center; gap: 12px; min-width: 230px; }
-.twin-studio__brand-icon { width: 42px; height: 42px; display: grid; place-items: center; color: #a4e0ca; background: #284b40; border: 1px solid #396653; border-radius: 3px; }
-.twin-studio__brand strong { display: block; font-size: 15px; letter-spacing: -.3px; }
-.twin-studio__brand strong b { font-weight: 400; color: #638879; margin: 0 5px; }
-.twin-studio__brand small { display: block; margin-top: 3px; font: 10px "IBM Plex Mono", monospace; letter-spacing: 1.4px; color: #7faaa0; direction: ltr; text-align: right; }
-.twin-studio__project { display: flex; gap: 12px; align-items: center; min-width: 0; }
-.twin-studio__project strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 270px; }
-.twin-studio__project small { display: block; color: var(--tw-muted); font-size: 10px; margin-top: 2px; }
-.twin-studio__live { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: #6bc7a3; box-shadow: 0 0 0 4px #6bc7a316; }
-.twin-studio__top-actions { display: flex; align-items: center; gap: 8px; }
-.twin-studio__top-actions button {
-  background: #20332f; border: 1px solid #344d45; color: #c5d6d0;
-  border-radius: 4px; padding: 9px 12px; display: flex; gap: 7px; align-items: center;
-  justify-content: center; white-space: nowrap; font-size: 12px;
-}
-.twin-studio__top-actions button:hover { background: #345447; }
-.twin-studio__top-actions .twin-studio__close { background: #e5eadd; color: #1c312a; border-color: #e5eadd; }
-.twin-studio__top-actions .twin-studio__close:hover { background: white; }
-.twin-studio__layout {
-  display: grid;
-  grid-template-columns: 251px minmax(0, 1fr) 285px;
-  min-height: 0; flex: 1;
-  background: #d2ddd9;
-}
-.twin-studio__systems,.twin-studio__inspector {
+
+/* ---------------------------------------------------------------- 3D viewport */
+
+.twin-studio__viewport {
+  position: relative;
+  min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  background: var(--tw-panel);
-  scrollbar-width: thin;
-  scrollbar-color: #445950 transparent;
-  padding: 22px 14px;
+  overflow: hidden;
+  background: var(--surface-2);
 }
-.twin-studio__systems { border-left: 1px solid var(--tw-line); }
-.twin-studio__inspector { border-right: 1px solid var(--tw-line); }
-.twin-studio__section-heading {
-  display: flex; align-items: center; gap: 8px;
-  padding: 0 8px; margin-bottom: 15px;
-  color: #a7d6c8; font-size: 12px; font-weight: 700;
+
+/* The canvas keeps left-to-right coordinates; the panels over it follow the page direction.
+   z-index makes it a stacking context, so the labels drei places in the scene (with very large
+   z-index values) stay under the panels and the details sheet. */
+.twin-studio__canvas {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  direction: ltr;
 }
-.twin-studio__section-heading svg { color: #83b6a5; }
-.twin-studio__section-heading small { margin-right: auto; font: 10px monospace; color: #68867c; }
-.twin-studio__section-heading .twin-studio__live { margin-right: auto; }
-.twin-studio__system-list,.twin-studio__floor-list,.twin-studio__switches { display: grid; gap: 4px; }
-.twin-studio__system {
-  display: flex; align-items: center; gap: 10px;
-  width: 100%; height: 42px; padding: 0 10px;
-  color: #abbeb6; border: 1px solid transparent; background: transparent;
-  text-align: right; font-size: 12px; border-radius: 4px;
+
+.twin-studio__canvas canvas {
+  display: block;
+  touch-action: none;
 }
-.twin-studio__system:hover { background: #223833; }
-.twin-studio__system.is-active { color: #f4f9f7; background: #29413a; border-color: #436454; }
-.twin-studio__system > svg, .twin-studio__system-arrow { margin-right: auto; color: #779589; }
-.twin-studio__system.is-active > svg { color: #8be0b9; }
-.twin-studio__system-bullet { width: 9px; height: 9px; flex: none; background: var(--system-color); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--system-color) 15%, transparent); }
-.twin-studio__rail-divider { height: 1px; background: #30443e; margin: 23px 5px; }
-.twin-studio__floor-list button {
-  display: flex; align-items: center; gap: 10px; height: 35px; padding: 0 11px;
-  border: 1px solid transparent; background: transparent; border-radius: 4px;
-  color: #a8bcb3; font-size: 12px; text-align: right;
+
+.twin-studio__overlay-title,
+.twin-studio__network-legend,
+.twin-studio__view-controls,
+.twin-studio__mobile-selection,
+.twin-studio__mobile-bim {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--tw-float);
 }
-.twin-studio__floor-list button:hover { background: #223833; }
-.twin-studio__floor-list button.is-active { background: #28493c; border-color: #497560; color: #e6fff1; }
-.twin-studio__floor-list small { min-width: 23px; font: 11px "IBM Plex Mono", monospace; color: #6b9682; direction: ltr; text-align: left; }
-.twin-studio__switch { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 6px; color: #b1c3bc; font-size: 11px; cursor: pointer; }
-.twin-studio__switch > span { display: inline-flex; gap: 7px; align-items: center; }
-.twin-studio__switch > span svg { color: #799c92; }
-.twin-studio__switch input { cursor: pointer; width: 16px; height: 16px; accent-color: #6cbd92; }
-.twin-studio__mobile-systems { display: none; }
-.twin-studio__viewport { position: relative; min-width: 0; min-height: 0; overflow: hidden; direction: ltr; background: linear-gradient(#d1dcd7,#aabfba); }
-.twin-studio__canvas { position: absolute; inset: 0; }
-.twin-studio__canvas canvas { display: block; touch-action: none; }
+
+.twin-studio__hud {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 16px;
+  inset-inline: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
 .twin-studio__overlay-title {
-  position: absolute; pointer-events: none; top: 19px; left: 20px;
-  display: flex; flex-direction: column; gap: 5px;
-  min-width: 185px; padding: 16px 19px;
-  border: 1px solid #ffffffb3; background: #ffffffde; box-shadow: 0 4px 24px #203a3423;
-  border-radius: 3px; color: #204035; direction: rtl; text-align: right;
-}
-.twin-studio__overlay-title small { color: #749086; font: 9px "IBM Plex Mono", monospace; letter-spacing: .5px; direction: ltr; }
-.twin-studio__overlay-title strong { font-size: 21px; line-height: 1.35; }
-.twin-studio__overlay-title > span { font-size: 11px; color: #55736b; }
-.twin-studio__north { position: absolute; pointer-events: none; top: 24px; right: 22px; color: #426459; display: grid; place-items: center; background: #ffffffc7; width: 39px; height: 41px; border: 1px solid #ffffff80; border-radius: 3px; }
-.twin-studio__north span { position: absolute; top: 2px; right: 4px; font-size: 9px; font-weight: 700; }
-.twin-studio__view-controls {
-  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-  display: flex; border: 1px solid #ffffffa3; background: #ffffffed;
-  padding: 5px; border-radius: 4px; box-shadow: 0 5px 24px #26433c2b; direction: rtl;
-}
-.twin-studio__view-controls button { padding: 9px 14px; min-width: 60px; border: 0; border-radius: 2px; background: transparent; font-size: 12px; color: #5f7a70; }
-.twin-studio__view-controls button:hover { background: #edf1ec; }
-.twin-studio__view-controls button.is-active { background: #214f3b; color: white; }
-.twin-studio__scene-hint { position: absolute; top: 50%; right: 19px; transform: translateY(-50%); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 10px; color: #476a5d; writing-mode: vertical-rl; direction: rtl; }
-.twin-studio__hint-dot { display: inline-block; width: 4px; height: 29px; background: #3c9f73; border-radius: 3px; }
-.twin-studio__viewport-stats {
-  position: absolute; left: 20px; bottom: 17px; pointer-events: none;
-  display: flex; gap: 10px; color: #365c53; font: 9px "IBM Plex Mono", monospace; opacity: .9;
-}
-.twin-world-label { white-space: nowrap; padding: 7px 11px; color: #1d493e; font-size: 11px; background: #ffffffeb; border: 1px solid #8ab3a1; border-radius: 3px; }
-.twin-floor-number { padding: 3px 5px; color: #31584e; font: 11px "IBM Plex Mono",monospace; background: #ffffffc4; border-left: 2px solid #3c7861; }
-.twin-studio__inspector-hero { padding: 15px; background: #223a33; border: 1px solid #35594a; border-radius: 4px; }
-.twin-studio__inspector-hero > span { font: 9px monospace; letter-spacing: 1.2px; color: #7bb79e; }
-.twin-studio__inspector-hero h2 { font-size: 16px; line-height: 1.5; margin: 8px 0; color: #eef7ef; overflow-wrap: anywhere; }
-.twin-studio__inspector-hero p { font-size: 11px; line-height: 1.9; margin: 0; color: #acc4b7; }
-.twin-studio__mini-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding-top: 13px; }
-.twin-studio__mini-stats > div { padding: 11px 6px; background: #203731; text-align: center; border: 1px solid #304a40; }
-.twin-studio__mini-stats strong { display: block; color: #def6e8; font: 19px "IBM Plex Mono", monospace; }
-.twin-studio__mini-stats small { display: block; font-size: 9px; margin-top: 5px; line-height: 1.5; color: #94afa1; }
-.twin-studio__guidance { padding: 20px 13px; text-align: center; border: 1px dashed #466457; }
-.twin-studio__guidance-symbol { display: grid; place-items: center; margin: 0 auto 13px; width: 49px; height: 49px; background: #294238; color: #83bba3; border-radius: 4px; }
-.twin-studio__guidance strong { display: block; line-height: 1.65; font-size: 12px; }
-.twin-studio__guidance p { color: #9db4a7; line-height: 1.9; font-size: 11px; margin: 8px 0 0; }
-.twin-studio__selection { padding: 16px 12px; border: 1px solid #446451; background: #233c31; }
-.twin-studio__selection-tag { font-size: 11px; font-weight: 700; }
-.twin-studio__selection h3 { font-size: 15px; margin: 10px 0; line-height: 1.6; }
-.twin-studio__selection code { display: inline-block; max-width: 100%; padding: 5px; background: #162b25; color: #c0dfd3; font-size: 10px; overflow-wrap: anywhere; }
-.twin-studio__selection p { color: #a8c7b5; font-size: 11px; line-height: 1.9; margin: 12px 0; }
-.twin-studio__selection button { border: 1px solid #4e705e; background: transparent; color: #cde4d5; font-size: 11px; padding: 8px; display: inline-flex; align-items: center; gap: 7px; }
-.twin-studio__evidence { display: grid; gap: 1px; background: #294038; }
-.twin-studio__evidence div { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px; background: #1d322c; }
-.twin-studio__evidence span { font-size: 10px; color: #9db6a9; }
-.twin-studio__evidence strong { text-align: left; font-size: 10px; color: #d8ebe0; font-weight: 600; }
-.twin-studio__disclaimer { display: flex; gap: 9px; background: #453e2d; border: 1px solid #66583a; padding: 12px; margin-top: 18px; color: #e5ce9e; }
-.twin-studio__disclaimer svg { flex: none; }
-.twin-studio__disclaimer p { font-size: 10px; line-height: 1.9; margin: 0; }
-.twin-studio__mobile-menu { display: none; }
-@media (max-width: 1280px) {
-  .twin-studio__layout { grid-template-columns: 210px minmax(0,1fr) 235px; }
-  .twin-studio__systems,.twin-studio__inspector { padding: 17px 9px; }
-  .twin-studio__brand { min-width: 200px; }
-  .twin-studio__scene-hint { display: none; }
-}
-@media (max-width: 1000px) {
-  .twin-studio__layout { grid-template-columns: 200px minmax(0,1fr); }
-  .twin-studio__inspector { display: none; }
-  .twin-studio__top { padding: 10px 13px; }
-  .twin-studio__project { display: none; }
-}
-@media (max-width: 660px) {
-  .twin-studio__top { min-height: 60px; }
-  .twin-studio__brand { min-width: 0; }
-  .twin-studio__brand strong { font-size: 12px; }
-  .twin-studio__brand small { font-size: 7px; letter-spacing: .8px; }
-  .twin-studio__brand-icon { width: 34px; height: 34px; }
-  .twin-studio__top-actions button span { display: none; }
-  .twin-studio__top-actions button { padding: 8px; }
-  .twin-studio__layout { display: flex; flex-direction: column; }
-  .twin-studio__systems { border-left: 0; border-bottom: 1px solid #385043; padding: 9px 10px; min-height: 0; flex: none; overflow-x: auto; overflow-y: hidden; }
-  .twin-studio__systems > .twin-studio__section-heading,
-  .twin-studio__systems .twin-studio__rail-divider,
-  .twin-studio__systems .twin-studio__floor-list,
-  .twin-studio__systems .twin-studio__switches { display: none; }
-  .twin-studio__system-list { display: flex; white-space: nowrap; width: max-content; }
-  .twin-studio__system { width: auto; height: 37px; padding: 0 11px; }
-  .twin-studio__system-arrow { display: none; }
-  .twin-studio__system > svg { display: none; }
-  .twin-studio__viewport { flex: 1; }
-  .twin-studio__overlay-title { top: 10px; left: 10px; padding: 11px 12px; min-width: 130px; }
-  .twin-studio__overlay-title strong { font-size: 15px; }
-  .twin-studio__overlay-title small { font-size: 7px; }
-  .twin-studio__north { top: 12px; right: 12px; }
-  .twin-studio__viewport-stats { left: 9px; bottom: 8px; font-size: 7px; }
-  .twin-studio__view-controls { bottom: 38px; }
-  .twin-studio__view-controls button { padding: 7px 8px; min-width: 48px; font-size: 10px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .twin-studio * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  max-width: 300px;
+  padding: 10px 14px;
+  pointer-events: none;
 }
 
-.twin-studio__mobile-floors, .twin-studio__mobile-selection { display: none; }
-@media (max-width: 1000px) {
-  .twin-studio__mobile-selection {
-    display: flex; flex-direction: column; gap: 4px; position: absolute;
-    bottom: 95px; right: 16px; width: min(310px, calc(100% - 32px));
-    padding: 12px 38px 13px 15px; direction: rtl; text-align: right;
-    color: #234535; border: 1px solid #9cbaaa; background: #ffffffed;
-    box-shadow: 0 8px 25px #1d41302e; font-size: 11px; line-height: 1.6;
-  }
-  .twin-studio__mobile-selection > button { position: absolute; top: 8px; right: 8px; border: 0; color: #436a56; background: transparent; }
-  .twin-studio__mobile-selection strong { font-size: 13px; }
-  .twin-studio__mobile-selection span { color: #527568; }
-}
-@media (max-width: 660px) {
-  .twin-studio__mobile-floors {
-    display: flex; align-items: center; gap: 6px; position: absolute;
-    right: 10px; top: 68px; direction: rtl;
-  }
-  .twin-studio__mobile-floors select,
-  .twin-studio__mobile-floors button { height: 36px; border: 1px solid #acc3b7; border-radius: 3px; background: #ffffffed; color: #375548; }
-  .twin-studio__mobile-floors select { width: 135px; padding: 0 8px; font: 12px "IBM Plex Sans Arabic",Tahoma,sans-serif; }
-  .twin-studio__mobile-floors button { display: grid; place-items: center; width: 35px; }
-  .twin-studio__mobile-floors button[aria-pressed="true"] { background: #2b6047; color: white; border-color: #2b6047; }
-  .twin-studio__mobile-selection { bottom: 89px; right: 9px; width: min(275px, calc(100% - 18px)); }
+.twin-studio__overlay-title small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
-
-/* Room and furniture index are first-class navigation, not decorative labels. */
-.twin-studio__room-filter { display: grid; gap: 5px; }
-.twin-studio__room-filter button {
-  border: 1px solid #33493f;
-  background: #1d312b; color: #b9cfc2;
-  padding: 10px 9px; min-height: 41px; width: 100%;
-  display: flex; justify-content: space-between; align-items: center;
-  text-align: right; border-radius: 3px; font-size: 11px;
-}
-.twin-studio__room-filter button:hover { background: #2a4637; }
-.twin-studio__room-filter button.is-active {
-  background: #325745; color: #f1fff6; border-color: #76aa8c;
-}
-.twin-studio__room-filter button small { color: #84ac96; font: 10px "IBM Plex Mono", monospace; }
-.twin-studio__room-filter button.is-active small { color: #c0e8cc; }
-.twin-studio__inventory {
-  display: grid; gap: 4px; padding: 1px;
-  max-height: 239px; overflow-y: auto; scrollbar-width: thin;
-  scrollbar-color: #456251 transparent;
-}
-.twin-studio__inventory button {
-  background: #20362e; border: 1px solid #334a3f;
-  padding: 10px; text-align: right; color: #dceadd;
-  display: flex; flex-direction: column; gap: 5px; border-radius: 3px;
-}
-.twin-studio__inventory button:hover { background: #2c4a3a; }
-.twin-studio__inventory button.is-active {
-  background: #315641; border-color: #8ab89b;
-}
-.twin-studio__inventory button span { font-weight: 600; font-size: 11px; }
-.twin-studio__inventory button small { font-size: 10px; color: #86a797; }
-.twin-room-label {
-  display: block; white-space: nowrap; pointer-events: auto;
-  background: #f3f5f1eb; border: 1px solid #94b6a9; color: #285445;
-  padding: 5px 9px; font: 600 11px "IBM Plex Sans Arabic",Tahoma,sans-serif;
-  border-radius: 3px; box-shadow: 0 2px 8px #1c312126;
-}
-.twin-room-label:hover, .twin-room-label.is-selected { background: #286449; color: white; }
-.twin-world-label { display: flex; flex-direction: column; gap: 3px; line-height: 1.5; direction: rtl; }
-.twin-world-label small { color: #537568; font-size: 9px; }
-.twin-studio__mini-stats { margin-top: 5px; }
-.twin-studio__viewport .twin-studio__overlay-title {
-  background: #ffffffed;
-}
-@media (max-width: 1280px) {
- .twin-studio__inventory { max-height: 175px; }
-}
-@media (max-width: 660px) {
- .twin-studio__mobile-floors { left: 9px; right: 9px; width: calc(100% - 18px); gap: 4px; }
- .twin-studio__mobile-floors select { min-width: 0; flex: 1; width: auto; font-size: 10px; }
- .twin-studio__mobile-floors button { flex: none; width: 30px; }
+.twin-studio__overlay-title strong {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-@media (max-width: 660px) {
-  /* On phones room navigation lives in the compact select, not inside the scroll rail. */
-  .twin-studio__systems .twin-studio__room-filter { display: none; }
-  .twin-studio__systems { padding: 7px 9px; }
-  .twin-studio__overlay-title { max-width: 153px; }
-  .twin-studio__mobile-floors { top: 80px; }
+.twin-studio__overlay-title span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
 }
 
-
-/* BIM explorer / readable engineering controls */
-.twin-studio__layout { grid-template-columns: 250px minmax(0,1fr) 350px; }
-.twin-studio__systems,.twin-studio__inspector { background: #142924; }
-.twin-studio__system,.twin-studio__floor-list button,.twin-studio__switch { font-size: 13px; color: #e0ece5; }
-.twin-studio__system:not(.is-active):hover,.twin-studio__floor-list button:not(.is-active):hover { background: #315143; }
-.twin-studio__section-heading { font-size: 13px; color: #e1f4e9; }
-.twin-studio__room-filter button { font-size: 12px; color: #e1ede4; }
-.twin-studio__system.is-active { background: #35644d; }
-.twin-studio__viewport { background: #dce5df; }
-.twin-studio__inspector-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 18px 0; }
-.twin-studio__inspector-tabs button { color: #dcebe3; padding: 12px 7px; border: 1px solid #597265; background: #233e31; font-size: 12px; font-weight: 600; border-radius: 3px; }
-.twin-studio__inspector-tabs button[aria-pressed="true"] { background: #dff0e6; border-color: #dff0e6; color: #1d4933; }
-.bim-library__intro { border: 1px solid #3d6a54; background: #1d4030; padding: 13px; }
-.bim-library__title { display: flex; gap: 8px; align-items: center; font-size: 14px; color: #edfff1; }
-.bim-library__intro p { font-size: 12px; line-height: 1.85; margin: 8px 0; color: #d1e9d7; }
-.bim-library__demo { display: flex; gap: 5px; font-size: 10px; align-items: flex-start; color: #e9d5a4; line-height: 1.65; }
-.bim-library__demo svg { flex: none; }
-.bim-library__loading,.bim-library__status { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 10px; background: #214736; }
-.bim-library__status.is-error { color: #ffaaa0; }
-.bim-library__files { display: grid; gap: 8px; margin-top: 12px; }
-.bim-library__file { background: #1d382f; border: 1px solid #3f5f50; padding: 10px; border-radius: 3px; }
-.bim-library__file.is-loaded { border-color: #96d1a7; background: #244b36; }
-.bim-library__file-head { display: flex; align-items: center; gap: 9px; }
-.bim-library__file-head > span:nth-child(2) { min-width: 0; flex: 1; }
-.bim-library__file-icon { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid; background: #193126; flex: none; }
-.bim-library__file-head strong { font: 11px "IBM Plex Mono", monospace; color: #f2fff9; display: block; }
-.bim-library__file-head small { color: #b1d9c2; font-size: 11px; display: block; }
-.bim-library__file-head b { font: 12px "IBM Plex Mono",monospace; color: #f3e4c1; }
-.bim-library__file p { color: #d1e3d8; font-size: 11px; line-height: 1.6; margin: 8px 0; }
-.bim-library__file-actions { display: flex; gap: 6px; }
-.bim-library__file-actions > button,.bim-library__file-actions > a { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 32px; padding: 6px 9px; font-size: 11px; font-weight: 600; border-radius: 2px; }
-.bim-library__file-actions > button { flex: 1; background: #ccebd6; border: 1px solid #b9dbc5; color: #194a30; }
-.bim-library__file-actions > button:disabled { opacity: .65; cursor: progress; }
-.bim-library__file-actions > a { border: 1px solid #739b83; color: #e8f8ed; }
-.bim-library__content { margin-top: 12px; border: 1px solid #4e7760; background: #1b3b2d; }
-.bim-library__content > header { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #3b6150; }
-.bim-library__content > header > span { display: flex; gap: 6px; align-items: center; font-size: 11px; }
-.bim-library__content > header > b { font: 11px monospace; color: #aedbbd; }
-.bim-library__content > label { display: grid; gap: 6px; padding: 10px; font-size: 11px; color: #c7e4d1; }
-.bim-library__content select { width: 100%; background: #eef8f0; color: #214531; padding: 6px; border-radius: 2px; }
-.bim-library__elements { max-height: 260px; overflow-y: auto; scrollbar-width: thin; }
-.bim-library__elements button { display: flex; gap: 8px; align-items: flex-start; border: 0; border-top: 1px solid #345b46; width: 100%; background: transparent; padding: 10px; color: #e8faed; text-align: right; }
-.bim-library__elements button:hover { background: #315c42; }
-.bim-library__elements button svg { color: #8fc9a2; flex: none; }
-.bim-library__elements button strong { display: block; font-size: 11px; line-height: 1.5; }
-.bim-library__elements button small { display: block; font-size: 10px; color: #afd1b6; direction: ltr; text-align: right; }
-.bim-library__footnote { display: block; padding: 9px; font-size: 10px; color: #c6dccc; line-height: 1.65; }
-.twin-studio__mobile-bim { display: none; }
-@media (max-width: 1340px) {
- .twin-studio__layout { grid-template-columns: 215px minmax(0,1fr) 302px; }
-}
-@media (max-width: 1000px) {
- .twin-studio__layout { grid-template-columns: 200px minmax(0,1fr); }
- .twin-studio__mobile-bim { position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; background: #174a37; color: white; padding: 10px 12px; border: 1px solid #29674b; border-radius: 3px; }
- .twin-studio__inspector.is-mobile-open { display: block; position: absolute; z-index: 25; left: 0; top: 76px; bottom: 0; width: min(365px,100%); box-shadow: 7px 0 32px #152b2666; }
-}
-@media (max-width: 660px) {
- .twin-studio__mobile-bim { top: 116px; right: 8px; padding: 7px 9px; font-size: 10px; }
- .twin-studio__inspector.is-mobile-open { left: 0; right: 0; top: 60px; bottom: 0; width: 100%; }
- .twin-studio__system,.twin-studio__floor-list button { font-size: 11px; }
- .twin-studio__viewport-stats { max-width: 260px; }
+.twin-studio__hud-end {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 0;
 }
 
-.twin-studio__mobile-inspector-close { width:100%; background:#dcefe2; border:1px solid #bbd7c5; color:#19452f; padding:10px; font-size:12px; font-weight:700; margin-bottom:12px; }
-.twin-studio__inspector .twin-studio__inspector-hero p,.twin-studio__inspector .twin-studio__guidance p { color:#d4e5d8; }
-.twin-studio__inspector .twin-studio__mini-stats small { color:#c9e0d1; }
-
-
-/* V3: intentional navigation hierarchy — one task per section. */
-.twin-studio__layout { grid-template-columns: 244px minmax(0,1fr) 292px; }
-.twin-studio__systems,.twin-studio__inspector { padding: 17px 13px; }
-.twin-studio__side-nav {
-  display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px;
-  padding: 5px; margin-bottom: 18px; border: 1px solid #3f5a4a;
-  background: #10221b; border-radius: 4px;
-}
-.twin-studio__side-nav button {
-  border: 1px solid transparent; border-radius: 3px; color: #c5ded1;
-  background: transparent; min-height: 37px; font-size: 12px; font-weight: 600;
-}
-.twin-studio__side-nav button[aria-selected="true"] {
-  background: #d8ebdf; color: #174a31; border-color: #a7d0b7;
-}
-.twin-studio__side-nav button:hover:not([aria-selected="true"]) { background: #274638; }
-.twin-studio__side-panel { animation: twin-panel-enter 140ms ease-out both; }
-@keyframes twin-panel-enter { from {opacity:.6;transform:translateY(3px)} to{opacity:1;transform:translateY(0)} }
-.twin-studio__section-heading { margin: 0 0 13px; padding: 0 4px; }
-.twin-studio__section-note { color: #bbd3c4; font-size: 12px; line-height: 1.7; margin: 0 4px 12px; }
-.twin-studio__system-list,.twin-studio__floor-list,.twin-studio__room-filter { display:grid; gap: 7px; }
-.twin-studio__floor-list button {
-  display: grid; grid-template-columns: 25px 1fr; align-content: center; align-items: start; column-gap: 10px;
-  width: 100%; height: auto; min-height: 50px; padding: 9px 11px;
-  border: 1px solid #355244; border-radius: 3px; background: #1b3528;
-  text-align: right; line-height: 1.45; color: #e3f3e8;
-}
-.twin-studio__floor-list button:hover { background:#29513b; }
-.twin-studio__floor-list button.is-active { border-color:#9ac7ac; background:#315740; }
-.twin-studio__floor-list button small {
-  font: 11px "IBM Plex Mono",monospace; color:#9bd1a9; min-width:0; padding-top:2px;
-}
-.twin-studio__floor-list button span { font-size:12px; font-weight:600; }
-.twin-studio__floor-list button em {
-  grid-column:2; display:block; font-size:11px; line-height:1.4; font-style:normal;
-  color:#a7c5b1; font-weight:400; margin-top:2px;
-}
-.twin-studio__floor-list button.is-active em { color:#d4f2df; }
-.twin-studio__switch { padding: 13px 9px; border-bottom:1px solid #345244; }
-.twin-studio__inspector-hero { padding:12px; }
-.twin-studio__inspector-hero h2 { font-size:14px; margin:5px 0; }
-.twin-studio__inspector-hero p { font-size:11px; line-height:1.7; }
-.twin-studio__mini-stats { padding-top:9px; }
-.twin-studio__mini-stats > div { padding:8px 4px; }
-.twin-studio__mini-stats strong { font-size:16px; }
-.twin-studio__mini-stats small { margin-top:3px; }
-.twin-studio__inspector-tabs { margin:12px 0 16px; }
-.twin-studio__inspector-tabs button { padding:10px 4px; }
-.twin-studio__overlay-title { padding:10px 13px; min-width:150px; top:15px; left:15px; }
-.twin-studio__overlay-title strong { font-size:16px; }
-.twin-floor-number {
-  display: flex; align-items:center; gap:8px; font-family: "IBM Plex Sans Arabic",Tahoma,sans-serif;
-  font-size:11px; background:#f7faf5f5; color:#204935; padding:5px 9px;
-  border:1px solid #9eb9a8; border-right:3px solid #3b8964; border-left:0;
-  box-shadow:0 3px 12px #2b423019; min-width:112px; direction:rtl;
-}
-.twin-floor-number strong { font:600 12px "IBM Plex Mono",monospace; color:#367958; }
-.twin-floor-number span { font-size:11px; font-weight:600; white-space:nowrap; }
-.twin-room-label { font-size:10px; padding:4px 6px; }
-.twin-studio__viewport-stats { letter-spacing: .15px; }
-@media (max-width: 1340px) {
- .twin-studio__layout { grid-template-columns: 212px minmax(0,1fr) 262px; }
- .twin-studio__floor-list button { padding:8px; }
- .twin-studio__systems,.twin-studio__inspector { padding:11px 9px; }
-}
-@media (max-width: 1000px) {
- .twin-studio__layout { grid-template-columns: 215px minmax(0,1fr); }
-}
-@media (max-width:660px) {
- .twin-studio__systems { max-height:180px; overflow:visible; padding:6px 9px; }
- .twin-studio__side-nav { grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; margin-bottom:5px; padding:3px; }
- .twin-studio__side-nav button { font-size:11px; min-height:32px; }
- .twin-studio__side-panel { overflow-x:auto; max-height:90px; }
- .twin-studio__systems > .twin-studio__section-heading { display:none; }
- .twin-studio__systems .twin-studio__floor-list,
- .twin-studio__systems .twin-studio__room-filter,
- .twin-studio__systems .twin-studio__switches { display:flex; gap:5px; flex-wrap:nowrap; overflow-x:auto; }
- .twin-studio__systems .twin-studio__section-heading,
- .twin-studio__systems .twin-studio__section-note { display:none; }
- .twin-studio__floor-list button { min-height:34px; white-space:nowrap; display:flex; width:auto; padding:6px 10px; align-items:center; }
- .twin-studio__floor-list button em { display:none; }
- .twin-studio__floor-list button span { font-size:11px; }
- .twin-studio__room-filter button { width:auto; min-height:34px; padding:5px 8px; flex:none; font-size:11px; }
- .twin-studio__switch { white-space:nowrap; border:0; padding:6px; font-size:10px; }
- .twin-studio__system-list { width:max-content; }
- .twin-floor-number { min-width:88px; padding:4px 6px; }
- .twin-floor-number span { font-size:9px; }
- .twin-studio__overlay-title { top:7px; left:7px; padding:7px; min-width:115px; }
- .twin-studio__overlay-title strong { font-size:13px; }
- .twin-studio__mobile-floors { top:82px; }
- .twin-studio__mobile-bim { top:126px; }
-}
-@media (prefers-reduced-motion:reduce) {
- .twin-studio__side-panel { animation:none; }
+.twin-studio__hud-end > * {
+  pointer-events: auto;
 }
 
-
-/* Dedicated venue navigation: clearly separate business archetypes from in-scene filters. */
-.twin-studio__scene-switcher {
-  display:flex; gap:5px; padding:5px; background:#091b17; border:1px solid #355649;
-  border-radius:5px; align-items:center; justify-content:center;
-}
-.twin-studio__scene-switcher button {
-  color:#c0d6c8; background:transparent; border:1px solid transparent;
-  padding:10px 20px; min-width:96px; font-size:13px; font-weight:700; border-radius:3px;
-}
-.twin-studio__scene-switcher button:hover { background:#274a38; color:white; }
-.twin-studio__scene-switcher button.is-active {
-  background:#e7f1e4; color:#1e5136; border-color:#e7f1e4;
-}
-.twin-studio__venue-spot-list { display:grid; gap:6px; margin:9px 0 20px; }
-.twin-studio__venue-spot-list button {
-  background:#213c30; border:1px solid #416454; border-radius:3px;
-  padding:11px; display:grid; grid-template-columns:24px 1fr; column-gap:8px;
-  text-align:right; color:#eff6ef;
-}
-.twin-studio__venue-spot-list button.is-active { background:#315f43; border-color:#a6cfb3; }
-.twin-studio__venue-spot-list button:hover { background:#2f513d; }
-.twin-studio__venue-spot-list button small { font:11px "IBM Plex Mono",monospace; color:#9ac7aa; grid-row:1 / span 2; }
-.twin-studio__venue-spot-list button strong { font-size:12px; line-height:1.5; }
-.twin-studio__venue-spot-list button span { font-size:10px; line-height:1.65; color:#b9d1bf; }
-.venue-sign { display:flex; flex-direction:column; gap:3px; align-items:center; justify-content:center;
-  min-width:145px; padding:7px 16px; text-align:center; white-space:nowrap;
-  background:#314a3d; color:#f7f5e9; border:1px solid #bdae8d; border-radius:2px;
-  box-shadow:0 2px 12px #1a2b2442;
-}
-.venue-sign strong {font:700 19px "IBM Plex Sans Arabic",Tahoma,sans-serif;}
-.venue-sign span {font:9px "IBM Plex Mono",monospace;letter-spacing:2px;color:#dbd1b8;}
-.venue-sign.is-restaurant { background:#394045; }
-.venue-world-inspector {
-  min-width:160px; max-width:245px; background:#fffdf3ed;
-  color:#284338; padding:9px 12px; border:1px solid #abc3b5;
-  box-shadow:0 4px 15px #1b332b33; text-align:right;
-}
-.venue-world-inspector strong { display:block; font-size:12px; }
-.venue-world-inspector small { display:block; margin-top:4px; font-size:10px; line-height:1.6; }
-@media (max-width:1320px) {
- .twin-studio__scene-switcher button { min-width:75px; padding:10px 13px; }
- .twin-studio__brand { min-width:0; }
-}
-@media (max-width:820px) {
- .twin-studio__top { gap:7px; padding:8px 10px; flex-wrap:wrap; }
- .twin-studio__scene-switcher { order:3; width:100%; }
- .twin-studio__scene-switcher button { flex:1; padding:7px; font-size:12px; }
- .twin-studio__top-actions .twin-studio__close span { display:none; }
- .twin-studio__brand strong { font-size:12px; }
- .twin-studio__brand small { display:none; }
-}
-@media (max-width:660px) {
- .twin-studio__top { min-height:97px; padding:7px 8px; }
- .twin-studio__scene-switcher { order:3; padding:3px; gap:3px; }
- .twin-studio__scene-switcher button {min-width:0;font-size:11px;padding:7px;}
- .twin-studio__venue-spot-list { display:none; }
- .twin-studio__overlay-title { top:7px; }
- .twin-studio__north { top:10px; }
- .twin-studio__scene-hint { display:none; }
- .twin-studio__viewport-stats { max-width:240px; }
-}
-
-
-/* Dedicated document and assessment surfaces for one-storey hospitality models. */
-.twin-studio__inspector-tabs {grid-template-columns:repeat(auto-fit,minmax(74px,1fr));}
-.twin-studio__inspector-tabs button {min-width:0;padding:10px 5px;font-size:11px;}
-.twin-studio__venue-quick-links {display:grid;gap:7px;margin:15px 0;}
-.twin-studio__venue-quick-links button {
- background:#2a4c39;border:1px solid #648b70;color:#e7f5e9;
- padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;
- font-size:12px;border-radius:3px;
-}
-.twin-studio__venue-quick-links button:hover {background:#39614b;}
-.venue-bim .bim-library__intro {margin-bottom:10px;}
-.venue-bim__metric {display:flex;align-items:center;gap:12px;padding:12px 14px;margin:10px 0;
- background:#213f2f;border:1px solid #486f52;border-radius:3px;}
-.venue-bim__metric strong {font:700 23px "IBM Plex Mono",monospace;color:#dcebc6;}
-.venue-bim__metric span {font-size:11px;color:#d1e6d7;line-height:1.55;}
-.venue-analysis {font-size:12px;color:#e2eee5;direction:rtl;}
-.venue-analysis__heading {display:flex;align-items:flex-start;gap:10px;padding:13px;
- border:1px solid #78865f;background:#334330;border-radius:3px;}
-.venue-analysis__heading svg {flex:none;color:#ead4a0;}
-.venue-analysis__heading strong {display:block;color:#f7f2df;font-size:14px;}
-.venue-analysis__heading span {display:block;color:#e5dfc5;line-height:1.7;margin-top:5px;font-size:11px;}
-.venue-analysis__stats {display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:14px 0;}
-.venue-analysis__stats>div {background:#233c30;border:1px solid #45634d;
- padding:12px 9px;text-align:center;}
-.venue-analysis__stats strong {display:block;color:#e6f2e3;font:700 21px "IBM Plex Mono",monospace;}
-.venue-analysis__stats span {display:block;font-size:10px;color:#bad2c0;margin-top:4px;}
-.venue-analysis h3 {font-size:13px;font-weight:700;color:#d7ebda;margin:18px 2px 10px;}
-.venue-analysis__systems {display:grid;gap:9px;}
-.venue-analysis__systems article {background:#1d3429;border:1px solid #405e49;padding:11px;border-radius:3px;}
-.venue-analysis__systems article.is-active {background:#264734;border-color:#88ad8d;}
-.venue-analysis__systems article>button {width:100%;border:0;background:transparent;color:#f1f6ed;
- display:flex;align-items:center;gap:8px;text-align:right;padding:1px 0 8px;}
-.venue-analysis__systems article>button strong {flex:1;font-size:12px;line-height:1.45;}
-.venue-analysis__systems article>button b {white-space:nowrap;font-size:10px;color:#c2deb8;}
-.venue-analysis__systems p {font-size:11px;color:#c7dacb;line-height:1.7;margin:0 0 7px;}
-.venue-analysis__color {flex:none;width:9px;height:9px;border-radius:100%;}
-.venue-analysis__review {border-top:1px solid #3c5744;padding-top:8px;
- display:flex;gap:7px;align-items:flex-start;color:#e7cea0;font-size:11px;line-height:1.65;}
-.venue-analysis__review svg {flex:none;margin-top:2px;}
-.venue-analysis__points {display:grid;gap:5px;padding-top:12px;}
-.venue-analysis__points button {background:#315942;color:#e9f6e9;border:1px solid #568462;
- padding:8px;display:flex;align-items:center;gap:6px;text-align:right;font-size:11px;}
-.venue-analysis__points button:hover {background:#3b6b4c;}
-.venue-analysis__limit {border:1px solid #826f4c;background:#373d2d;
- margin-top:16px;padding:12px;line-height:1.7;}
-.venue-analysis__limit strong {color:#f4dba7;font-size:12px;}
-.venue-analysis__limit p {margin:6px 0 0;color:#eee4c9;font-size:11px;}
-@media(max-width:660px){
- .twin-studio__inspector-tabs {grid-template-columns:repeat(3,minmax(0,1fr));}
- .twin-studio__mobile-bim {top:126px;max-width:185px;}
- .venue-analysis__systems {gap:7px;}
-}
-
-
-/* Network-first engineering explorer: all six systems are shown on scene entry. */
-.twin-studio__side-nav button[aria-selected="true"] {font-weight:800;}
-.twin-studio__systems-intro {
-  display:grid; gap:6px; margin:0 0 12px; padding:13px 12px;
-  border:1px solid #77b493; border-right:3px solid #9adabb;
-  background:#254c3a; color:#ecfff1; line-height:1.6;
-}
-.twin-studio__systems-intro strong {font-size:13px; font-weight:800;}
-.twin-studio__systems-intro span {font-size:11px; color:#c5e2cc;line-height:1.8;}
-.twin-studio__system-list {gap:6px;}
-.twin-studio__system {
-  min-height:44px; height:auto; padding:9px 11px;
-  border:1px solid #375447; background:#193529; font-weight:600;
-  color:#e1f2e5; gap:9px;
-}
-.twin-studio__system-name {flex:1;min-width:0;line-height:1.6;text-align:right;}
-.twin-studio__system.is-visible {border-color:#527c61; background:#214635;}
-.twin-studio__system.is-active {color:#fff; background:#34674b; border-color:#a6dbb5;}
-.twin-studio__system:first-child {background:#296145;border:1px solid #70b488;font-weight:800;}
-.twin-studio__system:first-child.is-active {background:#377c56;border-color:#b7e8c7; box-shadow:inset 0 0 0 1px #b0ddbf;}
-.twin-studio__system-state {font:10px "IBM Plex Sans Arabic",Tahoma,sans-serif; color:#c8efd5; background:#31634a;padding:2px 5px;border-radius:3px;}
-.twin-studio__system-bullet {width:11px;height:11px;box-shadow:0 0 0 3px color-mix(in srgb,var(--system-color) 23%,transparent);}
 .twin-studio__network-legend {
-  position:absolute;left:15px;bottom:76px;z-index:2;
-  max-width:min(410px,calc(100% - 30px));min-width:215px;
-  background:#102920e8; border:1px solid #517962;
-  color:#f2f9ef; padding:11px 12px;border-radius:3px;
-  box-shadow:0 5px 26px #162b2550;direction:rtl;
+  max-width: 340px;
+  padding: 10px 12px;
 }
-.twin-studio__network-legend>strong {
-  display:flex;align-items:center;gap:7px;font-size:11px;
-  margin-bottom:7px;color:#e7f7e8;
+
+.twin-studio__network-legend > strong {
+  display: flex;
+  gap: 6px;
+  margin-block-end: 6px;
+  font-size: 13px;
+  font-weight: 700;
 }
-.twin-studio__network-legend>div {display:flex;flex-wrap:wrap;gap:5px;}
+
+.twin-studio__network-legend > strong .num {
+  color: var(--muted);
+}
+
+.twin-studio__network-legend > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
 .twin-studio__network-legend button {
-  display:flex;align-items:center;gap:5px;border:1px solid #5f7a69;
-  background:#234435;color:#e8f5e9;font-size:10px;padding:5px 7px;border-radius:3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding-inline: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 13px;
+  transition: border-color 160ms var(--ease), background-color 160ms var(--ease);
 }
-.twin-studio__network-legend button:hover {background:#3a6b4d;border-color:#b4dbc0;}
-.twin-studio__network-legend button span {width:9px;height:9px;border-radius:50%;flex:none;}
-@media(max-width:1000px) {
-  .twin-studio__network-legend {left:9px;bottom:72px;max-width:260px;}
+
+.twin-studio__network-legend button:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
 }
-@media(max-width:660px) {
-  .twin-studio__systems-intro {display:none;}
-  .twin-studio__systems .twin-studio__system-list {display:flex;overflow-x:auto;width:100%;gap:5px;padding:2px 0;scrollbar-width:thin;}
-  .twin-studio__systems .twin-studio__system {
-    width:max-content;min-width:max-content;min-height:36px;padding:6px 10px;font-size:11px;
+
+.twin-studio__network-legend button span {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.twin-studio__mobile-bim {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 14px;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.twin-studio__mobile-bim:hover {
+  border-color: var(--line-strong);
+}
+
+.twin-studio__mobile-floors {
+  display: none;
+}
+
+.twin-studio__view-controls {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: 20px;
+  inset-inline-start: 50%;
+  transform: translateX(50%);
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+}
+
+.twin-studio__view-controls button {
+  min-width: 72px;
+  min-height: 44px;
+  padding-inline: 14px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.twin-studio__view-controls button:hover {
+  background: var(--surface);
+}
+
+.twin-studio__view-controls button.is-active {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.twin-studio__view-controls button.is-active:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--brand-ink);
+}
+
+.twin-studio__mobile-selection {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- Inspector */
+
+.twin-studio__mobile-inspector-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-block-end: 16px;
+  padding-inline: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.twin-studio__inspector-hero {
+  padding-block-end: 14px;
+}
+
+.twin-studio__inspector-hero > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.twin-studio__inspector-hero h2 {
+  margin-block: 2px 4px;
+  font-size: 18px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.twin-studio__inspector-hero p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.twin-studio__mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  margin: 0;
+  padding-block: 12px;
+  border-block: 1px solid var(--line);
+}
+
+.twin-studio__mini-stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+  padding-inline: 16px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.twin-studio__mini-stats > div:first-child {
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+
+.twin-studio__mini-stats dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.twin-studio__mini-stats dt {
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.twin-studio__inspector-tabs {
+  display: flex;
+  gap: 24px;
+  margin-block: 4px 20px;
+  border-block-end: 1px solid var(--line);
+}
+
+.twin-studio__inspector-tabs button {
+  min-height: 48px;
+  margin-block-end: -1px;
+  padding: 0;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.twin-studio__inspector-tabs button:hover {
+  color: var(--ink);
+}
+
+.twin-studio__inspector-tabs button[aria-pressed="true"] {
+  color: var(--brand);
+  border-block-end-color: var(--brand);
+}
+
+.twin-studio__inspector .twin-studio__section-heading {
+  margin-block-start: 4px;
+}
+
+.twin-studio__selection {
+  margin-block-end: 24px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.twin-studio__selection-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.twin-studio__selection-tag > span {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.twin-studio__selection h4 {
+  margin-block: 6px 2px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.twin-studio__selection code {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.twin-studio__selection p {
+  margin-block: 8px 4px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+.twin-studio__text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.twin-studio__text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.twin-studio__guidance {
+  margin-block-end: 24px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.twin-studio__guidance strong {
+  display: block;
+  color: var(--ink);
+}
+
+.twin-studio__venue-spot-list,
+.twin-studio__inventory {
+  display: grid;
+  margin-block-end: 24px;
+}
+
+.twin-studio__inventory {
+  max-height: 264px;
+  overflow-y: auto;
+  border-block: 1px solid var(--line);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.twin-studio__venue-spot-list .twin-studio__section-heading {
+  margin-block-end: 6px;
+}
+
+.twin-studio__venue-spot-list button,
+.twin-studio__inventory button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 0;
+  border-block-end: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  transition: background-color 160ms var(--ease);
+}
+
+.twin-studio__venue-spot-list .twin-studio__section-heading + button {
+  border-block-start: 1px solid var(--line);
+}
+
+.twin-studio__inventory button:last-child {
+  border-block-end: 0;
+}
+
+.twin-studio__venue-spot-list button:hover,
+.twin-studio__inventory button:hover {
+  background: var(--surface);
+}
+
+.twin-studio__venue-spot-list button.is-active,
+.twin-studio__inventory button.is-active {
+  background: var(--brand-tint);
+}
+
+.twin-studio__venue-spot-list button strong,
+.twin-studio__inventory button span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.twin-studio__venue-spot-list button.is-active strong,
+.twin-studio__inventory button.is-active span {
+  color: var(--brand);
+}
+
+.twin-studio__venue-spot-list button span,
+.twin-studio__inventory button small {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.twin-studio__venue-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-block: -12px 16px;
+}
+
+.twin-studio__venue-quick-links .link {
+  font-size: 14px;
+}
+
+.twin-studio__evidence {
+  margin: 0 0 16px;
+  border-block-start: 1px solid var(--line);
+}
+
+.twin-studio__evidence > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-block: 8px;
+  border-block-end: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.twin-studio__evidence dt {
+  color: var(--muted);
+}
+
+.twin-studio__evidence dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: end;
+}
+
+.twin-studio__disclaimer {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.twin-studio__disclaimer .lucide {
+  margin-block-start: 4px;
+}
+
+/* ---------------------------------------------------------------- BIM files (DemoBimPanel, VenueBimPanel) */
+
+.bim-library {
+  display: grid;
+  gap: 12px;
+  margin-block-end: 24px;
+}
+
+.bim-library__intro {
+  padding-block-end: 12px;
+  border-block-end: 1px solid var(--line);
+}
+
+.bim-library__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bim-library__title .lucide {
+  color: var(--muted);
+}
+
+.bim-library__intro p {
+  margin-block: 6px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+.bim-library__demo {
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.bim-library__demo .lucide {
+  margin-block-start: 3px;
+}
+
+.bim-library__loading,
+.bim-library__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.bim-library__loading .lucide,
+.bim-library__status .lucide {
+  margin-block-start: 3px;
+}
+
+.bim-library__status.is-error {
+  color: var(--fail);
+}
+
+.bim-library__files {
+  display: grid;
+}
+
+.bim-library__file {
+  padding: 12px 10px;
+  border-block-end: 1px solid var(--line);
+}
+
+.bim-library__files .bim-library__file:first-child {
+  border-block-start: 1px solid var(--line);
+}
+
+.bim-library__file.is-loaded {
+  background: var(--brand-tint);
+}
+
+.bim-library__file-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* A plain icon next to the file name, never in a tile. */
+.bim-library__file-icon {
+  display: inline-flex;
+  padding-block-start: 2px;
+  color: var(--muted);
+}
+
+.bim-library__file-head > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* File names are left-to-right runs; inline-block keeps them at the start of the right-to-left line. */
+.bim-library__file-head strong {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bim-library__file-head small {
+  display: block;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.bim-library__file-head b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bim-library__file p {
+  margin-block: 6px 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.bim-library__file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.bim-library__file-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding-inline: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  transition: border-color 160ms var(--ease);
+}
+
+.bim-library__file-actions > button:hover {
+  border-color: var(--ink);
+}
+
+.bim-library__file-actions > button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.bim-library__file-actions > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.bim-library__file-actions > a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.bim-library__content {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.bim-library__content > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 14px;
+}
+
+.bim-library__content > header > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bim-library__content > header > b {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bim-library__content > label {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.bim-library__elements {
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.bim-library__elements button {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-block-start: 1px solid var(--line);
+  background: none;
+  text-align: start;
+}
+
+.bim-library__elements button:hover {
+  background: var(--surface);
+}
+
+.bim-library__elements button .lucide {
+  margin-block-start: 3px;
+  color: var(--muted);
+}
+
+.bim-library__elements button > span {
+  min-width: 0;
+}
+
+.bim-library__elements button strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.bim-library__elements button small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  direction: ltr;
+  text-align: end;
+}
+
+.bim-library__footnote {
+  display: block;
+  padding: 10px 12px;
+  border-block-start: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.venue-bim__metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.venue-bim__metric strong {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- Venue analysis */
+
+.venue-analysis {
+  display: grid;
+  gap: 14px;
+  margin-block-end: 24px;
+  font-size: 14px;
+}
+
+.venue-analysis__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-block-end: 12px;
+  border-block-end: 1px solid var(--line);
+}
+
+.venue-analysis__heading .lucide {
+  margin-block-start: 3px;
+  color: var(--muted);
+}
+
+.venue-analysis__heading strong {
+  display: block;
+  font-size: 15px;
+}
+
+.venue-analysis__heading span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.venue-analysis__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding-block-end: 12px;
+  border-block-end: 1px solid var(--line);
+}
+
+.venue-analysis__stats > div {
+  display: grid;
+}
+
+.venue-analysis__stats strong {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.venue-analysis__stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.venue-analysis h3 {
+  margin: 4px 0 0;
+  font-size: 15px;
+}
+
+.venue-analysis__systems {
+  display: grid;
+  border-block-start: 1px solid var(--line);
+}
+
+.venue-analysis__systems article {
+  padding: 4px 10px 12px;
+  border-block-end: 1px solid var(--line);
+}
+
+.venue-analysis__systems article.is-active {
+  background: var(--surface);
+}
+
+.venue-analysis__systems article > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: start;
+}
+
+.venue-analysis__systems article > button strong {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.venue-analysis__systems article > button b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.venue-analysis__systems p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.venue-analysis__color {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.venue-analysis__review {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.venue-analysis__review .lucide {
+  margin-block-start: 4px;
+}
+
+.venue-analysis__points {
+  display: grid;
+  gap: 4px;
+  padding-block-start: 8px;
+}
+
+.venue-analysis__points button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 13px;
+  text-align: start;
+}
+
+.venue-analysis__points button:hover {
+  border-color: var(--line-strong);
+}
+
+.venue-analysis__limit {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.venue-analysis__limit strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.venue-analysis__limit p {
+  margin-block-start: 4px;
+}
+
+/* ---------------------------------------------------------------- Labels placed in the 3D scene */
+
+.twin-floor-number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 112px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--brand);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  direction: rtl;
+  box-shadow: var(--tw-float);
+}
+
+.twin-floor-number strong {
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.twin-floor-number span {
+  font-weight: 700;
+}
+
+.twin-room-label {
+  display: block;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 12px/1.4 var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: var(--tw-float);
+}
+
+.twin-room-label:hover,
+.twin-room-label.is-selected {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.twin-world-label,
+.venue-world-inspector,
+.model-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  max-width: 260px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.55;
+  text-align: start;
+  direction: rtl;
+  box-shadow: var(--tw-float);
+  pointer-events: none;
+}
+
+.twin-world-label strong,
+.venue-world-inspector strong,
+.model-tooltip strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.twin-world-label small,
+.venue-world-inspector small,
+.model-tooltip small,
+.model-tooltip span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.model-tooltip span {
+  color: var(--ink-2);
+}
+
+.model-tooltip--selected {
+  border-color: var(--brand);
+}
+
+/* The storefront sign sits on the facade in the scene. */
+.venue-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 150px;
+  padding: 6px 16px;
+  border-radius: 2px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.venue-sign strong {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.venue-sign span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  direction: ltr;
+}
+
+.venue-sign.is-restaurant {
+  background: #2f3436;
+}
+
+/* While an element is in focus (or the camera is inside), the facade sign would sit between the
+   camera and the element; it steps aside. */
+.twin-studio[data-focus="true"] .venue-sign {
+  visibility: hidden;
+}
+
+/* ---------------------------------------------------------------- Responsive */
+
+@media (max-width: 1340px) {
+  .twin-studio {
+    --tw-rail: 240px;
+    --tw-inspector: 296px;
   }
-  .twin-studio__system-state {display:none;}
+
+}
+
+@media (max-width: 1100px) {
+  .twin-studio__top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title actions"
+      "switch switch";
+  }
+
+  .twin-studio__scene-switcher {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 1000px) {
+  .twin-studio__layout {
+    grid-template-columns: var(--tw-rail) minmax(0, 1fr);
+  }
+
+  .twin-studio__inspector {
+    display: none;
+  }
+
+  .twin-studio__inspector.is-mobile-open {
+    position: absolute;
+    z-index: 5;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: block;
+    width: min(380px, 100%);
+    box-shadow: var(--tw-float);
+  }
+
+  .twin-studio__mobile-bim {
+    display: inline-flex;
+  }
+
+  .twin-studio__mobile-selection {
+    position: absolute;
+    z-index: 3;
+    inset-block-end: 84px;
+    inset-inline: 16px;
+    display: grid;
+    gap: 2px;
+    max-width: 420px;
+    margin-inline: auto;
+    padding-block: 10px 12px;
+    padding-inline: 14px 48px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .twin-studio__mobile-selection > button {
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-end: 2px;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+  }
+
+  .twin-studio__mobile-selection strong {
+    font-size: 14px;
+  }
+
+  .twin-studio__mobile-selection span {
+    color: var(--muted);
+  }
+}
+
+@media (pointer: coarse) {
+  .twin-studio__network-legend button {
+    min-height: 44px;
+  }
+}
+
+/* Phones: the controls become one scrolling row of chips above the scene. */
+@media (max-width: 660px) {
+  .twin-studio__top {
+    gap: 8px 12px;
+    padding-block: 8px 10px;
+    padding-inline: 16px;
+  }
+
+  .twin-studio__mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .twin-studio__heading {
+    gap: 10px;
+  }
+
+  .twin-studio__titles h1 {
+    font-size: 18px;
+  }
+
+  .twin-studio__fullscreen {
+    display: none;
+  }
+
+  .twin-studio__reset {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .twin-studio__reset span {
+    display: none;
+  }
+
+  .twin-studio__close {
+    min-width: 0;
+  }
+
+  .twin-studio__scene-switcher {
+    justify-self: stretch;
+  }
+
+  .twin-studio__scene-switcher button {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .twin-studio__layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .twin-studio__systems {
+    flex: none;
+    overflow: visible;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .twin-studio__side-nav {
+    position: static;
+    padding-inline: 8px;
+  }
+
+  .twin-studio__side-nav button {
+    min-height: 44px;
+  }
+
+  .twin-studio__side-panel {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .twin-studio__side-panel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .twin-studio__side-panel .twin-studio__section-heading,
+  .twin-studio__section-note,
+  .twin-studio__systems-intro {
+    display: none;
+  }
+
+  .twin-studio__system-list,
+  .twin-studio__floor-list,
+  .twin-studio__room-filter,
+  .twin-studio__switches {
+    display: flex;
+    gap: 6px;
+    border: 0;
+  }
+
+  .twin-studio__system,
+  .twin-studio__floor-list button,
+  .twin-studio__room-filter button,
+  .twin-studio__switch {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    min-height: 44px;
+    padding-block: 0;
+    padding-inline: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .twin-studio__system.is-active,
+  .twin-studio__floor-list button.is-active,
+  .twin-studio__room-filter button.is-active {
+    border-color: var(--brand);
+  }
+
+  .twin-studio__system > .lucide,
+  .twin-studio__floor-list button em,
+  .twin-studio__switch > span .lucide {
+    display: none;
+  }
+
+  .twin-studio__switch {
+    gap: 8px;
+  }
+
+  .twin-studio__field {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .twin-studio__field select {
+    width: auto;
+  }
+
+  .twin-studio__viewport {
+    flex: 1;
+  }
+
+  .twin-studio__hud {
+    inset-block-start: 8px;
+    inset-inline: 8px;
+    gap: 6px;
+  }
+
+  .twin-studio__overlay-title {
+    min-width: 0;
+    max-width: 58%;
+    padding: 6px 10px;
+  }
+
+  .twin-studio__overlay-title strong {
+    font-size: 15px;
+  }
+
+  .twin-studio__overlay-title small {
+    display: none;
+  }
+
   .twin-studio__network-legend {
-    left:7px;bottom:70px;min-width:0;max-width:calc(100% - 14px);
-    padding:7px 9px;
+    display: none;
   }
-  .twin-studio__network-legend>strong {font-size:10px;margin-bottom:5px;}
-  .twin-studio__network-legend>div {gap:3px;}
-  .twin-studio__network-legend button {font-size:9px;padding:3px 6px;}
+
+  .twin-studio__mobile-bim {
+    padding-inline: 12px;
+    font-size: 13px;
+  }
+
+  .twin-studio__mobile-floors {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+  }
+
+  .twin-studio__mobile-floors select {
+    flex: 1;
+    min-width: 0;
+    box-shadow: var(--tw-float);
+  }
+
+  .twin-studio__mobile-floors .icon-btn {
+    flex: none;
+    box-shadow: var(--tw-float);
+  }
+
+  .twin-studio__view-controls {
+    inset-block-end: 10px;
+  }
+
+  .twin-studio__view-controls button {
+    min-width: 64px;
+    padding-inline: 10px;
+  }
+
+  .twin-studio__mobile-selection {
+    inset-block-end: 74px;
+    inset-inline: 8px;
+  }
+
+  .twin-studio__inspector.is-mobile-open {
+    inset: 0;
+    width: 100%;
+    padding: 16px;
+    box-shadow: none;
+  }
 }

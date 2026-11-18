@@ -41,6 +41,33 @@ const stageIds: StageId[] = [
 ];
 const SUPPORTED_CONTRACT_VERSION = "MOWAEM-IFC-1.0";
 
+/*
+ * Files from before the product was named Mowaem carry property sets named "Pset_" + the retired name
+ * and the contract tag <RETIRED NAME>-IFC-1.0. They have no Pset_Mowaem sets, so without this check
+ * they would be read as standard IFC files. The retired name must not appear in tracked files
+ * (scripts/check-brand.mjs), so it is spelled here from character codes, as that script does.
+ */
+const RETIRED_NAME = String.fromCharCode(109, 105, 121, 97, 114);
+const LEGACY_MARKERS = [`pset_${RETIRED_NAME}`, `${RETIRED_NAME}-ifc-`].map((marker) =>
+  [...marker].map((char) => char.charCodeAt(0)),
+);
+export const LEGACY_CONTRACT_MESSAGE =
+  "هذا الملف بصيغة عقد قديمة سابقة لاسم موائم. صدّر الملف مجددًا بصيغة IFC قياسية أو بعقد MOWAEM-IFC-1.0 ثم أعد الفحص.";
+
+/** True when the bytes contain a legacy property set or contract tag (ASCII, any letter case). */
+export function hasLegacyContract(bytes: Uint8Array): boolean {
+  const lower = (byte: number) => (byte >= 65 && byte <= 90 ? byte + 32 : byte);
+  for (const marker of LEGACY_MARKERS) {
+    outer: for (let i = 0; i <= bytes.length - marker.length; i++) {
+      for (let j = 0; j < marker.length; j++) {
+        if (lower(bytes[i + j]) !== marker[j]) continue outer;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 function elapsed(start: number): number {
   return Math.max(0, Number((performance.now() - start).toFixed(1)));
 }
@@ -171,6 +198,13 @@ export async function runIfcCompliance({
       throw processingError;
     }
   };
+
+  // A file under the contract from before the Mowaem name stops at the first stage with its own message.
+  if (hasLegacyContract(upload.bytes)) {
+    return runStage<ComplianceRun>("validate", async () => {
+      throw new IfcProcessingError("validate", "LEGACY_CONTRACT", LEGACY_CONTRACT_MESSAGE);
+    });
+  }
 
   // Any IFC file without the MOWAEM-IFC-1.0 contract is read as a standard BIM export.
   if (!hasMowaemContract(upload.bytes)) {

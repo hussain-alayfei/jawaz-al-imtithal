@@ -83,7 +83,7 @@ const CODE_TO_KEY: Record<string, ErrorKey> = {
 };
 
 /* Data the file does carry but cannot be checked against; their engine message is clearer. */
-const OWN_MESSAGE_CODES = new Set(["NO_SPACES", "UNSUPPORTED_LENGTH_UNIT", "FACILITY_INCOMPLETE"]);
+const OWN_MESSAGE_CODES = new Set(["NO_SPACES", "UNSUPPORTED_LENGTH_UNIT", "FACILITY_INCOMPLETE", "LEGACY_CONTRACT"]);
 
 export interface CheckFailure {
   /** Short sentence from copy.check.errors, or the engine message when none fits. */
