@@ -1,5 +1,5 @@
 /* Digital twin studio (v2): a full-screen tool on the formal site palette.
-   Light rails, 1px hairlines, Almarai, the one brand green and neutral greys from src/brand/tokens.css.
+   Light rails, 1px hairlines, Noto Sans Arabic, the navy brand colour and neutral greys from src/brand/tokens.css.
    The six network colours appear only as small keys, because they are what tells the networks apart in
    the scene. Floating panels over the canvas are the only elements with a (subtle) shadow. */
 
@@ -92,7 +92,7 @@
 
 .twin-studio__titles h1 {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 
@@ -1510,7 +1510,7 @@
 
 .venue-sign strong {
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 
@@ -1522,7 +1522,7 @@
 }
 
 .venue-sign.is-restaurant {
-  background: #2f3436;
+  background: var(--ink-2);
 }
 
 /* While an element is in focus (or the camera is inside), the facade sign would sit between the

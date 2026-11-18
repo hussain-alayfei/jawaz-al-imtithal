@@ -219,20 +219,21 @@ export default function Report({ run, onBack, notify }: ReportProps) {
 <html lang="ar" dir="rtl">
 <head><meta charset="utf-8"><title>${escapeHtml(copy.report.title)}: ${escapeHtml(run.file.name)}</title>
 <style>
-body{font-family:"Almarai",Tahoma,Arial,sans-serif;color:#161616;margin:40px auto;max-width:860px;padding:0 24px;line-height:1.8}
-h1,h2,h3{color:#161616;line-height:1.45}
-.brand{margin:0 0 20px;font-weight:800;font-size:18px;color:#0f3b2e}
-h1{margin:0;font-size:32px;font-weight:800}.file{margin:2px 0 0;color:#5f5f5f}
-hr{border:0;border-top:1px solid #c9c9c5;margin:20px 0}
-dl.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin:0}dl.meta dt{font-size:12px;color:#5f5f5f}dl.meta dd{margin:0 0 8px;overflow-wrap:anywhere}
-h2{font-size:22px;margin:28px 0 6px}.counts span{margin-inline-end:20px;font-weight:700}
-section{margin-top:28px;page-break-before:always}section h2{font-size:20px;margin:0;padding-bottom:6px;border-bottom:1px solid #161616}.count{color:#5f5f5f}
-article{padding:12px 0;border-bottom:1px solid #e1e1de;page-break-inside:avoid}h3{font-size:16px;margin:0 0 6px}.no{color:#0f3b2e;font-variant-numeric:tabular-nums}
-.st{font-size:13px;margin-inline-start:8px}.st-fail{color:#b42318}.st-pass{color:#1d7348}.st-unknown{color:#5f5f5f}
-table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:4px 8px;text-align:right;vertical-align:top;border-bottom:1px solid #ececea}th{width:140px;color:#5f5f5f;font-weight:400}
-blockquote{margin:8px 0 0;padding-inline-start:12px;border-inline-start:2px solid #c9c9c5}cite{display:block;font-style:normal;font-size:12px;color:#5f5f5f}
-.note{font-size:13px;color:#5f5f5f}.foot{margin-top:32px;font-size:13px;color:#5f5f5f}
-@media print{body{margin:0;max-width:none}}
+body{font-family:"Noto Sans Arabic","Noto Sans",Tahoma,Arial,sans-serif;color:#0f172a;margin:40px auto;max-width:72ch;padding:0 24px;font-size:16px;line-height:1.7}
+h1,h2,h3{color:#0f172a;line-height:1.4;font-weight:700}
+.brand{margin:0 0 20px;font-weight:700;font-size:18px;color:#1e3a8a}
+h1{margin:0;font-size:32px}.file{margin:2px 0 0;color:#475569}
+hr{border:0;border-top:1px solid #cbd5e1;margin:20px 0}
+dl.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin:0}dl.meta dt{font-size:13px;color:#475569}dl.meta dd{margin:0 0 8px;overflow-wrap:anywhere}
+h2{font-size:24px;margin:28px 0 6px}.counts span{margin-inline-end:20px;font-weight:700}
+section{margin-top:28px;page-break-before:always}section h2{font-size:20px;margin:0;padding-bottom:6px;border-bottom:1px solid #0f172a}.count{color:#475569}
+article{padding:14px 0;border-bottom:1px solid #e2e8f0;page-break-inside:avoid}h3{font-size:17px;margin:0 0 8px}.no{color:#1e3a8a;font-variant-numeric:tabular-nums}
+.st{font-size:14px;margin-inline-start:8px}.st-fail{color:#dc2626}.st-pass{color:#15803d}.st-unknown{color:#475569}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 8px;text-align:right;vertical-align:top;border-bottom:1px solid #e2e8f0}th{width:140px;color:#475569;font-weight:400}
+td b{font-size:18px;font-variant-numeric:tabular-nums}
+blockquote{margin:10px 0 0;padding-inline-start:12px;border-inline-start:3px solid #cbd5e1}cite{display:block;font-style:normal;font-size:13px;color:#475569}
+.note{font-size:14px;color:#475569}.foot{margin-top:32px;font-size:14px;color:#475569}
+@media print{body{margin:0;max-width:none;font-size:12.5px}}
 </style></head><body>
 <p class="brand">${escapeHtml(copy.brand.name)}</p>
 <h1>${escapeHtml(copy.report.title)}</h1>
@@ -266,16 +267,16 @@ ${sections}
   return (
     <main className="rp">
       <div className="rp-tools" role="toolbar" aria-label={L.tools}>
-        <Button variant="secondary" size="small" onClick={onBack}>
+        <Button variant="secondary" onClick={onBack}>
           {copy.report.back}
         </Button>
         <div className="rp-tools__end">
           <button type="button" className="link" onClick={downloadReport}>
             {L.download}
           </button>
-          <Button variant="primary" size="small" onClick={() => window.print()}>
+          <button type="button" className="btn btn--accent" onClick={() => window.print()}>
             {copy.report.print}
-          </Button>
+          </button>
         </div>
       </div>
 

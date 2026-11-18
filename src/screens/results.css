@@ -1,134 +1,415 @@
-/* Results (formal v2): a compact title row, then the clause register beside the 3D model. On desktop the
-   two fill the viewport below the site header; on phones they become two tabs. White and one light grey
-   surface, hairlines, status colours only for results. Prefix: rs-. */
+/* Results (v3): mobile first. A summary bar, then the selected finding as the hero of the screen, with the
+   measured value against the required one in big tabular figures (the one memorable element), then the
+   register. Phones open the 3D model full screen on demand; from 1024 px the model fills one side and the
+   detail and register share the other, which scrolls on its own. Prefix: rs-. */
 
 .rs {
-  display: flex;
-  flex-direction: column;
-  height: calc(100dvh - var(--header-h));
-  min-height: 600px;
-  background: var(--paper);
+  background: var(--surface);
 }
 
-/* Title row */
-.rs-head {
-  flex: none;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "id actions"
-    "scope actions";
-  align-items: center;
-  gap: 2px 32px;
-  padding-block: 14px 16px;
-  padding-inline: var(--gutter);
+/* Summary bar */
+.rs-summary {
+  background: var(--paper);
   border-block-end: 1px solid var(--line);
 }
 
-.rs-head__id {
-  grid-area: id;
+.rs-summary__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "file"
+    "meta"
+    "actions";
+  gap: 16px;
+  padding-block: 20px;
+}
+
+.rs-file {
+  grid-area: file;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 14px;
+  gap: 0 12px;
   min-width: 0;
 }
 
-.rs-head__file {
+.rs-file__name {
   min-width: 0;
-  font-size: 24px;
-  font-weight: 800;
+  font-size: clamp(19px, 1.2rem + 0.6vw, 26px);
+  font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
-.rs-head__schema {
+.rs-file__schema {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.6;
   color: var(--muted);
 }
 
-.rs-head__scope {
-  grid-area: scope;
+.rs-meta {
+  grid-area: meta;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 24px;
+  gap: 12px 28px;
   min-width: 0;
 }
 
-.rs-head__scope-text {
-  font-size: 15px;
-  line-height: 1.6;
+.rs-scope {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+.rs-scope__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rs-scope__figure {
+  font-size: 17px;
+  font-weight: 600;
   color: var(--ink-2);
 }
 
-.rs-head__scope-text strong {
+.rs-scope__figure strong {
+  font-size: 30px;
   font-weight: 700;
-  color: var(--ink);
+  line-height: 1.2;
+  color: var(--brand);
 }
 
 .rs-counts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 20px;
+  gap: 6px 20px;
   margin: 0;
   padding: 0;
-  padding-inline-start: 24px;
-  border-inline-start: 1px solid var(--line);
   list-style: none;
 }
 
-.rs-head__actions {
+.rs-counts .status {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-actions {
   grid-area: actions;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
 }
 
-.rs-head__twin {
-  margin-inline-start: 8px;
+.rs-actions .btn {
+  flex: 1 1 140px;
 }
 
-/* Register beside the model */
-.rs-main {
-  flex: 1;
-  min-height: 0;
+.rs-actions__main {
+  flex-basis: 100% !important;
+}
+
+.rs-actions__twin {
+  margin-inline: 8px;
+}
+
+/* Layout: one column on phones, the side column first. */
+.rs-layout {
   display: grid;
-  grid-template-columns: clamp(380px, 31vw, 480px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  padding-block: 16px 40px;
 }
 
-.rs-register {
+.rs-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
-.rs-empty {
-  padding-block: 48px;
-  padding-inline: var(--gutter) 16px;
-  font-size: 17px;
+/* Selected finding: the hero */
+.rs-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  /* Picks bring it to just below the site header. */
+  scroll-margin-block-start: calc(var(--header-h) + 12px);
+}
+
+.rs-detail__empty {
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--muted);
 }
 
-.rs-group + .rs-group {
+.rs-detail__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rs-detail__kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.rs-detail__no {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-detail__title {
+  font-size: clamp(20px, 1.1rem + 0.5vw, 24px);
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+/* The measurement signature */
+.rs-sig {
+  margin-block-start: 20px;
+  padding-block: 18px;
+  border-block: 1px solid var(--line);
+}
+
+.rs-sig__figs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.rs-sig__fig {
+  min-width: 0;
+}
+
+.rs-sig__fig + .rs-sig__fig {
+  padding-inline-start: 20px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.rs-sig dt {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.rs-sig dd {
+  margin: 0;
+}
+
+.rs-sig__num {
+  display: inline-block;
+  font-size: clamp(34px, 1.6rem + 2.4vw, 48px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-sig__num--fail {
+  color: var(--fail);
+}
+
+.rs-sig__num--pass {
+  color: var(--pass);
+}
+
+.rs-sig__num--unknown {
+  color: var(--unknown);
+}
+
+.rs-sig__num small {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--muted);
+  white-space: normal;
+}
+
+/* No figure: the engine's sentence stands in for it, readable rather than big. */
+.rs-sig__lead {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.rs-sig__note {
+  max-width: 70ch;
+  margin-block-start: 12px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.rs-sig__note + .rs-sig__note {
+  margin-block-start: 4px;
+}
+
+/* Parts below the signature */
+.rs-part {
+  margin: 0;
+  padding-block: 16px 0;
+}
+
+.rs-part + .rs-part {
+  margin-block-start: 16px;
+  border-block-start: 1px solid var(--line);
+}
+
+.rs-label {
+  margin-block-end: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.rs-prose {
+  max-width: 70ch;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.rs-quote blockquote {
+  max-width: 70ch;
+  margin: 0;
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid var(--brand-tint);
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.rs-quote__cite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 16px;
+  margin-block-start: 6px;
+}
+
+.rs-quote__cite cite {
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.rs-element__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.rs-element__class {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.rs-guid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-start: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rs-guid__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.rs-guid__label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rs-guid__value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.rs-guid .icon-btn {
+  flex: none;
+}
+
+.rs-guid .icon-btn.is-done {
+  border-color: var(--pass);
+  color: var(--pass);
+}
+
+.rs-action .rs-prose {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rs-detail__open {
+  width: 100%;
   margin-block-start: 20px;
 }
 
+/* Register */
+.rs-register {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.rs-register__title {
+  padding: 16px 20px 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rs-group {
+  padding-block-start: 8px;
+}
+
 .rs-group__head {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 56px;
-  padding-inline: var(--gutter) 16px;
-  border-block-end: 1px solid var(--line-strong);
-  background: var(--paper);
+  min-height: 48px;
+  padding-inline: 20px;
+  border-block-end: 1px solid var(--line);
 }
 
 .rs-group__head h3 {
@@ -137,20 +418,21 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
 
 .rs-group__head .count {
+  min-width: 2em;
   font-size: 15px;
+  text-align: end;
 }
 
 .rs-group__note {
-  padding-block: 10px;
-  padding-inline: var(--gutter) 16px;
+  padding: 8px 20px;
   border-block-end: 1px solid var(--line);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--muted);
 }
@@ -162,13 +444,14 @@
 }
 
 .rs-row {
+  position: relative;
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  min-height: 52px;
-  padding-block: 13px;
-  padding-inline: var(--gutter) 16px;
+  min-height: 48px;
+  padding-block: 12px;
+  padding-inline: 20px;
   border: 0;
   border-block-end: 1px solid var(--line);
   background: transparent;
@@ -178,27 +461,54 @@
   line-height: 1.6;
   text-align: start;
   cursor: pointer;
-  /* Rows scrolled into view stop below the sticky group heading. */
-  scroll-margin-block-start: 64px;
   transition: background-color 160ms var(--ease);
+}
+
+.rs-list li:last-child .rs-row {
+  border-block-end: 0;
 }
 
 .rs-row:hover {
   background: var(--surface);
 }
 
+.rs-row:active {
+  background: var(--surface-2);
+}
+
 .rs-row:focus-visible {
   outline-offset: -3px;
+}
+
+.rs-row.is-selected {
+  background: var(--brand-tint);
+}
+
+.rs-row.is-selected::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: var(--brand);
+}
+
+.rs-row.is-selected .rs-row__title {
+  font-weight: 600;
 }
 
 .rs-row__no {
   flex: none;
   /* Wide enough for sub-clauses such as "4.10.1 (2)", so the subjects line up. */
-  min-width: 5.6em;
-  font-weight: 700;
+  min-width: 5.4em;
+  font-weight: 600;
   color: var(--brand);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.rs-row__no:empty {
+  display: none;
 }
 
 .rs-row__title {
@@ -219,201 +529,10 @@
   color: var(--fail);
 }
 
-/* The selected clause: one light grey surface for the row and its detail. */
-.rs-item.is-selected {
-  background: var(--surface);
-}
-
-.is-selected .rs-row {
-  padding-block: 16px 6px;
-  border-block-end: 0;
-}
-
-.is-selected .rs-row:hover {
-  background: transparent;
-}
-
-.is-selected .rs-row__title {
-  font-weight: 700;
-}
-
-.rs-detail {
-  display: flex;
-  flex-direction: column;
-  padding-block: 8px 24px;
-  padding-inline: var(--gutter) 16px;
-  border-block-end: 1px solid var(--line);
-}
-
-.rs-detail__part {
-  margin-block-start: 18px;
-  padding-block-start: 16px;
-  border-block-start: 1px solid var(--line-strong);
-}
-
-.rs-label {
-  margin-block-end: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.rs-meas {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 24px;
-  margin: 0;
-}
-
-.rs-meas > div {
-  min-width: 0;
-}
-
-.rs-meas dt {
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.rs-meas dd {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-}
-
-.rs-meas__num {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.3;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.rs-meas__num small {
-  display: inline-block;
-  margin-inline-start: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.rs-meas__num--fail {
-  color: var(--fail);
-}
-
-.rs-meas__num--pass {
-  color: var(--pass);
-}
-
-.rs-meas__note {
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-
-.rs-meas__note--lead {
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--ink-2);
-}
-
-.rs-quote {
-  margin-inline: 0;
-  margin-block-end: 0;
-}
-
-.rs-quote blockquote {
-  margin: 0;
-  padding-inline-start: 14px;
-  border-inline-start: 2px solid var(--line-strong);
-  font-size: 15px;
-  line-height: 1.9;
-  color: var(--ink);
-}
-
-.rs-quote__cite {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0 16px;
-  margin-block-start: 4px;
-}
-
-.rs-quote__cite cite {
-  font-size: 13px;
-  font-style: normal;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-/* A data check's description: Mowaem's own wording, so it is not set as a quotation. */
-.rs-desc {
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--ink-2);
-}
-
-.rs-element__name {
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.6;
-}
-
-.rs-element__class {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.rs-guid {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-block-start: 8px;
-}
-
-.rs-guid__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.5;
-}
-
-.rs-guid__label {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.rs-guid__value {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.rs-guid .icon-btn {
-  flex: none;
-}
-
-.rs-action__text {
-  font-size: 15px;
-  line-height: 1.8;
-}
-
-.rs-detail__model {
-  align-self: flex-start;
-  margin-block-start: 12px;
-}
-
 .rs-register__basis {
-  padding-block: 24px 28px;
-  padding-inline: var(--gutter) 16px;
+  margin-block-start: 8px;
+  padding: 14px 20px 18px;
+  border-block-start: 1px solid var(--line);
   font-size: 13px;
   line-height: 1.7;
   color: var(--muted);
@@ -426,8 +545,47 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-block: 16px 20px;
-  padding-inline: 24px var(--gutter);
+}
+
+/* Phones and tablets: closed, it waits off screen at full size so the viewer keeps its canvas;
+   open, it covers the whole screen. */
+.rs-model.is-compact {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  padding: 12px var(--gutter) 16px;
+  background: var(--paper);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.rs-model.is-compact.is-open {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.rs-model__bar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.rs-model__selected {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.rs-model__selected .status__glyph {
+  color: #ffffff;
 }
 
 .rs-model__note {
@@ -477,151 +635,147 @@
 .rs-frame__state--none p {
   max-width: 28ch;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-2);
 }
 
-/* Tabs (phones only) */
-.rs-tabs {
-  position: sticky;
-  inset-block-start: var(--header-h);
-  z-index: 30;
-  display: flex;
-  padding-inline: var(--gutter);
-  border-block-end: 1px solid var(--line);
-  background: var(--paper);
+/* Glyph colours inside the plain status wrappers. */
+.rs-model__selected .status__glyph,
+.rs-group__head .status__glyph {
+  flex: none;
 }
 
-.rs-tab {
-  flex: 1;
-  min-height: 48px;
-  margin-block-end: -1px;
-  border: 0;
-  border-block-end: 2px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: color 160ms var(--ease), border-color 160ms var(--ease);
-}
-
-.rs-tab:hover {
-  color: var(--ink);
-}
-
-.rs-tab[aria-selected="true"] {
-  border-block-end-color: var(--brand);
-  color: var(--brand);
-}
-
-.rs-tab:focus-visible {
-  outline-offset: -3px;
-}
-
-/* Narrow desktops: the actions keep their line, the scope wraps under the counts. */
-@media (min-width: 861px) and (max-width: 1180px) {
-  .rs-head {
-    column-gap: 20px;
+/* 768: the summary spreads out, the actions sit on one line. */
+@media (min-width: 768px) {
+  .rs-summary__inner {
+    padding-block: 22px;
   }
 
-  .rs-head__file {
-    font-size: 21px;
+  .rs-actions .btn,
+  .rs-actions__main {
+    flex: 0 0 auto !important;
   }
 
-  .rs-counts {
-    padding-inline-start: 0;
-    border-inline-start: 0;
+  .rs-detail {
+    padding: 24px 28px;
   }
 
-  .rs-main {
-    grid-template-columns: minmax(340px, 40%) minmax(0, 1fr);
+  .rs-sig__figs {
+    gap: 12px 32px;
+  }
+
+  .rs-sig__fig + .rs-sig__fig {
+    padding-inline-start: 32px;
+  }
+
+  .rs-detail__open {
+    width: auto;
+    align-self: flex-start;
   }
 }
 
-/* Phones and narrow tablets: one pane at a time, register first. */
-@media (max-width: 860px) {
+/* 1024: the model fills one side; detail and register share the other, which scrolls on its own. */
+@media (min-width: 1024px) {
   .rs {
-    display: block;
-    height: auto;
-    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - var(--header-h));
+    min-height: 640px;
   }
 
-  .rs-head {
-    grid-template-columns: minmax(0, 1fr);
+  .rs-summary {
+    flex: none;
+  }
+
+  .rs-summary__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "id"
-      "scope"
-      "actions";
-    gap: 8px;
+      "file actions"
+      "meta actions";
+    gap: 6px 32px;
     padding-block: 16px 18px;
   }
 
-  .rs-head__file {
-    font-size: 19px;
+  .rs-actions {
+    flex-wrap: nowrap;
   }
 
-  .rs-head__scope {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .rs-layout {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 24px;
+    padding-block: 0;
   }
 
-  .rs-counts {
-    gap: 2px 16px;
-    padding-inline-start: 0;
-    border-inline-start: 0;
+  .rs-side {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: 20px 28px;
+    /* Room for the scroll bar, so cards never touch it. */
+    padding-inline-end: 6px;
+    margin-inline-end: -6px;
+    scrollbar-gutter: stable;
   }
 
-  .rs-head__actions {
-    flex-wrap: wrap;
-    gap: 8px 12px;
-    margin-block-start: 6px;
-  }
-
-  .rs-head__actions .btn {
-    flex: 1 1 0;
-  }
-
-  .rs-head__twin {
-    flex-basis: 100%;
-    margin-inline-start: 0;
-  }
-
-  .rs-main {
-    position: relative;
-    display: block;
-    overflow: hidden;
+  .rs-detail {
+    flex: none;
+    padding: 22px 24px;
   }
 
   .rs-register {
-    overflow: visible;
-  }
-
-  .rs-group__head {
-    position: static;
+    flex: none;
   }
 
   .rs-model {
-    height: calc(100dvh - var(--header-h) - 49px);
-    min-height: 440px;
-    max-height: 820px;
-    padding-block: 12px 16px;
-    padding-inline: var(--gutter);
-  }
-
-  .rs-pane.is-off {
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    visibility: hidden;
-    pointer-events: none;
+    padding-block: 20px 24px;
   }
 }
 
-@media (max-width: 420px) {
-  .rs-meas__num {
-    font-size: 28px;
+@media (min-width: 1440px) {
+  .rs-layout {
+    gap: 32px;
   }
+
+  .rs-detail {
+    padding: 26px 30px;
+  }
+}
+
+.rs-sig__unit {
+  font-size: 0.55em;
+  font-weight: 600;
+}
+
+/* Latin names inside a sentence keep together (with their parentheses) when the line wraps. */
+.rs-sig__note bdi,
+.rs-sig__lead bdi,
+.rs-prose bdi,
+.rs-quote cite bdi {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* No measured figure (the file cannot prove the clause): the two sentences stack at reading width. */
+.rs-sig--text .rs-sig__figs {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.rs-sig--text .rs-sig__fig + .rs-sig__fig {
+  padding-inline-start: 0;
+  padding-block-start: 14px;
+  border-inline-start: 0;
+  border-block-start: 1px solid var(--line);
+}
+
+.rs-sig--text .rs-sig__lead {
+  max-width: 70ch;
+  font-weight: 400;
+}
+
+.rs-sig__fig .rs-sig__note {
+  display: block;
+  margin-block-start: 4px;
 }

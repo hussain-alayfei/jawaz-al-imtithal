@@ -1,5 +1,5 @@
 /* 3D viewer chrome in the formal identity: white panels with hairline borders and 8 px corners
-   over the scene, Almarai, ink and muted text, the brand green only for the pressed state.
+   over the scene, Noto Sans Arabic, ink and muted text, navy (--brand) only for the pressed state.
    No gradients, no glows; floating panels carry one faint shadow so they lift off bright sky.
    Prefix: vw-. Only tokens from src/brand/tokens.css. */
 
@@ -51,7 +51,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 .vw__meta {
@@ -144,7 +144,7 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 .vw-seg {
@@ -377,7 +377,7 @@
 
 .vw-dim strong {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .vw-dim span {

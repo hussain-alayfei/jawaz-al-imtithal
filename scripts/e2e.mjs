@@ -105,8 +105,8 @@ try {
   if ((await page.locator("footer.site-footer").count()) !== 1) throw new Error("Site footer is missing.");
   await shot(page, "01-landing");
 
-  // 2. Ready sample from the hero link: results with the real model.
-  await page.getByText("جرّب مخططًا جاهزًا", { exact: true }).first().click();
+  // 2. First ready-sample chip in the hero (the tiles sample): results with the real model.
+  await page.locator(".hm-chip").first().click();
   await page.waitForURL(/#\/results/, { timeout: 120_000 });
   await expectText(page, "11 من 14", "Tiles sample scope");
   await expectText(page, "4.5.2", "Tiles sample failing clause");

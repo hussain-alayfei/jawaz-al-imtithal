@@ -11,7 +11,7 @@ export function Measure({ finding, prefix }: { finding: Finding; prefix: "rs" | 
   const measured = splitValue(finding.actual);
   const required = splitValue(finding.expected);
   return (
-    <dl className={`${prefix}-meas`}>
+    <dl className={`${prefix}-meas${measured.value ? "" : ` ${prefix}-meas--text`}`}>
       <div>
         <dt>{copy.results.detail.measured}</dt>
         <dd>

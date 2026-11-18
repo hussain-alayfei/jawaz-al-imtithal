@@ -1,4 +1,5 @@
-/* Site header and footer (shared by every page except the digital twin studio). */
+/* Site header and footer (shared by every page except the digital twin studio), v3 tokens: navy brand,
+   navy header action, Noto Sans Arabic through --font. */
 
 .site-header {
   position: sticky;
@@ -19,7 +20,8 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: var(--ink);
+  min-height: 44px;
+  color: var(--brand);
   text-decoration: none;
   flex: none;
 }
@@ -31,7 +33,7 @@
 }
 
 .site-brand__name {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 24px;
   line-height: 1;
 }
@@ -55,7 +57,7 @@
   min-height: 44px;
   color: var(--ink-2);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   border-block-end: 2px solid transparent;
   transition: color 160ms var(--ease), border-color 160ms var(--ease);
@@ -83,6 +85,14 @@
 
 .site-header__cta {
   min-height: 44px;
+  padding-inline: 18px;
+  font-size: 15px;
+}
+
+.site-header__cta:active,
+.site-nav__cta-mobile .btn:active {
+  --btn-bg: var(--ink-2);
+  --btn-border: var(--ink-2);
 }
 
 .site-header__toggle {
@@ -151,8 +161,8 @@
   background: var(--surface);
   border-block-start: 1px solid var(--line);
   color: var(--ink-2);
-  font-size: 14px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .site-footer__grid {
@@ -171,7 +181,8 @@
 
 .site-footer__brand {
   font-size: 20px !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
+  color: var(--brand) !important;
 }
 
 .site-footer__about p {
@@ -210,7 +221,7 @@
   padding-block: 18px 28px;
   border-block-start: 1px solid var(--line);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 @media (max-width: 900px) {
