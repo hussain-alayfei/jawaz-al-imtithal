@@ -12,6 +12,7 @@ import {
   evaluateRules,
   materializeFindings,
 } from "./rules";
+import { hasMowaemContract, runStandardStages } from "./standard/pipeline";
 import { parseStepDocument } from "./stepParser";
 import {
   IfcProcessingError,
@@ -170,6 +171,19 @@ export async function runIfcCompliance({
       throw processingError;
     }
   };
+
+  // Any IFC file without the MOWAEM-IFC-1.0 contract is read as a standard BIM export.
+  if (!hasMowaemContract(upload.bytes)) {
+    return runStandardStages({
+      upload,
+      facility,
+      activityId,
+      signal,
+      runStage,
+      stages,
+      yieldToInterface: () => yieldToInterface(signal),
+    });
+  }
 
   const document = await runStage("validate", async (progress) => {
     const value = await parseStepDocument(upload, {

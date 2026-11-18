@@ -81,7 +81,7 @@ function result(
   return { ruleId, status, actual, target };
 }
 
-function hasCompleteFacility(facility: FacilityDetails): boolean {
+export function hasCompleteFacility(facility: FacilityDetails): boolean {
   return Boolean(
     facility.projectName.trim() &&
       facility.activity.trim() &&

@@ -6,6 +6,7 @@ import type {
   Scenario,
   Summary,
 } from "../data";
+import type { StandardFacts, StandardGeometry } from "./standard/model";
 
 export type StageId =
   | "validate"
@@ -133,6 +134,19 @@ export interface ComplianceRun {
   summary: Summary;
   report: ReadinessReport;
   processedAt: string;
+  /**
+   * "standard-ifc": any IFC file read with web-ifc (no Mowaem property sets).
+   * Absent for the older MOWAEM-IFC-1.0 contract files.
+   */
+  source?: "standard-ifc";
+  /** Rules with evidence in the file (pass or fail) out of all rules. */
+  coverage?: { verified: number; total: number };
+  /** Facts and triangles of the checked file, for the viewer that draws it. */
+  standard?: {
+    facts: StandardFacts;
+    geometry: StandardGeometry;
+    measurements: Record<string, { value: number; unit: "m"; source: string; limit?: number }>;
+  };
 }
 
 export class IfcProcessingError extends Error {
