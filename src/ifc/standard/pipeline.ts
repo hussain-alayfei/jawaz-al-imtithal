@@ -209,7 +209,7 @@ export async function runStandardStages({
       throw new IfcProcessingError("validate", "INVALID_ENVELOPE", "الملف لا يبدأ بغلاف STEP ‏(ISO-10303-21).");
     }
     if (!schema || !SUPPORTED_SCHEMAS.has(schema)) {
-      throw new IfcProcessingError("validate", "UNSUPPORTED_SCHEMA", `مخطط الملف (${schema ?? "غير معروف"}) غير مدعوم.`);
+      throw new IfcProcessingError("validate", "UNSUPPORTED_SCHEMA", `إصدار IFC في الملف (${schema ?? "غير معروف"}) غير مدعوم.`);
     }
     progress(0.5, `غلاف STEP سليم • ${schema}`, { schema });
     const value = await sha256(upload.bytes);
@@ -322,7 +322,9 @@ export async function runStandardStages({
 
   return await runStage<ComplianceRun>("report", async (progress) => {
     const summary = calculateSummary(findings);
-    const verified = summary.passed + summary.failed;
+    // The scope counts requirement clauses only; Mowaem's own data checks (MOWAEM-DATA-*) are not clauses.
+    const clauseFindings = findings.filter((finding) => !finding.ruleId.startsWith("MOWAEM-DATA"));
+    const verified = clauseFindings.filter((finding) => finding.status !== "unknown").length;
     const scenario = summary.failed === 0 && summary.unknown === 0 ? "ready" : "review";
     const processedAt = new Date().toISOString();
     const metadata: ModelMetadata = {
@@ -353,7 +355,7 @@ export async function runStandardStages({
       summary,
       processedAt,
       source: "standard-ifc",
-      coverage: { verified, total: findings.length },
+      coverage: { verified, total: clauseFindings.length },
       standard: { facts, geometry: model.geometry, measurements },
       report: {
         generatedAt: processedAt,

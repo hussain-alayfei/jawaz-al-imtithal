@@ -126,7 +126,7 @@ export function formatBytes(bytes: number): string {
   return `${Math.max(bytes / 1024, 0.1).toFixed(1)} KB`;
 }
 
-/** «بند» counted after a number: 13 من 17 بندًا، 10 بنود. */
+/** «بند» counted after a number: 10 من 14 بندًا، 10 بنود. */
 export function clausesWord(total: number): string {
   const rest = total % 100;
   if (rest >= 3 && rest <= 10) return "بنود";

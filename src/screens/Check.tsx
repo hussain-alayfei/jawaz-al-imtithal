@@ -27,6 +27,7 @@ import type { ComplianceRun, IfcUpload, PipelineEvent, StageId, StageState } fro
 import { copy } from "../content/copy";
 import { SAMPLE_FILES, sampleById, type SampleFile, type SampleId } from "../content/samples";
 import { Button, Seal, StatusMark, Wordmark } from "../brand/ui";
+import { tallyOf } from "./results/findings";
 import {
   STAGE_IDS,
   checkFileMeta,
@@ -394,9 +395,8 @@ export default function Check({
 
   const run = phase === "done" ? outcome?.run : undefined;
   const failure = phase === "error" ? outcome?.failure : undefined;
-  const coverage = run
-    ? (run.coverage ?? { verified: run.summary.passed + run.summary.failed, total: run.findings.length })
-    : undefined;
+  const tally = run ? tallyOf(run) : undefined;
+  const coverage = tally ? { verified: tally.verified, total: tally.total } : undefined;
 
   return (
     <div className="ck">
@@ -707,13 +707,13 @@ export default function Check({
                           </p>
                           <ul className="ck-done__counts">
                             <li>
-                              <StatusMark status="pass" label={`${run.summary.passed} ${copy.status.pass}`} />
+                              <StatusMark status="pass" label={`${tally?.passed ?? 0} ${copy.status.pass}`} />
                             </li>
                             <li>
-                              <StatusMark status="fail" label={`${run.summary.failed} ${copy.status.fail}`} />
+                              <StatusMark status="fail" label={`${tally?.failed ?? 0} ${copy.status.fail}`} />
                             </li>
                             <li>
-                              <StatusMark status="unknown" label={`${run.summary.unknown} ${copy.status.unknown}`} />
+                              <StatusMark status="unknown" label={`${tally?.unknown ?? 0} ${copy.status.unknown}`} />
                             </li>
                           </ul>
                           <Button

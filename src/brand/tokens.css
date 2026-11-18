@@ -80,13 +80,19 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--palm);
   outline-offset: 3px;
 }
 
-.on-stone :focus-visible,
-.on-stone:focus-visible {
-  outline-color: var(--palm);
+/* On deep palm surfaces the ring turns gold so it stays visible (palm ring is ≥ 9:1 on white and stone). */
+.on-dark :focus-visible,
+.lp-bar :focus-visible,
+.lp-hero__copy :focus-visible,
+.lp-closing :focus-visible,
+.lp-footer :focus-visible,
+.ck-bar :focus-visible,
+.rs-bar :focus-visible {
+  outline-color: var(--gold-on-palm);
 }
 
 .sr-only {
@@ -368,9 +374,9 @@ a {
 }
 
 .seal__top {
-  font-size: 0.085em;
-  font-weight: 600;
-  color: var(--gold-text);
+  font-size: 0.1em;
+  font-weight: 700;
+  color: #6f5219;
 }
 
 .seal__main {

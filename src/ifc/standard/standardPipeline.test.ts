@@ -134,7 +134,7 @@ describe("standard IFC restaurant plans against the ministry's restaurant requir
       expect(item.status).toBe("unknown");
       expect(item.actual).toContain("غير قابل للتحقق من الملف");
     }
-    expect(run.coverage).toEqual({ verified: 13, total: 17 });
+    expect(run.coverage).toEqual({ verified: 10, total: 14 });
     expect(run.scenario).toBe("review");
   });
 

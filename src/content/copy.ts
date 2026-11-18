@@ -29,7 +29,7 @@ export const copy = {
   },
   dossier: {
     title: "نموذج نتيجة الفحص",
-    note: "12 مطابق، 1 غير مطابق، 4 لا يمكن التحقق من الملف.",
+    note: "9 مطابق، 1 غير مطابق، 4 لا يمكن التحقق من الملف.",
     fileLabel: "الملف",
     file: "restaurant-kitchen-tiles-1.5m.ifc",
     schemaLabel: "الصيغة",
@@ -37,11 +37,11 @@ export const copy = {
     elementsLabel: "العناصر",
     elements: "84 عنصرًا",
     scopeLabel: "نطاق التحقق",
-    scope: "13 من 17 بندًا",
+    scope: "10 من 14 بندًا",
     referenceLabel: "المرجع",
     reference: "اشتراطات المطاعم، وزارة البلديات والإسكان",
     cta: "جرّب هذا المثال",
-    sealLabel: "ختم موائم: فحص مسبق، نطاق التحقق 13 من 17 بندًا",
+    sealLabel: "ختم موائم: فحص مسبق، نطاق التحقق 10 من 14 بندًا",
   },
   register: {
     title: "سجل البنود",
@@ -123,6 +123,8 @@ export const copy = {
       unknown: "لا يمكن التحقق من الملف",
       pass: "مطابق",
       unknownNote: "هذه البنود لا تُحسب مطابقة.",
+      data: "فحوص بيانات الملف",
+      dataNote: "فحوص من موائم، وليست بنودًا من الاشتراطات، ولا تدخل في نطاق التحقق.",
     },
     detail: {
       measured: "المقاس",

@@ -16,11 +16,46 @@ export function stepIdOf(elementId?: string): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-export function groupFindings(findings: Finding[]) {
-  return STATUS_ORDER.map((status) => ({
+/** Mowaem's own file and data checks: not clauses of the requirements, never counted in the clause scope. */
+export function isDataCheck(finding: Finding): boolean {
+  return requirementById.get(finding.ruleId)?.kind === "platform" || finding.ruleId.startsWith("MOWAEM-DATA");
+}
+
+export interface FindingGroup {
+  key: ResultStatus | "data";
+  /** Absent for the data-check group. */
+  status?: ResultStatus;
+  items: Finding[];
+}
+
+/** Clause groups by status, then Mowaem's data checks as their own group. */
+export function groupFindings(findings: Finding[]): FindingGroup[] {
+  const clauses = findings.filter((finding) => !isDataCheck(finding));
+  const groups: FindingGroup[] = STATUS_ORDER.map((status) => ({
+    key: status,
     status,
-    items: findings.filter((finding) => finding.status === status),
+    items: clauses.filter((finding) => finding.status === status),
   })).filter((group) => group.items.length > 0);
+  const data = findings.filter(isDataCheck);
+  if (data.length > 0) groups.push({ key: "data", items: data });
+  return groups;
+}
+
+export interface ClauseTally {
+  verified: number;
+  total: number;
+  passed: number;
+  failed: number;
+  unknown: number;
+}
+
+/** Counts over the requirement clauses only (data checks excluded). */
+export function tallyOf(run: ComplianceRun): ClauseTally {
+  const clauses = run.findings.filter((finding) => !isDataCheck(finding));
+  const passed = clauses.filter((finding) => finding.status === "pass").length;
+  const failed = clauses.filter((finding) => finding.status === "fail").length;
+  const unknown = clauses.filter((finding) => finding.status === "unknown").length;
+  return { verified: passed + failed, total: clauses.length, passed, failed, unknown };
 }
 
 /** Proven failure first, then the first rule the file cannot prove. */
@@ -106,9 +141,10 @@ export function elementOf(run: ComplianceRun, finding: Finding): ElementInfo | u
   };
 }
 
-/** Rules proven from the file (pass or fail) out of all rules. */
+/** Clauses proven from the file (pass or fail) out of all requirement clauses. */
 export function coverageOf(run: ComplianceRun): { verified: number; total: number } {
-  return run.coverage ?? { verified: run.summary.passed + run.summary.failed, total: run.findings.length };
+  const { verified, total } = tallyOf(run);
+  return { verified, total };
 }
 
 /** Arabic counted noun: 1 عنصر، 2 عنصران، 3 عناصر، 11 عنصرًا، 100 عنصر. */

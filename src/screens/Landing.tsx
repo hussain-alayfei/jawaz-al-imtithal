@@ -12,7 +12,7 @@ import "./landing.css";
 const LOCAL = {
   navLabel: "أقسام الصفحة",
   menu: "القائمة",
-  sealMain: "13 من 17",
+  sealMain: "10 من 14",
   notInFile: "لا يثبته الملف المعماري",
   quote: "… ويجب تكسية الحوائط بمواد متينة وقابلة للتنظيف، على ألا يقل ارتفاعها عن (1.80) متر من منسوب الأرضية.",
   cite: "البند 4.5.2، صفحة 24، بند إلزامي",
@@ -48,24 +48,24 @@ interface RegisterRow {
 /* Excerpt of the sample run in clause order (values from the approved board and BRIEF.md). */
 const REGISTER: readonly RegisterRow[] = [
   { clause: "3.1", what: "الحد الأدنى لمساحة الموقع", measured: "159.3 م²", required: "16 م² على الأقل", status: "pass" },
-  { clause: "4.1.3", what: "الصرف", status: "unknown" },
+  { clause: "4.1.3", what: "اتصال التجهيزات بالصرف الصحي", status: "unknown" },
   {
     clause: "4.2.2",
-    what: "مساحات التحضير والطهي والتخزين والتقديم",
+    what: "مساحات التحضير والتخزين وصالة التقديم",
     measured: "محددة في الملف",
     required: "مطبخ ومخزن وصالة",
     status: "pass",
   },
-  { clause: "4.3.2", what: "خدمات الواجهة", status: "unknown" },
-  { clause: "4.4.1", what: "الوصول الشامل", status: "unknown" },
+  { clause: "4.3.2", what: "تمديدات الخدمة على الواجهة", status: "unknown" },
+  { clause: "4.4.1", what: "متطلبات الأشخاص ذوي الإعاقة", status: "unknown" },
   {
     clause: "4.5.2",
-    what: "تكسية حوائط المطبخ من منسوب الأرضية",
+    what: "ارتفاع تكسية حوائط المطبخ",
     measured: "1.50 م",
     required: "1.80 م على الأقل",
     status: "fail",
   },
-  { clause: "4.7.1", what: "التهوية", status: "unknown" },
+  { clause: "4.7.1", what: "نظام التهوية", status: "unknown" },
   {
     clause: "4.8.1",
     what: "مساحة المستودع",
@@ -77,7 +77,7 @@ const REGISTER: readonly RegisterRow[] = [
   { clause: "4.9.1", what: "عرض مخرج الطوارئ", measured: "0.95 م", required: "0.90 م على الأقل", note: "حد مؤقت", status: "pass" },
   {
     clause: "4.10.1",
-    what: "موقع باب دورة المياه",
+    what: "باب دورة المياه وغرف تداول الأغذية",
     measured: "يفتح على صالة الطعام",
     required: "ألا يفتح على المطبخ",
     status: "pass",

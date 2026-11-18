@@ -80,10 +80,14 @@ export default function App() {
     setRoute(next);
   }, []);
 
-  /* Results and report need a finished run in memory; without one, send the visitor to a new check. */
+  /* Results and report need a finished run in memory (a refresh loses it). Replace the history entry
+     instead of adding one, so the back button still leads out of the check page. */
   useEffect(() => {
-    if ((route === "results" || route === "report") && !run) go("check");
-  }, [go, route, run]);
+    if ((route === "results" || route === "report") && !run) {
+      window.history.replaceState(null, "", ROUTE_HASH.check);
+      setRoute("check");
+    }
+  }, [route, run]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });

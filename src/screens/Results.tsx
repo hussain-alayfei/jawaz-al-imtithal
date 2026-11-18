@@ -15,6 +15,7 @@ import {
   clauseOf,
   counted,
   coverageOf,
+  tallyOf,
   defaultFinding,
   elementOf,
   groupFindings,
@@ -162,7 +163,8 @@ function FindingDetail({
 }
 
 export default function Results({ run, onReport, onNew, onHome, notify }: ResultsProps) {
-  const { findings, summary } = run;
+  const { findings } = run;
+  const summary = tallyOf(run);
   const compact = useMediaQuery(COMPACT_QUERY);
   const [selectedRule, setSelectedRule] = useState<string | undefined>(() => defaultFinding(findings)?.ruleId);
   const [selectedElement, setSelectedElement] = useState<string | undefined>(
@@ -390,17 +392,20 @@ export default function Results({ run, onReport, onNew, onHome, notify }: Result
           {findings.length === 0 && <p className="rs-empty">{copy.results.empty}</p>}
 
           {groups.map((group) => (
-            <section key={group.status} className={`rs-group rs-group--${group.status}`} aria-labelledby={`rs-g-${group.status}`}>
+            <section key={group.key} className={`rs-group rs-group--${group.key}`} aria-labelledby={`rs-g-${group.key}`}>
               <div className="rs-group__head">
-                <h3 id={`rs-g-${group.status}`}>
-                  <span className={`status status--${group.status}`}>
-                    <StatusGlyph status={group.status} size={20} />
-                  </span>
-                  {copy.results.groups[group.status]}
+                <h3 id={`rs-g-${group.key}`}>
+                  {group.status && (
+                    <span className={`status status--${group.status}`}>
+                      <StatusGlyph status={group.status} size={20} />
+                    </span>
+                  )}
+                  {copy.results.groups[group.key]}
                 </h3>
                 <span className="count">{group.items.length}</span>
               </div>
-              {group.status === "unknown" && <p className="rs-group__note">{copy.results.groups.unknownNote}</p>}
+              {group.key === "unknown" && <p className="rs-group__note">{copy.results.groups.unknownNote}</p>}
+              {group.key === "data" && <p className="rs-group__note">{copy.results.groups.dataNote}</p>}
               <ul className="rs-list">
                 {group.items.map((finding) => {
                   const selected = finding.ruleId === selectedRule;

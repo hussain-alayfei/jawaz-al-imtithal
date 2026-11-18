@@ -139,7 +139,7 @@ export interface ComplianceRun {
    * Absent for the older MOWAEM-IFC-1.0 contract files.
    */
   source?: "standard-ifc";
-  /** Rules with evidence in the file (pass or fail) out of all rules. */
+  /** Requirement clauses with evidence in the file (pass or fail) out of all clauses; data checks excluded. */
   coverage?: { verified: number; total: number };
   /** Facts and triangles of the checked file, for the viewer that draws it. */
   standard?: {

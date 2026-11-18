@@ -14,6 +14,7 @@ import {
   clauseOf,
   counted,
   coverageOf,
+  tallyOf,
   elementOf,
   groupFindings,
   splitValue,
@@ -132,7 +133,8 @@ function ReportFinding({ run, finding }: { run: ComplianceRun; finding: Finding 
 }
 
 export default function Report({ run, onBack, onHome, notify }: ReportProps) {
-  const { findings, metadata, summary } = run;
+  const { findings, metadata } = run;
+  const summary = tallyOf(run);
   const generatedAt = useMemo(() => formatDate(run.processedAt), [run.processedAt]);
   const groups = useMemo(() => groupFindings(findings), [findings]);
   const coverage = coverageOf(run);
@@ -163,8 +165,14 @@ export default function Report({ run, onBack, onHome, notify }: ReportProps) {
 </article>`;
           })
           .join("");
-        return `<section><h2>${escapeHtml(copy.results.groups[group.status])} <span class="count">${group.items.length}</span></h2>${
-          group.status === "unknown" ? `<p class="note">${escapeHtml(copy.results.groups.unknownNote)}</p>` : ""
+        const note =
+          group.key === "unknown"
+            ? copy.results.groups.unknownNote
+            : group.key === "data"
+              ? copy.results.groups.dataNote
+              : "";
+        return `<section><h2>${escapeHtml(copy.results.groups[group.key])} <span class="count">${group.items.length}</span></h2>${
+          note ? `<p class="note">${escapeHtml(note)}</p>` : ""
         }${rows}</section>`;
       })
       .join("");
@@ -313,17 +321,20 @@ ${sections}
         </section>
 
         {groups.map((group) => (
-          <section key={group.status} className={`rp-group rp-group--${group.status}`} aria-labelledby={`rp-g-${group.status}`}>
+          <section key={group.key} className={`rp-group rp-group--${group.key}`} aria-labelledby={`rp-g-${group.key}`}>
             <div className="rp-group__head">
-              <h2 id={`rp-g-${group.status}`}>
-                <span className={`status status--${group.status}`}>
-                  <StatusGlyph status={group.status} size={22} />
-                </span>
-                {copy.results.groups[group.status]}
+              <h2 id={`rp-g-${group.key}`}>
+                {group.status && (
+                  <span className={`status status--${group.status}`}>
+                    <StatusGlyph status={group.status} size={22} />
+                  </span>
+                )}
+                {copy.results.groups[group.key]}
               </h2>
               <span className="count">{group.items.length}</span>
             </div>
-            {group.status === "unknown" && <p className="rp-note">{copy.results.groups.unknownNote}</p>}
+            {group.key === "unknown" && <p className="rp-note">{copy.results.groups.unknownNote}</p>}
+            {group.key === "data" && <p className="rp-note">{copy.results.groups.dataNote}</p>}
             {group.items.map((finding) => (
               <ReportFinding key={finding.ruleId} run={run} finding={finding} />
             ))}
