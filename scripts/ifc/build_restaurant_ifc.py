@@ -259,7 +259,12 @@ def finish(b: Builder, product, rep, material: str, transparency: float = 0.0) -
     b.finish(product, rep, material, category, rgb, transparency)
 
 
-def build(exit_width: float, units: str, fire_exit_flags: bool = True) -> ifcopenshell.file:
+def build(
+    exit_width: float,
+    units: str,
+    fire_exit_flags: bool = True,
+    cladding_height: float = 2.0,
+) -> ifcopenshell.file:
     b = Builder(1000.0 if units == "mm" else 1.0)
     f = b.f
     walls, openings, spaces = layout(exit_width)
@@ -366,6 +371,7 @@ def build(exit_width: float, units: str, fire_exit_flags: bool = True) -> ifcope
     ifcopenshell.api.aggregate.assign_object(f, products=list(space_ents.values()), relating_object=b.storey)
 
     furnish(b, space_ents)
+    clad_kitchen(b, space_ents, cladding_height)
     finalise(f)
     return f
 
@@ -438,6 +444,50 @@ def furnish(b: Builder, spaces) -> None:
             ifcopenshell.api.spatial.assign_container(f, products=items, relating_structure=spaces[key])
 
 
+def clad_kitchen(b: Builder, spaces, height: float) -> None:
+    """Ceramic wall tiles on the kitchen's inner faces (IfcCovering CLADDING), stopped at openings.
+
+    Restaurant requirements 4.5.2 ask for washable cladding of at least 1.80 m in food preparation
+    areas; the height here is a design input so the rule can be tested against real geometry."""
+    t = 0.012
+    x0, y0, x1, y1 = 10.0 + INT_T / 2, 4.5 + INT_T / 2, FOOT_X - EXT_T, FOOT_Y - EXT_T
+    # (side, fixed coordinate, span start, span end, openings along the span)
+    sides = [
+        ("west", x0, y0, y1, [(7.0, 8.0)]),          # D-08 dining to kitchen
+        ("east", x1, y0, y1, [(7.5, 8.5)]),          # D-07 service door
+        ("south", y0, x0, x1, [(11.0, 12.0)]),       # D-05 corridor to kitchen
+        ("north", y1, x0, x1, [(12.25, 13.75)]),     # WI-05 kitchen window
+    ]
+    tiles = []
+    for side, fixed, start, end, gaps in sides:
+        segments, cursor = [], start
+        for g0, g1 in sorted(gaps):
+            if g0 > cursor:
+                segments.append((cursor, g0))
+            cursor = max(cursor, g1)
+        if cursor < end:
+            segments.append((cursor, end))
+        items = []
+        for a, c in segments:
+            if side == "west":
+                items.append(b.box_item(fixed, a, 0, fixed + t, c, height))
+            elif side == "east":
+                items.append(b.box_item(fixed - t, a, 0, fixed, c, height))
+            elif side == "south":
+                items.append(b.box_item(a, fixed, 0, c, fixed + t, height))
+            else:
+                items.append(b.box_item(a, fixed - t, 0, c, fixed, height))
+        covering = b.element("IfcCovering", f"Kitchen wall tiles {side}", "CLADDING")
+        b.place(covering, np.eye(4))
+        finish(b, covering, b.body_rep(items), "Ceramic")
+        ifcopenshell.api.pset.edit_pset(
+            b.f, pset=ifcopenshell.api.pset.add_pset(b.f, product=covering, name="Pset_CoveringCommon"),
+            properties={"Reference": f"KITCHEN-TILES-{side.upper()}", "IsExternal": False},
+        )
+        tiles.append(covering)
+    ifcopenshell.api.spatial.assign_container(b.f, products=tiles, relating_structure=spaces["SP-KITCHEN"])
+
+
 def finalise(f: ifcopenshell.file) -> None:
     """Deterministic GUIDs and header, so regenerated files only differ where the design differs."""
     for index, entity in enumerate(f.by_type("IfcRoot")):
@@ -456,9 +506,16 @@ def main() -> None:
     ap.add_argument("--exit-door-width", type=float, required=True, help="clear width of door D-02 in metres")
     ap.add_argument("--units", choices=("m", "mm"), default="m")
     ap.add_argument("--no-fire-exit-flags", action="store_true", help="omit Pset_DoorCommon.FireExit (test case)")
+    ap.add_argument("--kitchen-cladding-height", type=float, default=2.0,
+                    help="height of the kitchen wall tiles in metres (requirements 4.5.2: at least 1.80 m)")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
-    model = build(args.exit_door_width, args.units, fire_exit_flags=not args.no_fire_exit_flags)
+    model = build(
+        args.exit_door_width,
+        args.units,
+        fire_exit_flags=not args.no_fire_exit_flags,
+        cladding_height=args.kitchen_cladding_height,
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     model.header.file_name.name = args.out.name
     model.write(str(args.out))
