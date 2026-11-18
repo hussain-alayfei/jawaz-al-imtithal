@@ -1,5 +1,7 @@
-/* 3D viewer chrome in the «ختم» language: white panels with panel radius over the scene,
-   round 44px icon buttons for the tools, round status pins. Prefix: vw-. */
+/* 3D viewer chrome in the formal identity: white panels with hairline borders and 8 px corners
+   over the scene, Almarai, ink and muted text, the brand green only for the pressed state.
+   No gradients, no glows; floating panels carry one faint shadow so they lift off bright sky.
+   Prefix: vw-. Only tokens from src/brand/tokens.css. */
 
 .vw {
   position: relative;
@@ -7,14 +9,25 @@
   height: 100%;
   min-height: 420px;
   overflow: hidden;
-  background: #dcd6cb;
+  background: var(--surface-2);
+  font-family: var(--font);
+  color: var(--ink);
   container-type: inline-size;
   container-name: vw;
+}
+
+/* Capture shots (?capture=hero|networks): the scene alone, filling the window. */
+.vw--shot {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  min-height: 0;
 }
 
 .vw__canvas {
   position: absolute;
   inset: 0;
+  touch-action: none;
 }
 
 .vw__canvas canvas {
@@ -24,7 +37,8 @@
 /* Chrome sits above the scene's HTML labels (drei uses z-index up to 30). */
 .vw__meta,
 .vw__legend,
-.vw__tools,
+.vw__bar,
+.vw__layers,
 .vw__selection {
   position: absolute;
   z-index: 40;
@@ -32,12 +46,12 @@
 
 .vw__meta,
 .vw__legend,
+.vw__layers,
 .vw__selection {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--paper);
-  border-radius: 14px;
-  box-shadow:
-    0 0 0 1px rgba(15, 59, 46, 0.12),
-    0 6px 18px rgba(10, 43, 33, 0.1);
+  box-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
 }
 
 .vw__meta {
@@ -46,15 +60,15 @@
   display: flex;
   flex-direction: column;
   max-width: calc(100% - 32px);
-  padding: 8px 16px 9px;
-  line-height: 1.45;
+  margin: 0;
+  padding: 8px 14px 9px;
+  line-height: 1.5;
 }
 
 .vw__meta strong {
-  font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .vw__meta span {
@@ -69,13 +83,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px 16px;
-  max-width: min(440px, calc(100% - 300px));
+  gap: 2px 14px;
+  max-width: min(420px, calc(100% - 300px));
   margin: 0;
-  padding: 8px 16px;
+  padding: 7px 14px 8px;
   list-style: none;
   font-size: 13px;
-  font-weight: 500;
   line-height: 1.5;
   color: var(--ink);
 }
@@ -91,8 +104,8 @@
   flex-basis: 100%;
   justify-content: flex-end;
   font-size: 12px;
-  font-weight: 400;
   color: var(--muted);
+  white-space: normal;
 }
 
 .vw__dot {
@@ -103,19 +116,20 @@
 }
 
 .vw__dot--fail {
-  background: #a3283a;
+  background: var(--fail);
 }
 
 .vw__dot--pass {
-  background: var(--green-mark);
+  background: var(--pass);
 }
 
 .vw__dot--unknown {
   background: transparent;
-  border: 1.5px dashed var(--slate);
+  border: 1.5px dashed var(--unknown);
 }
 
-.vw__tools {
+/* Bottom bar: the view switcher (one segmented control, text labels), then the icon tools. */
+.vw__bar {
   inset-block-end: 16px;
   inset-inline-end: 16px;
   display: flex;
@@ -123,30 +137,147 @@
   gap: 8px;
 }
 
-.vw__tools .icon-btn {
-  box-shadow: 0 4px 12px rgba(10, 43, 33, 0.14);
+.vw__views {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgba(22, 22, 22, 0.06);
+}
+
+.vw-seg {
+  min-width: 64px;
+  height: 36px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: calc(var(--radius) - 3px);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.vw-seg:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.vw-seg[aria-pressed="true"] {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.vw-seg:disabled {
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.vw-seg:focus-visible {
+  outline-offset: 1px;
+}
+
+.vw__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .vw__tools .icon-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  background: var(--paper);
-  border-color: rgba(15, 59, 46, 0.22);
+  border-color: var(--line);
 }
 
 .vw-level {
   height: 44px;
   max-width: 160px;
-  padding-inline: 16px;
-  border: 1px solid rgba(15, 59, 46, 0.22);
-  border-radius: var(--radius-pill);
+  padding-inline: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   background: var(--paper);
-  color: var(--palm);
+  color: var(--ink);
   font: inherit;
   font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(10, 43, 33, 0.14);
+  font-weight: 700;
   cursor: pointer;
+}
+
+/* Building-services layers. */
+.vw__layers {
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  width: 248px;
+  padding: 10px 14px 10px;
+}
+
+/* The open layers panel is the legend of the services view. */
+.vw--layers .vw__legend {
+  display: none;
+}
+
+.vw__layers h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.vw__layers ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vw__layers label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.vw__layers input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--brand);
+  flex: none;
+}
+
+.vw-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--swatch);
+  flex: none;
+}
+
+.vw__layer-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.vw__layer-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.vw__layers p {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .vw__selection {
@@ -155,8 +286,9 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: min(360px, calc(100% - 300px));
-  padding: 12px 16px 13px;
+  width: min(340px, calc(100% - 560px));
+  min-width: 240px;
+  padding: 11px 14px 12px;
 }
 
 .vw__selection .status {
@@ -173,14 +305,14 @@
 
 .vw__selection-copy small {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 
 .vw__selection-copy strong {
   overflow: hidden;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -189,8 +321,36 @@
 .vw__selection-copy span {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 10px;
+  align-items: center;
+  gap: 2px 8px;
   font-size: 13px;
+  color: var(--muted);
+}
+
+.vw__selection-copy .vw__systems {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-block-start: 4px;
+  padding-block-start: 5px;
+  border-top: 1px solid var(--line);
+}
+
+.vw__systems-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.vw__selection-copy .vw__system {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.vw__system-kind {
   color: var(--muted);
 }
 
@@ -204,40 +364,38 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 5px 16px 7px;
-  border-radius: 14px;
+  padding: 4px 12px 6px;
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius);
   background: var(--paper);
-  box-shadow:
-    0 0 0 1.5px currentColor,
-    0 8px 20px rgba(10, 43, 33, 0.22);
-  line-height: 1.25;
+  line-height: 1.3;
   white-space: nowrap;
   pointer-events: none;
+  font-family: var(--font);
   font-variant-numeric: tabular-nums;
 }
 
 .vw-dim strong {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .vw-dim span {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
 }
 
 .vw-dim--fail {
-  color: var(--burgundy);
+  color: var(--fail);
 }
 
 .vw-dim--pass {
-  color: var(--green);
+  color: var(--pass);
 }
 
 .vw-dim--unknown {
-  color: var(--slate);
+  color: var(--unknown);
 }
 
 /* Round status pins over linked elements. */
@@ -245,51 +403,53 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 2px solid var(--paper);
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--paper);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(10, 43, 33, 0.4);
+  box-shadow: 0 0 0 1px var(--line-strong);
   transition: transform 160ms var(--ease);
 }
 
-/* 44px touch target around the 32px disc. */
+/* 44px touch target around the disc. */
 .vw-pin::before {
   content: "";
   position: absolute;
-  inset: -7px;
+  inset: -8px;
   border-radius: 50%;
 }
 
 .vw-pin:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .vw-pin--fail {
-  background: #a3283a;
+  background: var(--fail);
 }
 
 .vw-pin--unknown {
-  background: var(--slate);
+  background: var(--unknown);
 }
 
 .vw-pin--pass {
-  background: var(--green-mark);
+  background: var(--pass);
 }
 
 .vw-space {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3px 12px 4px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--palm);
+  padding: 2px 10px 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.35;
   white-space: nowrap;
   pointer-events: none;
@@ -297,42 +457,114 @@
 
 .vw-space small {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--muted);
 }
 
-/* Narrow viewers (phones, narrow columns): tools stack on the end edge, the legend steps aside. */
-@container vw (max-width: 700px) {
+/* Medium viewers: the selection moves up under the title so the bottom row keeps the controls. */
+@container vw (max-width: 860px) {
+  .vw__selection {
+    inset-block-start: 76px;
+    inset-block-end: auto;
+    width: min(340px, calc(100% - 32px));
+  }
+
   .vw__legend {
     display: none;
   }
 
+  .vw__layers {
+    inset-block-start: auto;
+    inset-block-end: 76px;
+  }
+}
+
+/* Narrow viewers (phones, narrow columns): switcher along the bottom, tools stacked on the end edge. */
+@container vw (max-width: 620px) {
   .vw__meta {
     inset-block-start: 12px;
     inset-inline-start: 12px;
-    max-width: calc(100% - 88px);
-    padding: 6px 14px 7px;
+    max-width: calc(100% - 80px);
+    padding: 6px 12px 7px;
   }
 
   .vw__meta strong {
-    font-size: 15px;
+    font-size: 14px;
+  }
+
+  .vw__meta span {
+    font-size: 12px;
+  }
+
+  .vw__bar {
+    display: contents;
+  }
+
+  .vw__views {
+    position: absolute;
+    z-index: 40;
+    inset-block-end: 12px;
+    inset-inline: 12px;
+    display: flex;
+  }
+
+  .vw-seg {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 4px;
+    font-size: 13px;
   }
 
   .vw__tools {
+    position: absolute;
+    z-index: 40;
     inset-block-start: 12px;
-    inset-block-end: auto;
     inset-inline-end: 12px;
     flex-direction: column;
   }
 
   .vw-level {
     max-width: 44px;
-    padding-inline: 8px;
+    padding-inline: 6px;
   }
 
   .vw__selection {
-    inset-block-end: 12px;
+    inset-block-start: auto;
+    inset-block-end: 66px;
     inset-inline: 12px;
     width: auto;
+    min-width: 0;
+    padding: 9px 12px 10px;
+  }
+
+  .vw__layers {
+    inset-block-start: 64px;
+    inset-block-end: auto;
+    inset-inline-start: 12px;
+    inset-inline-end: 68px;
+    width: auto;
+    padding: 7px 10px 8px;
+  }
+
+  /* Two columns of short rows, so the networks stay in view above the selection. */
+  .vw__layers h3 {
+    margin-block-end: 2px;
+    font-size: 13px;
+  }
+
+  .vw__layers ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+  }
+
+  .vw__layers label {
+    min-height: 30px;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .vw__layers p {
+    display: none;
   }
 }

@@ -56,3 +56,66 @@ export function sunVector(elevationDeg: number, azimuthDeg: number): [number, nu
 /** Riyadh, the date and hour the viewer is lit for (10:30 local, UTC+3, spring equinox). */
 export const RIYADH = { lat: 24.7136, lon: 46.6753 };
 export const VIEW_TIME = new Date(Date.UTC(2026, 2, 20, 7, 30));
+
+/** Golden hour for the landing-page hero: 16:10 local on 18 November, sun low in the west-south-west. */
+export const HERO_TIME = new Date(Date.UTC(2026, 10, 18, 13, 10));
+
+export interface Daylight {
+  /** Direct sun colour (sRGB hex) and intensity for a DirectionalLight. */
+  sun: { color: string; intensity: number };
+  /** Hemisphere light: sky and ground colours, intensity. */
+  hemisphere: { sky: string; ground: string; intensity: number };
+  /** Image-light dome colours (linear RGB, all below 1 so the sun stays the key light). */
+  dome: { zenith: [number, number, number]; horizon: [number, number, number]; ground: [number, number, number]; sunGlow: number };
+  /** Sky shader parameters. */
+  sky: { turbidity: number; rayleigh: number; mie: number; mieG: number };
+  fog: string;
+  exposure: number;
+  /** scene.environmentIntensity: the dome fills the shade, the sun stays the key light. */
+  envIntensity: number;
+}
+
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+const mix3 = (a: readonly number[], b: readonly number[], t: number): [number, number, number] => [
+  mix(a[0], b[0], t),
+  mix(a[1], b[1], t),
+  mix(a[2], b[2], t),
+];
+const hex = (rgb: readonly number[]) =>
+  `#${rgb.map((v) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, "0")).join("")}`;
+
+/**
+ * Light for a clear desert day from the sun's elevation (degrees): white midday sun, warm and
+ * weaker near the horizon (longer air path), the sky dome warming at its horizon. Tuned against
+ * captures for a sun-to-shade ratio of about 5:1 on sunlit ground at midday (about 2:1 at golden
+ * hour, when the sky's share of the light is larger).
+ */
+export function daylight(elevationDeg: number): Daylight {
+  // 0 at the horizon, 1 from about 35 degrees up.
+  const t = Math.min(1, Math.max(0, (elevationDeg - 2) / 33));
+  const e = t * t * (3 - 2 * t);
+  // Low sun: warm but not orange (a clear desert evening, not a dusty sunset).
+  const sunLow = [1.0, 0.84, 0.66];
+  const sunHigh = [1.0, 0.957, 0.902];
+  return {
+    // three.js lights are physical (since r155): a diffuse surface gets intensity x N.L / pi from
+    // the sun but the full image light, so the sun needs about pi times the old value for a
+    // sun-to-shade ratio near 5:1 (3d-studio skill); exposure comes down to match.
+    sun: { color: hex(mix3(sunLow, sunHigh, e)), intensity: mix(7.6, 9.4, e) },
+    hemisphere: {
+      sky: hex(mix3([0.8, 0.82, 0.86], [0.874, 0.906, 0.933], e)),
+      ground: hex(mix3([0.58, 0.5, 0.4], [0.604, 0.518, 0.4], e)),
+      intensity: mix(0.22, 0.3, e),
+    },
+    dome: {
+      zenith: mix3([0.42, 0.48, 0.58], [0.5, 0.6, 0.74], e),
+      horizon: mix3([0.88, 0.8, 0.7], [0.86, 0.84, 0.8], e),
+      ground: mix3([0.4, 0.34, 0.27], [0.42, 0.37, 0.3], e),
+      sunGlow: mix(0.9, 0.6, e),
+    },
+    sky: { turbidity: mix(4.5, 6.5, e), rayleigh: mix(2.0, 1.5, e), mie: mix(0.004, 0.006, e), mieG: mix(0.86, 0.82, e) },
+    fog: hex(mix3([0.85, 0.8, 0.74], [0.867, 0.839, 0.788], e)),
+    exposure: mix(0.78, 0.62, e),
+    envIntensity: mix(0.62, 0.72, e),
+  };
+}
