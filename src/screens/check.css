@@ -1,0 +1,889 @@
+/* فحص جديد: the three-step check page, in the «ختم» language. Every class is prefixed ck-. */
+
+.ck {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.ck-wrap {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  padding-inline: 40px;
+}
+
+/* Top bar */
+.ck-bar {
+  background: var(--palm);
+  color: #ffffff;
+}
+
+.ck-bar__in {
+  display: flex;
+  align-items: center;
+  min-height: 76px;
+  max-width: 1280px;
+}
+
+.ck-bar .wordmark {
+  min-height: 44px;
+  color: #ffffff;
+  font-size: 28px;
+}
+
+.ck-bar .wordmark svg {
+  width: 38px;
+  height: 38px;
+  color: var(--palm);
+}
+
+.ck-bar :focus-visible {
+  outline-color: var(--gold-on-palm);
+}
+
+/* Title */
+.ck-main {
+  flex: 1;
+  padding-block: 52px 80px;
+}
+
+.ck-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ck-ornament {
+  display: block;
+  width: 168px;
+  height: 10px;
+}
+
+.ck-head h1 {
+  margin-top: 12px;
+  font-size: 42px;
+  line-height: 1.4;
+}
+
+.ck-head p {
+  max-width: 560px;
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--slate);
+}
+
+.ck-rule {
+  margin-top: 36px;
+}
+
+/* Steps: one page, three real steps, joined by a hairline from marker to marker. */
+.ck-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ck-step {
+  position: relative;
+  padding-block: 40px 8px;
+}
+
+.ck-step > section {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: start;
+}
+
+.ck-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-block: 94px -30px;
+  inset-inline-start: 21.5px;
+  width: 1px;
+  background: var(--line);
+}
+
+.ck-step--done:not(:last-child)::before {
+  background: var(--gold);
+}
+
+.ck-anchor {
+  scroll-margin-top: 24px;
+}
+
+.ck-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  background: var(--paper);
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 4px rgba(185, 139, 46, 0.45);
+  color: var(--palm);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 220ms var(--ease),
+    color 220ms var(--ease),
+    border-color 220ms var(--ease);
+}
+
+.ck-marker--done {
+  background: var(--palm);
+  color: var(--gold-on-palm);
+}
+
+.ck-marker--locked {
+  border-color: var(--line);
+  box-shadow: 0 0 0 3px var(--paper);
+  color: var(--muted);
+}
+
+.ck-step__body {
+  min-width: 0;
+}
+
+.ck-step__title {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 26px;
+  line-height: 1.4;
+}
+
+.ck-step__title:focus {
+  outline: none;
+}
+
+.ck-step__title:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.ck-step--locked .ck-step__title {
+  color: var(--muted);
+}
+
+/* Step 1 fields */
+.ck-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 28px;
+  margin-top: 18px;
+}
+
+.ck-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ck-label {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--palm);
+}
+
+.ck-control-wrap {
+  position: relative;
+}
+
+.ck-control {
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding-block: 10px;
+  padding-inline: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease);
+}
+
+.ck-control:hover:not(:disabled) {
+  border-color: #b9ad94;
+}
+
+.ck-control:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-color: var(--palm);
+}
+
+.ck-control:disabled {
+  background: var(--stone-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.ck-control[aria-invalid="true"] {
+  border-color: var(--burgundy);
+  box-shadow: inset 0 0 0 1px var(--burgundy);
+}
+
+.ck-control--select {
+  appearance: none;
+  padding-inline-end: 48px;
+  cursor: pointer;
+}
+
+.ck-control--suffix {
+  padding-inline-end: 56px;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ck-control--suffix::-webkit-outer-spin-button,
+.ck-control--suffix::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.ck-control-icon,
+.ck-suffix {
+  position: absolute;
+  inset-inline-end: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ck-control-icon {
+  color: var(--palm);
+}
+
+.ck-suffix {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.ck-help {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.ck-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+  color: var(--burgundy);
+}
+
+.ck-error svg {
+  flex: none;
+  margin-top: 4px;
+}
+
+.ck-error--file {
+  margin-top: 12px;
+}
+
+.ck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* Step 2: drop zone and ready samples */
+.ck-upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 32px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.ck-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 252px;
+  padding: 30px 24px 28px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  background: var(--stone-soft);
+  text-align: center;
+  transition: background-color 180ms var(--ease);
+}
+
+.ck-drop::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(185, 139, 46, 0.38);
+  border-radius: 13px;
+  pointer-events: none;
+  transition: border-color 180ms var(--ease);
+}
+
+.ck-drop.is-dragging {
+  background: var(--stone);
+}
+
+.ck-drop.is-dragging::before {
+  border-color: var(--gold);
+}
+
+.ck-drop__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--palm);
+}
+
+.ck-drop.is-picked .ck-drop__icon {
+  background: var(--palm);
+  border-color: var(--palm);
+  color: var(--gold-on-palm);
+}
+
+.ck-drop__text {
+  max-width: 100%;
+}
+
+.ck-drop__title {
+  font-size: 21px;
+  line-height: 1.5;
+}
+
+.ck-drop__help {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.ck-drop__file {
+  max-width: 100%;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--palm);
+  overflow-wrap: anywhere;
+}
+
+.ck-drop__action {
+  margin-top: 14px;
+}
+
+.ck-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ck-notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.ck-notes svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--gold-text);
+}
+
+.ck-samples__title {
+  padding-bottom: 8px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--gold-text);
+}
+
+.ck-samples ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--gold);
+}
+
+.ck-samples li {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ck-sample {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  min-height: 62px;
+  padding: 11px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease);
+}
+
+.ck-sample:hover:not(:disabled) {
+  background: var(--stone-soft);
+}
+
+.ck-sample:focus-visible {
+  outline-offset: -2px;
+}
+
+.ck-sample:disabled {
+  cursor: not-allowed;
+}
+
+.ck-sample__dot {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1.5px solid #a99e86;
+  border-radius: 50%;
+  background: var(--paper);
+  transition: border-color 160ms var(--ease);
+}
+
+.ck-sample__dot::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--palm);
+  transform: scale(0);
+  transition: transform 180ms var(--ease);
+}
+
+.ck-sample[aria-pressed="true"] {
+  background: var(--stone-soft);
+}
+
+.ck-sample[aria-pressed="true"] .ck-sample__dot {
+  border-color: var(--palm);
+}
+
+.ck-sample[aria-pressed="true"] .ck-sample__dot::after {
+  transform: scale(1);
+}
+
+.ck-sample__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ck-sample__label {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--palm);
+}
+
+.ck-sample__note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Step 3: start, stages, outcome */
+.ck-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.ck-ready__file,
+.ck-runline {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.ck-ready__file bdi,
+.ck-runline bdi {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ck-runline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-top: 10px;
+}
+
+.ck-runline strong {
+  font-weight: 600;
+  color: var(--palm);
+}
+
+.ck-stages {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 3px double var(--gold);
+}
+
+.ck-stage {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 50px;
+  padding-block: 9px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ck-stage__label {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.ck-stage--running .ck-stage__label {
+  font-weight: 600;
+  color: var(--palm);
+}
+
+.ck-stage--completed .ck-stage__label {
+  color: var(--ink);
+}
+
+.ck-stage--failed .ck-stage__label {
+  font-weight: 600;
+  color: var(--burgundy);
+}
+
+.ck-stage__time {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ck-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid #b3a88f;
+  border-radius: 50%;
+  color: #ffffff;
+  flex: none;
+}
+
+.ck-glyph--running {
+  border-color: var(--gold);
+}
+
+.ck-glyph--running::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--palm);
+}
+
+.ck-glyph--completed {
+  border-color: var(--palm);
+  background: var(--palm);
+}
+
+.ck-glyph--failed {
+  border-color: var(--burgundy);
+  background: var(--burgundy);
+}
+
+@keyframes ck-breathe {
+  from {
+    transform: scale(0.55);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ck-glyph--running::after {
+    animation: ck-breathe 900ms var(--ease) infinite alternate;
+  }
+}
+
+.ck-done {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 32px;
+  margin-top: 28px;
+  padding: 30px 36px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  background: var(--stone-soft);
+}
+
+.ck-done::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(185, 139, 46, 0.45);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.ck-done__seal,
+.ck-done__text {
+  position: relative;
+}
+
+.ck-done h3 {
+  font-size: 26px;
+  line-height: 1.4;
+}
+
+.ck-done__scope {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.ck-done__scope strong {
+  font-weight: 600;
+  color: var(--palm);
+}
+
+.ck-done__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 26px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ck-done .btn {
+  margin-top: 20px;
+}
+
+.ck-fail {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 24px;
+  padding: 22px 26px;
+  border-radius: var(--radius-panel);
+  background: var(--burgundy-soft);
+}
+
+.ck-fail__glyph {
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+}
+
+.ck-fail h3 {
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--burgundy);
+}
+
+.ck-fail p {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ck-fail .btn {
+  margin-top: 16px;
+}
+
+.ck-nowrap {
+  white-space: nowrap;
+}
+
+/* Footer */
+.ck-foot {
+  padding-block: 0 36px;
+}
+
+.ck-foot p {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .ck-upload {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ck-wrap {
+    padding-inline: 16px;
+  }
+
+  .ck-bar__in {
+    min-height: 64px;
+  }
+
+  .ck-bar .wordmark {
+    font-size: 24px;
+  }
+
+  .ck-bar .wordmark svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ck-main {
+    padding-block: 36px 56px;
+  }
+
+  .ck-head h1 {
+    font-size: 32px;
+  }
+
+  .ck-head p {
+    font-size: 16px;
+  }
+
+  .ck-rule {
+    margin-top: 26px;
+  }
+
+  /* On a phone the marker sits beside the step title and the step body takes the full width. */
+  .ck-step {
+    padding-block: 28px 8px;
+  }
+
+  .ck-step + .ck-step {
+    margin-top: 20px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .ck-step > section {
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+  }
+
+  .ck-step:not(:last-child)::before {
+    display: none;
+  }
+
+  .ck-step__body {
+    display: contents;
+  }
+
+  .ck-step__body > * {
+    grid-column: 1 / -1;
+  }
+
+  .ck-step__body > .ck-step__title {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ck-marker {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+
+  .ck-step__title {
+    min-height: 36px;
+    font-size: 22px;
+  }
+
+  .ck-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .ck-step .btn {
+    width: 100%;
+  }
+
+  .ck-drop {
+    min-height: 0;
+    padding: 26px 18px 22px;
+  }
+
+  .ck-drop__action {
+    align-self: stretch;
+  }
+
+  .ck-done {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 18px;
+    padding: 24px 20px;
+  }
+
+  .ck-done__text {
+    justify-self: stretch;
+  }
+
+  .ck-done__counts {
+    flex-direction: column;
+  }
+
+  .ck-fail {
+    padding: 20px 18px;
+  }
+}
