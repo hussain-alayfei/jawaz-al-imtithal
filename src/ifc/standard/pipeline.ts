@@ -5,7 +5,8 @@ import {
   type FacilityDetails,
   type ModelMetadata,
 } from "../../data";
-import { hasCompleteFacility, materializeFindings } from "../rules";
+import type { Finding, ResultStatus } from "../../data";
+import { hasCompleteFacility } from "../rules";
 import {
   IfcProcessingError,
   type ComplianceRun,
@@ -17,7 +18,67 @@ import {
 } from "../types";
 import { loadStandardModel, StandardLoadError } from "./load";
 import type { StandardFacts, StandardModel } from "./model";
+import {
+  MOMAH_SOURCE_LABEL,
+  MOMAH_VERSION,
+  RESTAURANT_REQUIREMENTS_SOURCE,
+  requirementById,
+  type Requirement,
+} from "./requirements";
 import { evaluateStandardRestaurant, toEntity, type StandardEvaluation } from "./rules";
+
+const KIND_LABEL: Record<Requirement["kind"], string> = {
+  mandatory: "بند إلزامي",
+  recommendation: "توصية",
+  reference: "إحالة إلى كود البناء السعودي",
+  platform: "فحص بيانات من موائم",
+};
+
+/** A finding built from the requirement it checks: clause, verbatim text and source link. */
+export function findingFor(evaluation: StandardEvaluation): Finding {
+  const req = requirementById.get(evaluation.ruleId);
+  if (!req) throw new Error(`Missing requirement ${evaluation.ruleId}`);
+  const status: ResultStatus = evaluation.status;
+  const official = req.kind !== "platform";
+  const clause = official
+    ? `البند ${req.clause}${req.page ? ` • صفحة ${req.page}` : ""} • ${KIND_LABEL[req.kind]}`
+    : KIND_LABEL.platform;
+  const title =
+    status === "pass"
+      ? `${req.subject}: مطابق`
+      : status === "fail"
+        ? req.kind === "recommendation"
+          ? `${req.subject}: التوصية غير محققة`
+          : `${req.subject}: غير مطابق`
+        : `${req.subject}: غير قابل للتحقق من الملف`;
+  const explanation =
+    status === "unknown"
+      ? `لا يحمل الملف الدليل اللازم لهذا البند، فلا يُحتسب مطابقًا. طريقة القياس: ${req.method}`
+      : `قيس هذا البند من الملف نفسه. طريقة القياس: ${req.method}`;
+  return {
+    ruleId: req.id,
+    status,
+    severity: status === "fail" ? (req.kind === "recommendation" ? "medium" : "high") : status === "unknown" ? "medium" : "info",
+    title,
+    shortTitle: title,
+    category: req.category,
+    elementId: evaluation.target ? `STEP-${evaluation.target.stepId}` : undefined,
+    elementStepId: evaluation.target?.stepId,
+    elementGuid: evaluation.target?.globalId,
+    elementName: evaluation.target?.name,
+    actual: evaluation.actual,
+    expected: req.expected,
+    explanation,
+    recommendation: status === "pass" ? "لا يلزم إجراء في نطاق هذا البند." : req.recommendation,
+    source: official ? MOMAH_SOURCE_LABEL : "فحص جودة بيانات من موائم (ليس بندًا من الاشتراطات)",
+    clause,
+    version: official ? MOMAH_VERSION : "MOWAEM-DATA-1",
+    effort: status === "pass" ? "لا يوجد" : req.effort,
+    clauseText: req.text,
+    sourceUrl: official ? RESTAURANT_REQUIREMENTS_SOURCE.pdfUrl : undefined,
+    requirementKind: req.kind,
+  };
+}
 
 /*
  * The six analysis stages for a standard IFC file. Same stage ids and events as the
@@ -229,18 +290,18 @@ export async function runStandardStages({
     await yieldToInterface();
     return {
       value,
-      detail: `${activity?.ruleVersion} • ${value.length} قواعد • ${verified} قابلة للتحقق من الملف`,
-      evidence: { rulePackVersion: activity?.ruleVersion ?? "UNKNOWN", rules: value.length, verified },
+      detail: `${RESTAURANT_REQUIREMENTS_SOURCE.title} (${RESTAURANT_REQUIREMENTS_SOURCE.edition}) • ${value.length} بندًا • ${verified} قابلة للتحقق من الملف`,
+      evidence: {
+        requirements: `${RESTAURANT_REQUIREMENTS_SOURCE.title} • ${RESTAURANT_REQUIREMENTS_SOURCE.decision}`,
+        rules: value.length,
+        verified,
+      },
     };
   });
 
   const extracted = toExtractedModel(facts);
   const findings = await runStage("link", async (progress) => {
-    const materialized = materializeFindings(activityId, evaluations);
-    const value = materialized.map((finding, index) => ({
-      ...finding,
-      ...(evaluations[index].presentation ?? {}),
-    }));
+    const value = evaluations.map(findingFor);
     const ids = new Set(extracted.elements.map((e) => e.stepId));
     const guids = new Set(extracted.elements.map((e) => e.globalId));
     for (const finding of value) {
@@ -297,7 +358,7 @@ export async function runStandardStages({
       report: {
         generatedAt: processedAt,
         fileSha256: hash.sha256,
-        rulePackVersion: activity?.ruleVersion ?? "UNKNOWN",
+        rulePackVersion: `${RESTAURANT_REQUIREMENTS_SOURCE.title} ${RESTAURANT_REQUIREMENTS_SOURCE.edition}`,
         scoreMethod: "passed_over_total",
         modelEvidence: {
           schema: facts.schema,

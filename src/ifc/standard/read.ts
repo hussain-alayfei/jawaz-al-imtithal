@@ -108,7 +108,8 @@ function categoryFor(ifcType: string, predefined?: string): GeometryCategory {
   const t = ifcType.toUpperCase();
   if (t === "IFCWALL" || t === "IFCWALLSTANDARDCASE" || t === "IFCCURTAINWALL" || t === "IFCCOLUMN" || t === "IFCBEAM") return "wall";
   if (t === "IFCSLAB") return predefined === "ROOF" ? "roof" : "floor";
-  if (t === "IFCROOF" || t === "IFCCOVERING") return "roof";
+  if (t === "IFCCOVERING") return predefined === "FLOORING" ? "floor" : predefined === "CLADDING" ? "wall" : "roof";
+  if (t === "IFCROOF") return "roof";
   if (t === "IFCDOOR") return "door";
   if (t === "IFCWINDOW" || t === "IFCPLATE") return "window";
   if (t === "IFCFURNITURE" || t === "IFCFURNISHINGELEMENT" || t === "IFCSYSTEMFURNITUREELEMENT") return "furniture";
@@ -231,6 +232,7 @@ export async function readStandardModel(
     const builders = new Map<GeometryCategory, ChunkBuilder>();
     const boxes = new Map<number, Box3>();
     const floorArea = new Map<number, number>();
+    const footprints = new Map<number, number[]>();
     const productType = new Map<number, string>();
     const sceneBox = emptyBox();
     let triangles = 0;
@@ -294,7 +296,12 @@ export async function readStandardModel(
             const wx = p[c] - p[a], wy = p[c + 1] - p[a + 1], wz = p[c + 2] - p[a + 2];
             const cx = uy * wz - uz * wy, cy = uz * wx - ux * wz, cz = ux * wy - uy * wx;
             const area2 = Math.hypot(cx, cy, cz);
-            if (area2 > 0 && cy / area2 < -0.9) downArea += area2 / 2;
+            if (area2 > 0 && cy / area2 < -0.9) {
+              downArea += area2 / 2;
+              const fp = footprints.get(expressId) ?? [];
+              fp.push(p[a], p[a + 2], p[b], p[b + 2], p[c], p[c + 2]);
+              footprints.set(expressId, fp);
+            }
           }
         }
         builder.add(expressId, p, n, c, uv, new Uint32Array(idx));
@@ -340,6 +347,7 @@ export async function readStandardModel(
         globalId: str(line.GlobalId) ?? "",
         ifcType: typeName(expressId),
         name: str(line.Name),
+        predefinedType: str(line.PredefinedType),
         containerId: container.get(expressId),
         bbox: boxes.get(expressId),
       };
@@ -364,6 +372,7 @@ export async function readStandardModel(
         objectType,
         role: role?.role,
         roleMatchedOn: role?.matchedOn,
+        footprint: footprints.get(expressId),
         netFloorArea:
           qtoArea !== undefined ? qtoArea * units.area : geometryArea,
         areaSource:

@@ -5076,3 +5076,32 @@ code,
   font-size: var(--fs-sm);
   background: transparent;
 }
+
+/* ---- Verbatim clause from the official requirements ---- */
+.clause-quote {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-right: 3px solid var(--green-800, #0b5d48);
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+}
+
+.clause-quote figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: var(--fs-xs);
+}
+
+.clause-quote figcaption a {
+  color: var(--pass);
+}
+
+.clause-quote blockquote {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}

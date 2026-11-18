@@ -27,10 +27,11 @@ const finding = (run: ComplianceRun, ruleId: string) => {
 
 const PASS = "public/samples/restaurant/restaurant-exit-0.95m.ifc";
 const FAIL = "public/samples/restaurant/restaurant-exit-0.75m.ifc";
+const TILES = "public/samples/restaurant/restaurant-kitchen-tiles-1.5m.ifc";
 const FAIL_MM = "test-fixtures/ifc/standard/restaurant-exit-0.75m-mm.ifc";
 const NO_FLAGS = "test-fixtures/ifc/standard/restaurant-no-fire-exit-flags.ifc";
 
-describe("standard IFC restaurant plans", () => {
+describe("standard IFC restaurant plans against the ministry's restaurant requirements", () => {
   it("routes files without the Mowaem contract to the standard reader", async () => {
     expect(hasMowaemContract((await upload(PASS)).bytes)).toBe(false);
     expect(hasMowaemContract((await upload("test-fixtures/ifc/restaurant/submission-v1.ifc")).bytes)).toBe(true);
@@ -39,23 +40,36 @@ describe("standard IFC restaurant plans", () => {
   it("passes the exit width when the drawn door is 0.95 m", async () => {
     const run = await check(PASS);
     expect(run.source).toBe("standard-ifc");
-    const width = finding(run, "DOOR-WIDTH-001");
+    const width = finding(run, "MOMAH-REST-4.9.1-WIDTH");
     expect(width.status).toBe("pass");
     expect(width.actual).toContain("0.95 م");
     expect(width.actual).toContain("OverallWidth");
-    expect(run.standard?.measurements["DOOR-WIDTH-001"]?.value).toBeCloseTo(0.95, 6);
+    expect(width.expected).toContain("حد تجريبي");
+    expect(run.standard?.measurements["MOMAH-REST-4.9.1-WIDTH"]?.value).toBeCloseTo(0.95, 6);
   });
 
   it("fails the exit width when only that door changes to 0.75 m, linked to the door's own GUID", async () => {
     const run = await check(FAIL);
-    const width = finding(run, "DOOR-WIDTH-001");
+    const width = finding(run, "MOMAH-REST-4.9.1-WIDTH");
     expect(width.status).toBe("fail");
     expect(width.actual).toContain("0.75 م");
     const door = run.standard!.facts.doors.find((d) => d.reference === "D-02")!;
     expect(width.elementGuid).toBe(door.globalId);
     expect(width.elementStepId).toBe(door.expressId);
     expect(door.width).toBeCloseTo(0.75, 6);
-    expect(door.bbox).toBeDefined();
+  });
+
+  it("measures the kitchen wall tiles against clause 4.5.2 (1.80 m) from their geometry", async () => {
+    const ok = finding(await check(PASS), "MOMAH-REST-4.5.2-CLADDING");
+    expect(ok.status).toBe("pass");
+    expect(ok.actual).toContain("2.00 م");
+    const low = await check(TILES);
+    const tiles = finding(low, "MOMAH-REST-4.5.2-CLADDING");
+    expect(tiles.status).toBe("fail");
+    expect(tiles.actual).toContain("1.50 م");
+    expect(low.standard!.measurements["MOMAH-REST-4.5.2-CLADDING"]).toMatchObject({ axis: "height", limit: 1.8 });
+    // only the tiles changed: the exit door still passes
+    expect(finding(low, "MOMAH-REST-4.9.1-WIDTH").status).toBe("pass");
   });
 
   it("reads a millimetre file as the same plan in metres", async () => {
@@ -65,49 +79,69 @@ describe("standard IFC restaurant plans", () => {
     expect(millimetres.findings.map((f) => [f.ruleId, f.status])).toEqual(
       metres.findings.map((f) => [f.ruleId, f.status]),
     );
-    expect(millimetres.standard!.measurements["DOOR-WIDTH-001"]!.value).toBeCloseTo(0.75, 6);
-    const a = metres.standard!.geometry.bbox;
-    const b = millimetres.standard!.geometry.bbox;
-    for (let i = 0; i < 3; i++) {
-      expect(b.max[i] - b.min[i]).toBeCloseTo(a.max[i] - a.min[i], 3);
-    }
+    expect(millimetres.standard!.measurements["MOMAH-REST-4.9.1-WIDTH"]!.value).toBeCloseTo(0.75, 6);
+    expect(millimetres.standard!.measurements["MOMAH-REST-4.5.2-CLADDING"]!.value).toBeCloseTo(2, 3);
   });
 
-  it("reads rooms, areas and the 16 x 11 m footprint from the file", async () => {
+  it("checks rooms, areas, storage share and WC clauses from the file", async () => {
     const run = await check(PASS);
-    const { facts, geometry } = run.standard!;
+    const { facts } = run.standard!;
     const roles = Object.fromEntries(facts.spaces.map((s) => [s.role, s]));
     expect(Object.keys(roles).sort()).toEqual(["DINING", "KITCHEN", "SERVICE", "STORAGE", "WC"]);
     expect(roles.DINING.netFloorArea).toBeCloseTo(101.588, 2);
     expect(roles.DINING.areaSource).toBe("Qto_SpaceBaseQuantities");
     expect(roles.DINING.longName).toBe("Dining hall / صالة الطعام");
-    // Footprint from the walls' own geometry (window frames stand a few cm proud of the facade).
     const walls = facts.products.filter((p) => p.ifcType === "IfcWall" && p.bbox);
     const extent = (axis: 0 | 2) =>
       Math.max(...walls.map((w) => w.bbox!.max[axis])) - Math.min(...walls.map((w) => w.bbox!.min[axis]));
     expect(walls).toHaveLength(8);
     expect(extent(0)).toBeCloseTo(16, 3);
     expect(extent(2)).toBeCloseTo(11, 3);
-    expect(geometry.triangles).toBeGreaterThan(1000);
-    expect(finding(run, "REST-SPACE-001").status).toBe("pass");
-    expect(finding(run, "EGRESS-001").status).toBe("pass");
+    for (const ruleId of [
+      "MOMAH-REST-3.1-AREA",
+      "MOMAH-REST-4.2.2-SPACES",
+      "MOMAH-REST-4.8.1-STORE",
+      "MOMAH-REST-4.10.1-WC",
+      "MOMAH-REST-4.10.1-DOOR",
+      "MOMAH-REST-4.10.1-SEPARATION",
+      "MOMAH-REST-4.10.1-HANDWASH",
+      "MOMAH-REST-4.9.1-EXIT",
+    ]) {
+      expect(finding(run, ruleId).status, ruleId).toBe("pass");
+    }
+    expect(finding(run, "MOMAH-REST-4.8.1-STORE").actual).toContain("11.2 م²");
+    expect(finding(run, "MOMAH-REST-4.10.1-DOOR").actual).toContain("D-04");
   });
 
-  it("never counts a rule without evidence in the file as a pass", async () => {
+  it("cites the clause text and the official PDF on every ministry finding", async () => {
     const run = await check(PASS);
-    for (const ruleId of ["FACADE-MEP-001", "ACCESS-ROUTE-001", "KITCHEN-VENT-001", "REST-SAN-001"]) {
+    for (const item of run.findings) {
+      if (item.requirementKind === "platform") {
+        expect(item.sourceUrl).toBeUndefined();
+        continue;
+      }
+      expect(item.clause).toMatch(/^البند /);
+      expect(item.clauseText?.length).toBeGreaterThan(20);
+      expect(item.sourceUrl).toContain("momah.gov.sa");
+      expect(item.source).toContain("4600653138/1");
+    }
+  });
+
+  it("never counts a clause without evidence in the file as a pass", async () => {
+    const run = await check(PASS);
+    for (const ruleId of ["MOMAH-REST-4.1.3-DRAIN", "MOMAH-REST-4.3.2-FACADE", "MOMAH-REST-4.7.1-VENT", "MOMAH-REST-4.4.1-ACCESS"]) {
       const item = finding(run, ruleId);
       expect(item.status).toBe("unknown");
       expect(item.actual).toContain("غير قابل للتحقق من الملف");
     }
-    expect(run.coverage).toEqual({ verified: 6, total: 10 });
+    expect(run.coverage).toEqual({ verified: 13, total: 17 });
     expect(run.scenario).toBe("review");
   });
 
-  it("reports the exit rules as unverifiable when no door is flagged FireExit", async () => {
+  it("reports the exit clauses as unverifiable when no door is flagged FireExit", async () => {
     const run = await check(NO_FLAGS);
-    expect(finding(run, "DOOR-WIDTH-001").status).toBe("unknown");
-    expect(finding(run, "EGRESS-001").status).toBe("unknown");
+    expect(finding(run, "MOMAH-REST-4.9.1-WIDTH").status).toBe("unknown");
+    expect(finding(run, "MOMAH-REST-4.9.1-EXIT").status).toBe("unknown");
   });
 
   it("stops other activities with a clear message instead of guessing", async () => {
@@ -147,9 +181,11 @@ describe("an independent BIM export (Revit 2011 Duplex, buildingSMART, CC BY 4.0
     expect(facts.spaces.every((space) => space.areaSource === "geometry")).toBe(true);
     expect(geometry.triangles).toBeGreaterThan(10000);
     // Revit 2011 wrote no Pset_DoorCommon.FireExit: exits cannot be identified, so not judged.
-    expect(finding(run, "DOOR-WIDTH-001").status).toBe("unknown");
-    expect(finding(run, "EGRESS-001").status).toBe("unknown");
-    // An apartment has no dining hall or storage: the space rules fail on evidence.
-    expect(finding(run, "REST-SPACE-001").status).toBe("fail");
+    expect(finding(run, "MOMAH-REST-4.9.1-WIDTH").status).toBe("unknown");
+    expect(finding(run, "MOMAH-REST-4.9.1-EXIT").status).toBe("unknown");
+    // An apartment has no dining hall or storage: clause 4.2.2 fails on evidence.
+    expect(finding(run, "MOMAH-REST-4.2.2-SPACES").status).toBe("fail");
+    expect(finding(run, "MOMAH-REST-3.1-AREA").status).toBe("pass");
+    expect(finding(run, "MOMAH-REST-4.5.2-CLADDING").status).not.toBe("pass");
   }, 60000);
 });

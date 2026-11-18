@@ -39,7 +39,7 @@ export interface IfcModelViewerProps {
   selectedStatus?: ResultStatus;
   selectedTitle?: string;
   selectedRuleId?: string;
-  measurement?: { value: number; limit?: number; source: string };
+  measurement?: { value: number; limit?: number; source: string; axis: "width" | "height" };
   markers: IfcViewerMarker[];
   onSelectStep: (stepId?: number) => void;
   onSelectFinding?: (ruleId: string) => void;
@@ -432,6 +432,8 @@ function DimensionLine({
   status,
   cut,
   building,
+  axis,
+  floorY,
 }: {
   box: Box3;
   value: number;
@@ -439,7 +441,41 @@ function DimensionLine({
   status: ResultStatus;
   cut: boolean;
   building: Box3;
+  axis: "width" | "height";
+  floorY: number;
 }) {
+  if (axis === "height") {
+    // Vertical line from the floor to the measured top, on the room side of the element.
+    const c = boxCenter(box);
+    const b0 = boxCenter(building);
+    const dx = box.max[0] - box.min[0];
+    const dz = box.max[2] - box.min[2];
+    const inward = dx < dz
+      ? new THREE.Vector3(Math.sign(b0.x - c.x) || 1, 0, 0)
+      : new THREE.Vector3(0, 0, Math.sign(b0.z - c.z) || 1);
+    const foot = new THREE.Vector3(c.x, floorY, c.z).addScaledVector(inward, 0.35);
+    const head = foot.clone().setY(floorY + value);
+    const tick = new THREE.Vector3(inward.z, 0, inward.x).multiplyScalar(0.12);
+    const color = STATUS_HEX[status];
+    const limitPoint = limit !== undefined ? foot.clone().setY(floorY + limit) : undefined;
+    return (
+      <group renderOrder={5}>
+        <Line points={[foot, head]} color={color} lineWidth={3} depthTest={false} />
+        <Line points={[head.clone().sub(tick), head.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
+        <Line points={[foot.clone().sub(tick), foot.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
+        {limitPoint && (
+          <Line points={[limitPoint.clone().sub(tick.clone().multiplyScalar(2)), limitPoint.clone().add(tick.clone().multiplyScalar(2))]}
+            color="#16211d" lineWidth={2} dashed dashSize={0.06} gapSize={0.05} depthTest={false} />
+        )}
+        <Html position={head.clone().add(new THREE.Vector3(0, 0.18, 0))} center zIndexRange={[20, 10]}>
+          <div className={`ifc-dimension ifc-dimension--${status}`} dir="rtl" data-testid="ifc-dimension">
+            <strong>{value.toFixed(2)} م</strong>
+            {limit !== undefined && <span>الحد {limit.toFixed(2)} م</span>}
+          </div>
+        </Html>
+      </group>
+    );
+  }
   const dx = box.max[0] - box.min[0];
   const dz = box.max[2] - box.min[2];
   const alongX = dx >= dz;
@@ -693,11 +729,14 @@ export default function IfcModelViewer({
   }, [facts]);
   const [level, setLevel] = useState(0);
   const levelY = levels[level]?.y ?? groundY + 0.15;
-  const cutY = cut ? levelY + CUT_HEIGHT : Infinity;
+  // A height measurement (e.g. wall tiles) raises the cut so the measured top stays visible.
+  const cutHeight =
+    measurement?.axis === "height" ? Math.max(CUT_HEIGHT, measurement.value + 0.3) : CUT_HEIGHT;
+  const cutY = cut ? levelY + cutHeight : Infinity;
 
   useEffect(() => {
-    plane.constant = cut ? levelY + CUT_HEIGHT : NO_CUT;
-  }, [cut, plane, levelY]);
+    plane.constant = cut ? levelY + cutHeight : NO_CUT;
+  }, [cut, plane, levelY, cutHeight]);
 
   useEffect(() => () => Object.values(textures).forEach((t) => t.dispose()), [textures]);
 
@@ -764,6 +803,8 @@ export default function IfcModelViewer({
               status={selectedStatus ?? "unknown"}
               cut={cut}
               building={geometry.bbox}
+              axis={measurement.axis}
+              floorY={levelY}
             />
           )}
           <Markers markers={markers} facts={facts} cutY={cutY} onSelectFinding={onSelectFinding} />
@@ -773,7 +814,7 @@ export default function IfcModelViewer({
               show={(id) => levels.length <= 1 || storeyOf.get(id) === levels[level]?.id}
             />
           )}
-          <ShadowRefresh dep={`${cut}-${level}-${geometry.triangles}`} />
+          <ShadowRefresh dep={`${cut}-${level}-${cutHeight}-${geometry.triangles}`} />
           <CameraRig bbox={geometry.bbox} preset={preset} focusBox={focusBox} nonce={nonce} />
           <OrbitControls
             makeDefault

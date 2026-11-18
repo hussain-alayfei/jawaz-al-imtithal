@@ -145,7 +145,10 @@ export interface ComplianceRun {
   standard?: {
     facts: StandardFacts;
     geometry: StandardGeometry;
-    measurements: Record<string, { value: number; unit: "m"; source: string; limit?: number }>;
+    measurements: Record<
+      string,
+      { value: number; unit: "m"; source: string; limit?: number; axis: "width" | "height" }
+    >;
   };
 }
 

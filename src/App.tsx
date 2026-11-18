@@ -859,13 +859,14 @@ function ModelUpload({
         <div className="real-plans__head">
           <strong>جرّب على مخطط IFC حقيقي</strong>
           <p>
-            مخطط المطعم نموذج هندسي تجريبي بُني بمكتبة IfcOpenShell: جدران بفتحات فعلية وأبواب وغرف بمساحاتها وأثاث، وليس مشروعًا منفذًا. النسختان متطابقتان إلا في عرض باب الطوارئ. ملف الدوبلكس تصدير حقيقي من Revit لم يُعدّ لموائم.
+            مخطط المطعم نموذج هندسي تجريبي بُني بمكتبة IfcOpenShell: جدران بفتحات فعلية وأبواب وغرف بمساحاتها وتكسية مطبخ وأثاث، وليس مشروعًا منفذًا. كل نسخة تختلف عن الأخرى في عنصر واحد فقط. تُفحص المخططات مقابل «اشتراطات المطاعم» الصادرة من وزارة البلديات والإسكان (قرار وزاري 4600653138/1). ملف الدوبلكس تصدير حقيقي من Revit لم يُعدّ لموائم.
           </p>
         </div>
         <div className="real-plans__list">
           {([
-            ["/samples/restaurant/restaurant-exit-0.75m.ifc", "restaurant-exit-0.75m.ifc", "مطعم: باب الطوارئ 0.75 م", "المتوقع: عرض المخرج غير مطابق للحد التجريبي"],
-            ["/samples/restaurant/restaurant-exit-0.95m.ifc", "restaurant-exit-0.95m.ifc", "مطعم: باب الطوارئ 0.95 م", "نفس المخطط بعد تعديل الباب فقط"],
+            ["/samples/restaurant/restaurant-kitchen-tiles-1.5m.ifc", "restaurant-kitchen-tiles-1.5m.ifc", "مطعم: تكسية المطبخ 1.50 م", "البند 4.5.2 من اشتراطات الوزارة يشترط 1.80 م على الأقل"],
+            ["/samples/restaurant/restaurant-exit-0.95m.ifc", "restaurant-exit-0.95m.ifc", "مطعم: تكسية المطبخ 2.00 م", "نفس المخطط بعد رفع التكسية فقط"],
+            ["/samples/restaurant/restaurant-exit-0.75m.ifc", "restaurant-exit-0.75m.ifc", "مطعم: باب الطوارئ 0.75 م", "عرض المخرج: حد تجريبي 0.90 م (البند 4.9.1 يحيل إلى SBC-801)"],
             ["/samples/external/Duplex_A_20110907.ifc", "Duplex_A_20110907.ifc", "دوبلكس سكني من Revit 2011", "buildingSMART • CC BY 4.0 • ملف خارجي مستقل"],
           ] as const).map(([path, name, title, note]) => (
             <div className="real-plans__item" key={name}>
@@ -1479,9 +1480,9 @@ function SummaryStrip({
         </div>
         <span>
           <strong>نطاق التحقق من الملف</strong>
-          <b>{coverage.verified} من {coverage.total} قواعد</b>
+          <b>{coverage.verified} من {coverage.total} بندًا</b>
           <small>
-            لا نعرض نسبة جاهزية لملف IFC قياسي: {coverage.total - coverage.verified} قواعد بلا دليل في الملف
+            بنود اشتراطات المطاعم وفحوص البيانات • {coverage.total - coverage.verified} بنود بلا دليل في الملف، فلا نعرض نسبة جاهزية
           </small>
         </span>
       </div>
@@ -1526,7 +1527,7 @@ function SummaryStrip({
         <ShieldCheck size={19} />
         <span>
           {coverage
-            ? `${summary.failed} ملاحظة مثبتة من هندسة الملف وبياناته • ${summary.unknown} قواعد تحتاج بيانات لا يحملها الملف.`
+            ? `${summary.failed} ملاحظة مثبتة من هندسة الملف وبياناته • ${summary.unknown} بنود تحتاج بيانات لا يحملها الملف.`
             : summary.failed || summary.unknown
             ? `عالج ${summary.failed} من الملاحظات وأكمل ${summary.unknown} من المعلومات قبل التقديم.`
             : "اكتملت قواعد العرض العشر دون ملاحظات أو معلومات ناقصة."}
@@ -1677,12 +1678,29 @@ function FindingDetail({
           </span>
         </div>
       )}
+      {finding.clauseText && (
+        <figure className="clause-quote" data-testid="clause-quote">
+          <figcaption>
+            <strong>{finding.clause}</strong>
+            {finding.sourceUrl && (
+              <a href={finding.sourceUrl} target="_blank" rel="noreferrer">
+                الوثيقة الرسمية (PDF)
+              </a>
+            )}
+          </figcaption>
+          <blockquote>{finding.clauseText}</blockquote>
+        </figure>
+      )}
       <div className="finding-source">
         <Info size={14} />
         <span>
           <strong>{finding.source}</strong>
           <small>
-            إصدار القواعد <span dir="ltr">{finding.version}</span>
+            {finding.clauseText ? (
+              <>الإصدار: <bdi>{finding.version}</bdi></>
+            ) : (
+              <>إصدار القواعد <span dir="ltr">{finding.version}</span></>
+            )}
           </small>
         </span>
       </div>
@@ -1968,10 +1986,14 @@ function Workspace({
         >
           <div className="findings-panel__head">
             <div>
-              <span className="eyebrow">{activity?.ruleVersion}</span>
+              <span className="eyebrow">
+                {run.source === "standard-ifc" ? run.report.rulePackVersion : activity?.ruleVersion}
+              </span>
               <h2>نتائج الفحص</h2>
             </div>
-            <span className="findings-count">{findings.length} قواعد</span>
+            <span className="findings-count">
+              {run.source === "standard-ifc" ? `${findings.length} بندًا` : `${findings.length} قواعد`}
+            </span>
           </div>
 
           {findingsView === "list" && (
@@ -2163,7 +2185,7 @@ function Report({
       .map(
         (finding) => `
           <tr>
-            <td>${escapeHtml(finding.ruleId)}</td>
+            <td>${escapeHtml(finding.ruleId)}<br><small>${escapeHtml(finding.clause)}</small></td>
             <td>${escapeHtml(statusShortLabels[finding.status])}</td>
             <td>${escapeHtml(finding.shortTitle)}</td>
             <td>${escapeHtml(finding.actual)}</td>

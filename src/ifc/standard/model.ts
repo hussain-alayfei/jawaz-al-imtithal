@@ -25,6 +25,8 @@ export interface StandardProduct {
   /** IFC class name as web-ifc reports it, e.g. "IfcDoor". */
   ifcType: string;
   name?: string;
+  /** IFC PredefinedType when the file states it, e.g. "CLADDING", "WASHHANDBASIN". */
+  predefinedType?: string;
   /** expressId of the spatial element that contains it (storey or space). */
   containerId?: number;
   bbox?: Box3;
@@ -38,6 +40,8 @@ export interface StandardSpace extends StandardProduct {
   roleMatchedOn?: string;
   netFloorArea?: number;
   areaSource?: "Qto_SpaceBaseQuantities" | "geometry";
+  /** Floor outline as plan triangles [x1, z1, x2, z2, x3, z3, ...] from the space's own geometry. */
+  footprint?: number[];
 }
 
 export interface StandardDoor extends StandardProduct {

@@ -47,6 +47,10 @@ export interface Finding {
   clause: string;
   version: string;
   effort: string;
+  /** Verbatim clause text from the official requirements, for standard-IFC findings. */
+  clauseText?: string;
+  sourceUrl?: string;
+  requirementKind?: "mandatory" | "recommendation" | "reference" | "platform";
 }
 
 export interface Summary {
