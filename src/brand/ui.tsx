@@ -149,15 +149,14 @@ export function Seal({ size, top = copy.seal.top, main, bottom = copy.brand.name
   );
 }
 
-/** Small mark: gold ring of triangles around a palm disc. */
+/** Brand mark: a room in plan with its door swing, on a brand-coloured disc. */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 200 200" className={className} aria-hidden="true">
-      <circle cx="100" cy="100" r="97" fill="none" stroke="#B98B2E" strokeWidth="6" />
-      <path d={SEAL_TEETH} fill="#B98B2E" />
-      <circle cx="100" cy="100" r="66" fill="currentColor" />
-      <path d="M100 62 L128 112 H72 Z" fill="#D9B76A" />
-      <path d="M78 128 H122" stroke="#D9B76A" strokeWidth="7" strokeLinecap="round" />
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      <path d="M15 23 H23 V9 H9 V23" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinejoin="miter" />
+      <path d="M15 23 V17" fill="none" stroke="#FFFFFF" strokeWidth="1.6" />
+      <path d="M9 23 A6 6 0 0 1 15 17" fill="none" stroke="#FFFFFF" strokeWidth="1.2" />
     </svg>
   );
 }

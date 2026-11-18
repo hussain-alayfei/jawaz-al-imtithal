@@ -66,6 +66,24 @@ export interface StandardFacts {
   typeCounts: Record<string, number>;
   /** IfcDistributionPort count and whether any port is connected to another. */
   ports: { count: number; connected: number };
+  /** Building-services systems read from IfcRelAssignsToGroup (IfcDistributionSystem / IfcSystem). */
+  systems: StandardSystem[];
+  /** Element pairs whose ports are joined by IfcRelConnectsPorts (expressIds of the owning elements). */
+  connections: { a: number; b: number }[];
+}
+
+/** What a building-services system carries, derived from its PredefinedType or name. */
+export type SystemKind = "water" | "drainage" | "electrical" | "hvac" | "fire" | "other";
+
+export interface StandardSystem {
+  expressId: number;
+  globalId: string;
+  name?: string;
+  kind: SystemKind;
+  /** PredefinedType of IfcDistributionSystem when stated, e.g. "DRAINAGE", "DOMESTICCOLDWATER". */
+  predefinedType?: string;
+  /** expressIds of the elements assigned to the system. */
+  members: number[];
 }
 
 /** Merged triangles of one display category, with a face-range table for picking. */
@@ -91,6 +109,7 @@ export type GeometryCategory =
   | "furniture"
   | "sanitary"
   | "equipment"
+  | "mep"
   | "space"
   | "other";
 

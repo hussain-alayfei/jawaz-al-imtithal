@@ -426,6 +426,9 @@ export async function readStandardModel(
         count: api.GetLineIDsWithType(modelID, WebIFC.IFCDISTRIBUTIONPORT).size(),
         connected: api.GetLineIDsWithType(modelID, WebIFC.IFCRELCONNECTSPORTS).size(),
       },
+      // Filled by the building-services reader (systems and port connectivity).
+      systems: [],
+      connections: [],
     };
     const chunks = [...builders.entries()].map(([category, builder]) => builder.build(category));
     onProgress?.(1, `${products.length} عنصرًا بمعرّف دائم`);

@@ -7,15 +7,22 @@ import {
   type FacilityDetails,
 } from "./data";
 import type { ComplianceRun } from "./ifc/types";
-import type { SampleId } from "./content/samples";
+import { SAMPLE_FILES, type SampleId } from "./content/samples";
 import Landing from "./screens/Landing";
+import { SiteHeader, type NavTarget } from "./site/SiteHeader";
+import { SiteFooter } from "./site/SiteFooter";
+import { useFadeIn } from "./site/useFadeIn";
 import Check from "./screens/Check";
 
 /* The results and report screens pull in the 3D viewer and web-ifc, so they load on demand. */
 const Results = lazy(() => import("./screens/Results"));
 const Report = lazy(() => import("./screens/Report"));
+/* The digital twin studio: illustrative venue scenes and engineering networks (not a compliance result). */
+const EngineeringTwinStudio = lazy(() =>
+  import("./components/EngineeringTwinStudio").then((module) => ({ default: module.EngineeringTwinStudio })),
+);
 
-type Route = "landing" | "check" | "results" | "report";
+type Route = "landing" | "check" | "results" | "report" | "twin";
 
 const STORAGE_KEY = "mowaem-plan-compliance-v2";
 
@@ -24,13 +31,23 @@ const ROUTE_HASH: Record<Route, string> = {
   check: "#/check",
   results: "#/results",
   report: "#/report",
+  twin: "#/twin",
 };
 
 function routeFromHash(hash: string): Route {
   if (hash.startsWith("#/check")) return "check";
   if (hash.startsWith("#/results")) return "results";
   if (hash.startsWith("#/report")) return "report";
+  if (hash.startsWith("#/twin")) return "twin";
   return "landing";
+}
+
+/** "#/check?sample=tiles" opens the check page and runs that ready sample (used by links and captures). */
+function sampleFromHash(hash: string): SampleId | undefined {
+  const query = hash.split("?")[1];
+  if (!query) return undefined;
+  const id = new URLSearchParams(query).get("sample");
+  return SAMPLE_FILES.find((sample) => sample.id === id)?.id;
 }
 
 function loadStoredState(): { facility: FacilityDetails; activityId: ActivityId } {
@@ -63,12 +80,21 @@ export default function App() {
   const [route, setRoute] = useState<Route>(() => routeFromHash(window.location.hash));
   const [activityId, setActivityId] = useState<ActivityId>(stored.activityId);
   const [facility, setFacility] = useState<FacilityDetails>(stored.facility);
-  const [autoSample, setAutoSample] = useState<SampleId>();
+  const [autoSample, setAutoSample] = useState<SampleId | undefined>(() => sampleFromHash(window.location.hash));
   const [run, setRun] = useState<ComplianceRun>();
   const [toast, setToast] = useState("");
+  const [pendingSection, setPendingSection] = useState<string>();
+  useFadeIn();
 
   useEffect(() => {
-    const onHashChange = () => setRoute(routeFromHash(window.location.hash));
+    const onHashChange = () => {
+      const next = routeFromHash(window.location.hash);
+      if (next === "check") {
+        const sample = sampleFromHash(window.location.hash);
+        if (sample) setAutoSample(sample);
+      }
+      setRoute(next);
+    };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
@@ -90,7 +116,9 @@ export default function App() {
   }, [route, run]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    if (!pendingSection) window.scrollTo({ top: 0 });
+    // Only on route changes; a pending section scroll handles its own position.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route]);
 
   useEffect(() => {
@@ -117,6 +145,32 @@ export default function App() {
     go("check");
   };
 
+  /* Header and footer links: landing sections scroll into view (after the landing page renders). */
+  const navigate = (target: NavTarget) => {
+    if (target === "check") return startCheck();
+    if (target === "twin") return go("twin");
+    go("landing");
+    if (target === "home") {
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    setPendingSection(`home-${target}`);
+  };
+
+  useEffect(() => {
+    if (route !== "landing" || !pendingSection) return;
+    const id = pendingSection;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ block: "start" });
+        target.focus({ preventScroll: true });
+      }
+      setPendingSection(undefined);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingSection, route]);
+
   const startSample = (id: SampleId) => {
     if (activityId !== "restaurant") changeActivity("restaurant");
     setAutoSample(id);
@@ -125,7 +179,9 @@ export default function App() {
 
   return (
     <div className="app" dir="rtl" lang="ar">
-      {route === "landing" && <Landing onStart={startCheck} onSample={startSample} />}
+      {route !== "twin" && <SiteHeader onNavigate={navigate} />}
+
+      {route === "landing" && <Landing onStart={startCheck} onSample={startSample} onTwin={() => go("twin")} />}
 
       {route === "check" && (
         <Check
@@ -140,6 +196,7 @@ export default function App() {
             go("results");
           }}
           onHome={() => go("landing")}
+          onTwin={() => go("twin")}
         />
       )}
 
@@ -150,6 +207,7 @@ export default function App() {
             onReport={() => go("report")}
             onNew={startCheck}
             onHome={() => go("landing")}
+            onTwin={() => go("twin")}
             notify={setToast}
           />
         </Suspense>
@@ -160,6 +218,21 @@ export default function App() {
           <Report run={run} onBack={() => go("results")} onHome={() => go("landing")} notify={setToast} />
         </Suspense>
       )}
+
+      {route === "twin" && (
+        <Suspense fallback={<ScreenLoading />}>
+          <EngineeringTwinStudio
+            projectName={run ? run.facility.projectName : facility.projectName}
+            activityName={facility.activity}
+            activityId={run ? run.activityId : activityId}
+            floors={run ? run.facility.floors : facility.floors}
+            findingsCount={run ? run.findings.filter((finding) => finding.status === "fail").length : 0}
+            onClose={() => (window.history.length > 1 ? window.history.back() : go("landing"))}
+          />
+        </Suspense>
+      )}
+
+      {route !== "twin" && <SiteFooter onNavigate={navigate} />}
 
       {toast && (
         <div className="toast" role="status">

@@ -1,35 +1,63 @@
-/* موائم: هوية «ختم». Shared tokens and primitives for every screen.
-   Screens own their layout CSS; colours, type, buttons and status marks live here. */
+/* موائم: formal identity (v2). One brand colour, neutral greys, Almarai throughout.
+   Screens own their layout CSS; colours, type, buttons and status marks live here.
+   No gradients, no shadows for depth (hairline borders instead), one simple fade for motion. */
 
 :root {
+  /* Surfaces and text */
   --paper: #ffffff;
-  --stone: #e9e5dc;
-  --stone-soft: #f4f2ed;
-  --palm: #0f3b2e;
-  --palm-hover: #17503f;
-  --palm-deep: #0a2b21;
-  --gold: #b98b2e;
-  --gold-text: #8a6620;
-  --gold-on-palm: #d9b76a;
-  --burgundy: #7a1f2b;
-  --burgundy-soft: #f6e9eb;
-  --green: #1e7a50;
-  --green-mark: #25935f;
-  --green-soft: #e7f3ec;
-  --slate: #4a5560;
-  --slate-soft: #eef0f2;
-  --ink: #17221d;
-  --muted: #55605a;
-  --line: #d9d3c6;
-  --line-soft: #e8e4da;
+  --surface: #f5f5f3;
+  --surface-2: #ececea;
+  --ink: #161616;
+  --ink-2: #353535;
+  --muted: #5f5f5f;
+  --line: #e1e1de;
+  --line-strong: #c9c9c5;
 
-  --font-display: "Noto Naskh Arabic", "Times New Roman", serif;
-  --font-ui: "IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
+  /* The one brand colour */
+  --brand: #0f3b2e;
+  --brand-hover: #165140;
+  --brand-ink: #ffffff;
+  --brand-tint: #e8efec;
 
-  --radius-pill: 999px;
-  --radius-field: 12px;
-  --radius-panel: 18px;
+  /* Status colours: used only for results */
+  --pass: #1d7348;
+  --pass-tint: #e7f2ec;
+  --fail: #b42318;
+  --fail-tint: #fbeceb;
+  --unknown: #5f5f5f;
+  --unknown-tint: #efefed;
+
+  --font: "Almarai", system-ui, "Segoe UI", Tahoma, sans-serif;
+
+  --radius: 8px;
+  --radius-lg: 12px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --header-h: 72px;
+  --page-max: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+
+  /* Legacy names kept so older components keep compiling while screens move to v2. */
+  --stone: var(--surface-2);
+  --stone-soft: var(--surface);
+  --palm: var(--brand);
+  --palm-hover: var(--brand-hover);
+  --palm-deep: #0a2b21;
+  --gold: var(--line-strong);
+  --gold-text: var(--muted);
+  --gold-on-palm: #ffffff;
+  --burgundy: var(--fail);
+  --burgundy-soft: var(--fail-tint);
+  --green: var(--pass);
+  --green-mark: var(--pass);
+  --green-soft: var(--pass-tint);
+  --slate: var(--unknown);
+  --slate-soft: var(--unknown-tint);
+  --line-soft: var(--line);
+  --font-display: var(--font);
+  --font-ui: var(--font);
+  --radius-pill: var(--radius);
+  --radius-field: var(--radius);
+  --radius-panel: var(--radius-lg);
 
   color-scheme: light;
 }
@@ -43,26 +71,29 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 16px);
 }
 
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-ui);
+  font-family: var(--font);
   font-size: 16px;
-  line-height: 1.8;
+  font-weight: 400;
+  line-height: 1.85;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-weight: 700;
-  line-height: 1.35;
-  color: var(--palm);
+  line-height: 1.4;
+  color: var(--ink);
   margin: 0;
 }
 
@@ -71,28 +102,27 @@ p {
 }
 
 a {
-  color: var(--palm);
+  color: var(--brand);
+}
+
+img {
+  max-width: 100%;
+  display: block;
 }
 
 ::selection {
-  background: #ecdcb6;
-  color: var(--palm-deep);
+  background: var(--brand-tint);
+  color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--palm);
+  outline: 2px solid var(--brand);
   outline-offset: 3px;
 }
 
-/* On deep palm surfaces the ring turns gold so it stays visible (palm ring is ≥ 9:1 on white and stone). */
-.on-dark :focus-visible,
-.lp-bar :focus-visible,
-.lp-hero__copy :focus-visible,
-.lp-closing :focus-visible,
-.lp-footer :focus-visible,
-.ck-bar :focus-visible,
-.rs-bar :focus-visible {
-  outline-color: var(--gold-on-palm);
+/* On brand-coloured surfaces the ring turns white so it stays visible. */
+.on-dark :focus-visible {
+  outline-color: #ffffff;
 }
 
 .sr-only {
@@ -111,128 +141,97 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* Buttons: pill shapes with a round icon disc, echoing the seal. No square buttons anywhere. */
+/* Page container */
+.page {
+  width: 100%;
+  max-width: calc(var(--page-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Buttons: soft-cornered, solid or outlined, text first. */
 .btn {
   --btn-bg: transparent;
-  --btn-fg: var(--palm);
+  --btn-fg: var(--brand);
   --btn-border: transparent;
-  --disc-bg: transparent;
-  --disc-fg: currentColor;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 48px;
-  padding-block: 6px;
+  padding-block: 10px;
   padding-inline: 22px;
   border: 1px solid var(--btn-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   background: var(--btn-bg);
   color: var(--btn-fg);
-  font-family: var(--font-ui);
+  font-family: var(--font);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 180ms var(--ease),
-    border-color 180ms var(--ease),
-    color 180ms var(--ease),
-    transform 120ms var(--ease);
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    color 160ms var(--ease);
 }
 
-.btn:active {
-  transform: translateY(1px);
+.btn svg {
+  flex: none;
 }
 
 .btn[disabled],
 .btn[aria-disabled="true"] {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
-  transform: none;
-}
-
-.btn--with-icon {
-  padding-inline-start: 6px;
-}
-
-.btn__disc {
-  display: inline-grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--disc-bg);
-  color: var(--disc-fg);
-  flex: none;
-  transition: background-color 180ms var(--ease), color 180ms var(--ease);
 }
 
 .btn--primary {
-  --btn-bg: var(--palm);
-  --btn-fg: #ffffff;
-  --disc-bg: rgba(217, 183, 106, 0.18);
-  --disc-fg: var(--gold-on-palm);
-  box-shadow: inset 0 0 0 1px rgba(217, 183, 106, 0.35);
+  --btn-bg: var(--brand);
+  --btn-fg: var(--brand-ink);
+  --btn-border: var(--brand);
 }
 
 .btn--primary:hover {
-  --btn-bg: var(--palm-hover);
-  --disc-bg: var(--gold-on-palm);
-  --disc-fg: var(--palm);
+  --btn-bg: var(--brand-hover);
+  --btn-border: var(--brand-hover);
 }
 
 .btn--secondary {
   --btn-bg: var(--paper);
-  --btn-fg: var(--palm);
-  --btn-border: rgba(15, 59, 46, 0.28);
-  --disc-bg: var(--stone-soft);
-  --disc-fg: var(--palm);
+  --btn-fg: var(--ink);
+  --btn-border: var(--line-strong);
 }
 
 .btn--secondary:hover {
-  --btn-border: var(--palm);
-  --disc-bg: var(--stone);
+  --btn-border: var(--ink);
 }
 
-.btn--on-dark {
-  --btn-bg: transparent;
-  --btn-fg: #ffffff;
-  --btn-border: rgba(255, 255, 255, 0.45);
-  --disc-bg: rgba(255, 255, 255, 0.12);
-  --disc-fg: var(--gold-on-palm);
-}
-
-.btn--on-dark:hover {
-  --btn-border: var(--gold-on-palm);
-}
-
+.btn--on-dark,
 .btn--gold {
-  --btn-bg: var(--gold-on-palm);
-  --btn-fg: var(--palm-deep);
-  --disc-bg: rgba(15, 59, 46, 0.12);
-  --disc-fg: var(--palm-deep);
+  --btn-bg: #ffffff;
+  --btn-fg: var(--brand);
+  --btn-border: #ffffff;
 }
 
+.btn--on-dark:hover,
 .btn--gold:hover {
-  --btn-bg: #e4c784;
+  --btn-bg: var(--brand-tint);
+  --btn-border: var(--brand-tint);
 }
 
 .btn--small {
   min-height: 44px;
+  padding-inline: 16px;
   font-size: 15px;
-  padding-inline: 18px;
 }
 
-.btn--small .btn__disc {
-  width: 32px;
-  height: 32px;
-}
-
-.btn--small.btn--with-icon {
-  padding-inline-start: 6px;
+/* Legacy icon disc: shown as a plain inline icon now. */
+.btn__disc {
+  display: inline-flex;
+  align-items: center;
 }
 
 .link {
@@ -243,52 +242,50 @@ a {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--palm);
+  color: var(--brand);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: underline;
-  text-decoration-color: var(--gold);
-  text-decoration-thickness: 1.5px;
+  text-decoration-thickness: 1px;
   text-underline-offset: 6px;
   cursor: pointer;
 }
 
 .link:hover {
-  text-decoration-color: var(--palm);
+  text-decoration-thickness: 2px;
 }
 
-/* Round icon-only button (zoom, close, copy). */
+/* Icon-only button (zoom, close, copy). */
 .icon-btn {
   display: inline-grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(15, 59, 46, 0.22);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
   background: var(--paper);
-  color: var(--palm);
+  color: var(--ink);
   cursor: pointer;
   transition: border-color 160ms var(--ease), background-color 160ms var(--ease);
 }
 
 .icon-btn:hover {
-  border-color: var(--palm);
-  background: var(--stone-soft);
+  border-color: var(--ink);
 }
 
 .icon-btn[aria-pressed="true"] {
-  background: var(--palm);
-  border-color: var(--palm);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #ffffff;
 }
 
-/* Status marks: a round glyph plus the status word. No boxes. */
+/* Status marks: a round glyph plus the status word. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -304,29 +301,29 @@ a {
 }
 
 .status--pass {
-  color: var(--green);
+  color: var(--pass);
 }
 
 .status--pass .status__glyph {
-  background: var(--green-mark);
+  background: var(--pass);
 }
 
 .status--fail {
-  color: var(--burgundy);
+  color: var(--fail);
 }
 
 .status--fail .status__glyph {
-  background: var(--burgundy);
+  background: var(--fail);
 }
 
 .status--unknown {
-  color: var(--slate);
+  color: var(--unknown);
 }
 
 .status--unknown .status__glyph {
   background: transparent;
-  color: var(--slate);
-  border: 1.5px dashed var(--slate);
+  color: var(--unknown);
+  border: 1.5px solid var(--unknown);
 }
 
 .status--lg {
@@ -338,16 +335,14 @@ a {
   height: 24px;
 }
 
-/* Count beside a group heading: plain gold-rule number, no box. */
 .count {
-  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 18px;
-  color: var(--gold-text);
+  font-size: 16px;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-/* Seal */
+/* Legacy seal (no longer used by v2 screens). */
 .seal {
   position: relative;
   display: inline-block;
@@ -376,22 +371,20 @@ a {
 .seal__top {
   font-size: 0.1em;
   font-weight: 700;
-  color: #6f5219;
+  color: var(--muted);
 }
 
 .seal__main {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.17em;
-  color: var(--palm);
+  color: var(--brand);
   white-space: nowrap;
 }
 
 .seal__bottom {
-  font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.09em;
-  color: var(--palm);
+  color: var(--brand);
 }
 
 /* Wordmark */
@@ -401,35 +394,39 @@ a {
   gap: 10px;
   color: inherit;
   text-decoration: none;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 26px;
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: 24px;
   line-height: 1;
 }
 
 .wordmark svg {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   flex: none;
 }
 
-/* Gold double hairline rule */
 .gold-rule {
   display: block;
-  height: 5px;
-  border-block: 1px solid var(--gold);
-  opacity: 0.85;
+  height: 1px;
+  background: var(--line);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
+/* Motion: one simple fade. Elements with .fade-in fade up once when they enter the viewport
+   (see src/site/useFadeIn.ts). Without JS or with reduced motion they are simply visible. */
+.fade-in {
+  opacity: 1;
+}
+
+.js-fade .fade-in:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.js-fade .fade-in {
+  transition:
+    opacity 600ms var(--ease),
+    transform 600ms var(--ease);
 }
 
 /* Shell */
@@ -450,10 +447,25 @@ a {
   inset-inline-start: 50%;
   transform: translateX(50%);
   z-index: 50;
-  padding: 12px 22px;
-  border-radius: var(--radius-pill);
-  background: var(--palm);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  background: var(--ink);
   color: #ffffff;
   font-size: 15px;
-  box-shadow: inset 0 0 0 1px rgba(217, 183, 106, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .js-fade .fade-in:not(.is-visible) {
+    opacity: 1;
+    transform: none;
+  }
 }

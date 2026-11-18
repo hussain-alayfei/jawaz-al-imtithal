@@ -9,6 +9,8 @@ export interface LandingProps {
   onStart: () => void;
   /** Go to the new-check page and run this sample straight away. */
   onSample: (id: SampleId) => void;
+  /** Open the digital twin studio (illustrative scenes, not a compliance result). */
+  onTwin: () => void;
 }
 
 export interface CheckProps {
@@ -21,6 +23,8 @@ export interface CheckProps {
   /** Called once the check finished; the shell then shows the results screen. */
   onDone: (run: ComplianceRun) => void;
   onHome: () => void;
+  /** Open the digital twin studio (for the illustrative BIM library). */
+  onTwin: () => void;
 }
 
 export interface ResultsProps {
@@ -28,6 +32,7 @@ export interface ResultsProps {
   onReport: () => void;
   onNew: () => void;
   onHome: () => void;
+  onTwin: () => void;
   notify: (message: string) => void;
 }
 
