@@ -1,189 +1,187 @@
-/* فحص جديد: the three-step check page, in the «ختم» language. Every class is prefixed ck-. */
+/* فحص جديد (v2, formal): a three-step e-service form on one page. Every class is prefixed ck-.
+   Colours, type, buttons and status marks come from src/brand/tokens.css. */
 
 .ck {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  display: block;
+  padding-block: 56px 96px;
   background: var(--paper);
 }
 
-.ck-wrap {
-  width: 100%;
+.ck-inner {
   max-width: 960px;
-  margin-inline: auto;
-  padding-inline: 40px;
 }
 
-/* Top bar */
-.ck-bar {
-  background: var(--palm);
-  color: #ffffff;
-}
-
-.ck-bar__in {
-  display: flex;
-  align-items: center;
-  min-height: 76px;
-  max-width: 1280px;
-}
-
-.ck-bar .wordmark {
-  min-height: 44px;
-  color: #ffffff;
-  font-size: 28px;
-}
-
-.ck-bar .wordmark svg {
-  width: 38px;
-  height: 38px;
-  color: var(--palm);
-}
-
-.ck-bar :focus-visible {
-  outline-color: var(--gold-on-palm);
-}
-
-/* Title */
-.ck-main {
-  flex: 1;
-  padding-block: 52px 80px;
-}
-
+/* Page title */
 .ck-head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  margin-block-end: 36px;
 }
 
-.ck-ornament {
-  display: block;
-  width: 168px;
-  height: 10px;
+.ck-title {
+  font-size: clamp(32px, 3vw, 44px);
+  font-weight: 800;
+  line-height: 1.35;
 }
 
-.ck-head h1 {
-  margin-top: 12px;
-  font-size: 42px;
-  line-height: 1.4;
-}
-
-.ck-head p {
-  max-width: 560px;
-  margin-top: 6px;
+.ck-lede {
+  max-width: 60ch;
+  margin-block-start: 10px;
   font-size: 18px;
-  line-height: 1.8;
-  color: var(--slate);
+  line-height: 1.85;
+  color: var(--ink-2);
 }
 
-.ck-rule {
-  margin-top: 36px;
+/* No one-word last lines in running text. */
+.ck-lede,
+.ck-help,
+.ck-drop__help,
+.ck-notes li,
+.ck-fail__detail {
+  text-wrap: pretty;
 }
 
-/* Steps: one page, three real steps, joined by a hairline from marker to marker. */
-.ck-steps {
-  margin: 0;
+/* Step indicator: plain numbers joined by a thin line; the current step in the brand colour. */
+.ck-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  margin: 0 0 32px;
   padding: 0;
   list-style: none;
 }
 
-.ck-step {
-  position: relative;
-  padding-block: 40px 8px;
-}
-
-.ck-step > section {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  column-gap: 28px;
-  align-items: start;
-}
-
-.ck-step:not(:last-child)::before {
-  content: "";
-  position: absolute;
-  inset-block: 94px -30px;
-  inset-inline-start: 21.5px;
-  width: 1px;
-  background: var(--line);
-}
-
-.ck-step--done:not(:last-child)::before {
-  background: var(--gold);
-}
-
-.ck-anchor {
-  scroll-margin-top: 24px;
-}
-
-.ck-marker {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1.5px solid var(--gold);
-  background: var(--paper);
-  box-shadow:
-    0 0 0 3px var(--paper),
-    0 0 0 4px rgba(185, 139, 46, 0.45);
-  color: var(--palm);
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  transition:
-    background-color 220ms var(--ease),
-    color 220ms var(--ease),
-    border-color 220ms var(--ease);
-}
-
-.ck-marker--done {
-  background: var(--palm);
-  color: var(--gold-on-palm);
-}
-
-.ck-marker--locked {
-  border-color: var(--line);
-  box-shadow: 0 0 0 3px var(--paper);
-  color: var(--muted);
-}
-
-.ck-step__body {
+.ck-progress__step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
 }
 
-.ck-step__title {
+.ck-progress__line {
   display: flex;
   align-items: center;
-  min-height: 44px;
-  font-size: 26px;
-  line-height: 1.4;
+  gap: 14px;
 }
 
-.ck-step__title:focus {
+.ck-progress__line::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  margin-inline-end: 14px;
+  background: var(--line-strong);
+}
+
+.ck-progress__step:last-child .ck-progress__line::after {
+  display: none;
+}
+
+.ck-progress__no {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.ck-progress__label {
+  padding-inline-end: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.ck-progress__step--done .ck-progress__no,
+.ck-progress__step--done .ck-progress__label {
+  color: var(--ink-2);
+}
+
+.ck-progress__step.is-current .ck-progress__no,
+.ck-progress__step.is-current .ck-progress__label {
+  color: var(--brand);
+}
+
+/* Panels */
+.ck-steps {
+  display: grid;
+  gap: 24px;
+}
+
+.ck-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.ck-panel.is-current {
+  border-color: var(--line-strong);
+}
+
+.ck-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding-block: 14px;
+  padding-inline: 28px;
+  border-block-end: 1px solid var(--line);
+}
+
+.ck-panel__no {
+  flex: none;
+  min-width: 14px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.ck-panel--done .ck-panel__no {
+  color: var(--ink-2);
+}
+
+.ck-panel.is-current .ck-panel__no {
+  color: var(--brand);
+}
+
+.ck-panel__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ck-panel__title:focus {
   outline: none;
 }
 
-.ck-step__title:focus-visible {
-  outline: 2px solid var(--palm);
+.ck-panel__title:focus-visible {
+  outline: 2px solid var(--brand);
   outline-offset: 4px;
   border-radius: 4px;
 }
 
-.ck-step--locked .ck-step__title {
+.ck-panel--locked .ck-panel__title {
   color: var(--muted);
 }
 
-/* Step 1 fields */
+.ck-panel__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.ck-panel__body {
+  padding: 28px;
+}
+
+/* Step 1: labelled fields */
 .ck-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px 28px;
-  margin-top: 18px;
 }
 
 .ck-field {
@@ -195,9 +193,9 @@
 
 .ck-label {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .ck-control-wrap {
@@ -210,38 +208,35 @@
   margin: 0;
   padding-block: 10px;
   padding-inline: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-field);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-ui);
+  font-family: var(--font);
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.4;
-  transition:
-    border-color 160ms var(--ease),
-    box-shadow 160ms var(--ease);
+  transition: border-color 160ms var(--ease);
 }
 
 .ck-control:hover:not(:disabled) {
-  border-color: #b9ad94;
+  border-color: var(--muted);
 }
 
 .ck-control:focus-visible {
-  outline: 2px solid var(--palm);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
-  border-color: var(--palm);
+  border-color: var(--brand);
 }
 
 .ck-control:disabled {
-  background: var(--stone-soft);
+  background: var(--surface);
   color: var(--muted);
   cursor: not-allowed;
 }
 
 .ck-control[aria-invalid="true"] {
-  border-color: var(--burgundy);
-  box-shadow: inset 0 0 0 1px var(--burgundy);
+  border-color: var(--fail);
 }
 
 .ck-control--select {
@@ -272,18 +267,17 @@
 }
 
 .ck-control-icon {
-  color: var(--palm);
+  color: var(--ink-2);
 }
 
 .ck-suffix {
-  color: var(--muted);
   font-size: 16px;
-  font-weight: 500;
+  color: var(--muted);
 }
 
 .ck-help {
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--muted);
 }
 
@@ -292,18 +286,18 @@
   align-items: flex-start;
   gap: 8px;
   font-size: 14px;
-  font-weight: 600;
-  line-height: 1.7;
-  color: var(--burgundy);
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--fail);
 }
 
 .ck-error svg {
   flex: none;
-  margin-top: 4px;
+  margin-block-start: 4px;
 }
 
 .ck-error--file {
-  margin-top: 12px;
+  margin-block-start: 12px;
 }
 
 .ck-actions {
@@ -311,68 +305,40 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
-  margin-top: 24px;
+  margin-block-start: 28px;
 }
 
-/* Step 2: drop zone and ready samples */
-.ck-upload {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 32px;
-  align-items: start;
-  margin-top: 18px;
+.ck-nowrap {
+  white-space: nowrap;
 }
 
+/* Step 2: drop zone (1px solid border, brand on drag-over) */
 .ck-drop {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 252px;
-  padding: 30px 24px 28px;
-  border: 1px solid var(--gold);
-  border-radius: var(--radius-panel);
-  background: var(--stone-soft);
+  min-height: 216px;
+  padding: 28px 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   text-align: center;
-  transition: background-color 180ms var(--ease);
-}
-
-.ck-drop::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1px solid rgba(185, 139, 46, 0.38);
-  border-radius: 13px;
-  pointer-events: none;
-  transition: border-color 180ms var(--ease);
+  transition:
+    border-color 160ms var(--ease),
+    background-color 160ms var(--ease);
 }
 
 .ck-drop.is-dragging {
-  background: var(--stone);
-}
-
-.ck-drop.is-dragging::before {
-  border-color: var(--gold);
+  border-color: var(--brand);
+  background: var(--brand-tint);
 }
 
 .ck-drop__icon {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 8px;
-  border: 1px solid var(--gold);
-  border-radius: 50%;
-  background: var(--paper);
-  color: var(--palm);
-}
-
-.ck-drop.is-picked .ck-drop__icon {
-  background: var(--palm);
-  border-color: var(--palm);
-  color: var(--gold-on-palm);
+  display: inline-flex;
+  margin-block-end: 6px;
+  color: var(--brand);
 }
 
 .ck-drop__text {
@@ -380,133 +346,83 @@
 }
 
 .ck-drop__title {
-  font-size: 21px;
+  font-size: 19px;
+  font-weight: 700;
   line-height: 1.5;
 }
 
 .ck-drop__help {
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--muted);
 }
 
 .ck-drop__file {
   max-width: 100%;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.6;
-  color: var(--palm);
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .ck-drop__action {
-  margin-top: 14px;
+  margin-block-start: 14px;
 }
 
 .ck-notes {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 4px;
-  margin: 14px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted);
 }
 
 .ck-notes li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--muted);
 }
 
 .ck-notes svg {
   flex: none;
-  margin-top: 4px;
-  color: var(--gold-text);
+  margin-block-start: 4px;
+  color: var(--ink-2);
 }
 
-.ck-samples__title {
-  padding-bottom: 8px;
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--gold-text);
+/* Ready samples */
+.ck-samples {
+  margin-block-start: 36px;
 }
 
-.ck-samples ul {
-  margin: 0;
+.ck-subtitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ck-samples > .ck-help {
+  margin-block-start: 2px;
+}
+
+.ck-sample-list {
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--gold);
-}
-
-.ck-samples li {
-  border-bottom: 1px solid var(--line-soft);
+  border-block-start: 1px solid var(--line);
 }
 
 .ck-sample {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  width: 100%;
-  min-height: 62px;
-  padding: 11px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition: background-color 160ms var(--ease);
-}
-
-.ck-sample:hover:not(:disabled) {
-  background: var(--stone-soft);
-}
-
-.ck-sample:focus-visible {
-  outline-offset: -2px;
-}
-
-.ck-sample:disabled {
-  cursor: not-allowed;
-}
-
-.ck-sample__dot {
-  position: relative;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  margin-top: 4px;
-  border: 1.5px solid #a99e86;
-  border-radius: 50%;
-  background: var(--paper);
-  transition: border-color 160ms var(--ease);
-}
-
-.ck-sample__dot::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--palm);
-  transform: scale(0);
-  transition: transform 180ms var(--ease);
-}
-
-.ck-sample[aria-pressed="true"] {
-  background: var(--stone-soft);
-}
-
-.ck-sample[aria-pressed="true"] .ck-sample__dot {
-  border-color: var(--palm);
-}
-
-.ck-sample[aria-pressed="true"] .ck-sample__dot::after {
-  transform: scale(1);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding-block: 14px;
+  border-block-end: 1px solid var(--line);
 }
 
 .ck-sample__text {
@@ -517,79 +433,234 @@
 
 .ck-sample__label {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.6;
-  color: var(--palm);
+}
+
+.ck-sample.is-selected .ck-sample__label {
+  color: var(--brand);
 }
 
 .ck-sample__note {
   font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.ck-sample__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.ck-sample__use[aria-pressed="true"] {
+  --btn-bg: var(--brand-tint);
+  --btn-fg: var(--brand);
+  --btn-border: var(--brand);
+}
+
+.ck-download {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--brand);
+  transition: border-color 160ms var(--ease);
+}
+
+.ck-download:hover {
+  border-color: var(--line-strong);
+}
+
+/* The digital twin's illustrative BIM library, collapsed under the samples */
+.ck-library {
+  margin-block-start: 28px;
+  border-block: 1px solid var(--line);
+}
+
+.ck-library__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding-block: 10px;
+  color: var(--brand);
+  font-size: 16px;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.ck-library__summary::-webkit-details-marker {
+  display: none;
+}
+
+.ck-library__summary:focus-visible {
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ck-library__chevron {
+  flex: none;
+}
+
+.ck-library[open] .ck-library__chevron {
+  transform: rotate(180deg);
+}
+
+.ck-library__body {
+  padding-block: 0 24px;
+}
+
+.ck-library__groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 32px;
+  margin-block-start: 18px;
+}
+
+.ck-library__title {
+  margin-block-end: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.ck-library__files {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ck-library__file {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding-block: 6px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ck-library__file svg {
+  flex: none;
+  margin-block-start: 3px;
+  color: var(--brand);
+}
+
+.ck-library__file-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.ck-library__file-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.ck-library__file:hover .ck-library__file-name {
+  text-decoration-thickness: 2px;
+}
+
+.ck-library__file-label {
+  font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
 }
 
-/* Step 3: start, stages, outcome */
+.ck-library__open {
+  margin-block-start: 22px;
+}
+
+/* Step 3: run and outcome */
 .ck-ready {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  margin-top: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
 }
 
 .ck-ready__file,
 .ck-runline {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--muted);
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-2);
   overflow-wrap: anywhere;
 }
 
+/* A file name moves to the next line whole rather than breaking at its hyphens. */
 .ck-ready__file bdi,
 .ck-runline bdi {
-  font-weight: 600;
+  display: inline-block;
+  max-width: 100%;
+  font-weight: 700;
   color: var(--ink);
 }
 
-.ck-runline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  margin-top: 10px;
-}
-
 .ck-runline strong {
-  font-weight: 600;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .ck-stages {
   margin: 14px 0 0;
   padding: 0;
   list-style: none;
-  border-top: 3px double var(--gold);
+  border-block-start: 1px solid var(--line);
 }
 
 .ck-stage {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 50px;
-  padding-block: 9px;
-  border-bottom: 1px solid var(--line-soft);
+  gap: 12px;
+  min-height: 48px;
+  padding-block: 8px;
+  border-block-end: 1px solid var(--line);
+}
+
+/* The outcome below brings its own divider. */
+.ck-stage:last-child {
+  border-block-end: 0;
+}
+
+.ck-stage__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--muted);
+}
+
+.ck-stage--running .ck-stage__icon,
+.ck-stage--completed .ck-stage__icon {
+  color: var(--brand);
+}
+
+.ck-stage--failed .ck-stage__icon {
+  color: var(--fail);
 }
 
 .ck-stage__label {
+  flex: 1;
+  min-width: 0;
   font-size: 16px;
   line-height: 1.6;
   color: var(--muted);
 }
 
 .ck-stage--running .ck-stage__label {
-  font-weight: 600;
-  color: var(--palm);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .ck-stage--completed .ck-stage__label {
@@ -597,257 +668,145 @@
 }
 
 .ck-stage--failed .ck-stage__label {
-  font-weight: 600;
-  color: var(--burgundy);
+  font-weight: 700;
+  color: var(--fail);
 }
 
 .ck-stage__time {
+  flex: none;
   font-size: 14px;
-  line-height: 1.6;
   color: var(--muted);
   white-space: nowrap;
 }
 
-.ck-glyph {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid #b3a88f;
-  border-radius: 50%;
-  color: #ffffff;
-  flex: none;
+.ck-done,
+.ck-fail {
+  margin-block-start: 24px;
+  padding-block-start: 24px;
+  border-block-start: 1px solid var(--line);
 }
 
-.ck-glyph--running {
-  border-color: var(--gold);
-}
-
-.ck-glyph--running::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--palm);
-}
-
-.ck-glyph--completed {
-  border-color: var(--palm);
-  background: var(--palm);
-}
-
-.ck-glyph--failed {
-  border-color: var(--burgundy);
-  background: var(--burgundy);
-}
-
-@keyframes ck-breathe {
-  from {
-    transform: scale(0.55);
-    opacity: 0.55;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .ck-glyph--running::after {
-    animation: ck-breathe 900ms var(--ease) infinite alternate;
-  }
-}
-
-.ck-done {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+.ck-done__title {
+  display: flex;
   align-items: center;
-  gap: 32px;
-  margin-top: 28px;
-  padding: 30px 36px;
-  border: 1px solid var(--gold);
-  border-radius: var(--radius-panel);
-  background: var(--stone-soft);
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
-.ck-done::before {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border: 1px solid rgba(185, 139, 46, 0.45);
-  border-radius: 12px;
-  pointer-events: none;
-}
-
-.ck-done__seal,
-.ck-done__text {
-  position: relative;
-}
-
-.ck-done h3 {
-  font-size: 26px;
-  line-height: 1.4;
+.ck-done__title svg {
+  flex: none;
+  color: var(--brand);
 }
 
 .ck-done__scope {
-  margin-top: 4px;
+  margin-block-start: 6px;
   font-size: 16px;
-  line-height: 1.7;
-  color: var(--ink);
+  color: var(--ink-2);
 }
 
 .ck-done__scope strong {
-  font-weight: 600;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .ck-done__counts {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 26px;
-  margin: 10px 0 0;
+  gap: 8px 28px;
+  margin: 16px 0 24px;
   padding: 0;
   list-style: none;
 }
 
-.ck-done .btn {
-  margin-top: 20px;
-}
-
 .ck-fail {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 14px;
-  margin-top: 24px;
-  padding: 22px 26px;
-  border-radius: var(--radius-panel);
-  background: var(--burgundy-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.ck-fail__glyph {
-  width: 26px;
-  height: 26px;
-  margin-top: 2px;
+.ck-fail__icon {
+  flex: none;
+  margin-block-start: 4px;
+  color: var(--fail);
 }
 
-.ck-fail h3 {
-  font-size: 20px;
-  line-height: 1.5;
-  color: var(--burgundy);
+.ck-fail__text {
+  min-width: 0;
 }
 
-.ck-fail p {
-  margin-top: 4px;
-  font-size: 15px;
-  line-height: 1.7;
+.ck-fail__title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.6;
   color: var(--ink);
-  overflow-wrap: anywhere;
 }
 
-.ck-fail .btn {
-  margin-top: 16px;
-}
-
-.ck-nowrap {
-  white-space: nowrap;
-}
-
-/* Footer */
-.ck-foot {
-  padding-block: 0 36px;
-}
-
-.ck-foot p {
-  margin-top: 16px;
-  font-size: 14px;
-  line-height: 1.8;
+.ck-fail__detail {
+  margin-block-start: 4px;
+  font-size: 15px;
+  line-height: 1.75;
   color: var(--muted);
 }
 
+.ck-fail .btn {
+  margin-block-start: 16px;
+}
+
+/* Tablet */
 @media (max-width: 860px) {
-  .ck-upload {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
+  .ck-library__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+/* Phones */
 @media (max-width: 640px) {
-  .ck-wrap {
-    padding-inline: 16px;
+  .ck {
+    padding-block: 32px 64px;
   }
 
-  .ck-bar__in {
-    min-height: 64px;
+  .ck-head {
+    margin-block-end: 28px;
   }
 
-  .ck-bar .wordmark {
-    font-size: 24px;
-  }
-
-  .ck-bar .wordmark svg {
-    width: 32px;
-    height: 32px;
-  }
-
-  .ck-main {
-    padding-block: 36px 56px;
-  }
-
-  .ck-head h1 {
-    font-size: 32px;
-  }
-
-  .ck-head p {
-    font-size: 16px;
-  }
-
-  .ck-rule {
-    margin-top: 26px;
-  }
-
-  /* On a phone the marker sits beside the step title and the step body takes the full width. */
-  .ck-step {
-    padding-block: 28px 8px;
-  }
-
-  .ck-step + .ck-step {
-    margin-top: 20px;
-    border-top: 1px solid var(--line-soft);
-  }
-
-  .ck-step > section {
-    grid-template-columns: 36px minmax(0, 1fr);
-    column-gap: 12px;
-  }
-
-  .ck-step:not(:last-child)::before {
-    display: none;
-  }
-
-  .ck-step__body {
-    display: contents;
-  }
-
-  .ck-step__body > * {
-    grid-column: 1 / -1;
-  }
-
-  .ck-step__body > .ck-step__title {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .ck-marker {
-    width: 36px;
-    height: 36px;
+  .ck-lede {
     font-size: 17px;
   }
 
-  .ck-step__title {
-    min-height: 36px;
-    font-size: 22px;
+  .ck-progress {
+    margin-block-end: 24px;
+  }
+
+  .ck-progress__label {
+    padding-inline-end: 10px;
+    font-size: 13px;
+  }
+
+  .ck-progress__line {
+    gap: 10px;
+  }
+
+  .ck-progress__line::after {
+    margin-inline-end: 10px;
+  }
+
+  .ck-steps {
+    gap: 16px;
+  }
+
+  .ck-panel__head {
+    min-height: 64px;
+    gap: 12px;
+    padding-inline: 18px;
+  }
+
+  .ck-panel__title {
+    font-size: 19px;
+  }
+
+  .ck-panel__body {
+    padding: 20px 18px 24px;
   }
 
   .ck-fields {
@@ -855,35 +814,21 @@
     gap: 20px;
   }
 
-  .ck-step .btn {
-    width: 100%;
-  }
-
   .ck-drop {
     min-height: 0;
-    padding: 26px 18px 22px;
+    padding: 24px 16px;
   }
 
-  .ck-drop__action {
-    align-self: stretch;
-  }
-
-  .ck-done {
+  .ck-library__groups {
     grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-    gap: 18px;
-    padding: 24px 20px;
   }
 
-  .ck-done__text {
-    justify-self: stretch;
-  }
-
-  .ck-done__counts {
+  .ck-ready {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .ck-fail {
-    padding: 20px 18px;
+  .ck-ready .btn {
+    width: 100%;
   }
 }

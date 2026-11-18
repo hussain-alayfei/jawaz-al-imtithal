@@ -413,12 +413,13 @@ img {
 }
 
 /* Motion: one simple fade. Elements with .fade-in fade up once when they enter the viewport
-   (see src/site/useFadeIn.ts). Without JS or with reduced motion they are simply visible. */
+   (see src/site/useFadeIn.ts, which marks them with data-shown). Without JS or with reduced
+   motion they are simply visible. */
 .fade-in {
   opacity: 1;
 }
 
-.js-fade .fade-in:not(.is-visible) {
+.js-fade .fade-in:not([data-shown]) {
   opacity: 0;
   transform: translateY(10px);
 }
@@ -464,7 +465,7 @@ img {
     scroll-behavior: auto !important;
   }
 
-  .js-fade .fade-in:not(.is-visible) {
+  .js-fade .fade-in:not([data-shown]) {
     opacity: 1;
     transform: none;
   }
