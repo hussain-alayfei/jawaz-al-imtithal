@@ -35,12 +35,14 @@ import {
   useState,
 } from "react";
 import * as THREE from "three";
+import { copy } from "../content/copy";
 import {
   elementTargets,
   type ActivityId,
   type ResultStatus,
   type Scenario,
 } from "../data";
+import "./viewer3d.css";
 
 type Vec3 = [number, number, number];
 type LayerName = "shell" | "furniture" | "mep" | "spaces";
@@ -129,16 +131,17 @@ interface CameraTarget {
   target: Vec3;
 }
 
+/* The site's three status colours (src/brand/tokens.css), so the scene, its legend and the register agree. */
 const statusColors: Record<ResultStatus, string> = {
-  pass: "#16835d",
-  fail: "#d8523c",
-  unknown: "#d18a24",
+  pass: "#1d7348",
+  fail: "#b42318",
+  unknown: "#5f5f5f",
 };
 
 const viewerStatusLabels: Record<ResultStatus, string> = {
-  pass: "مطابق",
-  fail: "ملاحظة تحتاج معالجة",
-  unknown: "معلومات غير مكتملة",
+  pass: copy.status.pass,
+  fail: copy.status.fail,
+  unknown: copy.status.unknown,
 };
 
 const activityPalettes: Record<
@@ -661,10 +664,11 @@ function Part({
           ]}
           center
           distanceFactor={9}
+          zIndexRange={[30, 0]}
         >
           <div
-            className={`model-tooltip ${
-              selected ? `model-tooltip--selected model-tooltip--${selectedStatus}` : ""
+            className={`v3-tip ${
+              selected ? `v3-tip--selected v3-tip--${selectedStatus}` : ""
             }`}
             dir="rtl"
           >
@@ -675,12 +679,12 @@ function Part({
         </Html>
       )}
       {resolvedMarkers.length > 0 && (
-        <Html position={[0, size[1] / 2 + 0.16, 0]} center distanceFactor={9}>
-          <div className="model-pin-group" aria-label={`نتائج مرتبطة بالعنصر ${name}`}>
+        <Html position={[0, size[1] / 2 + 0.16, 0]} center distanceFactor={9} zIndexRange={[30, 0]}>
+          <div className="v3-pins" aria-label={`نتائج مرتبطة بالعنصر ${name}`}>
             {resolvedMarkers.map((resolvedMarker, index) => (
               <button
                 type="button"
-                className={`model-pin model-pin--${resolvedMarker.status}`}
+                className={`v3-pin v3-pin--${resolvedMarker.status}`}
                 aria-label={`${resolvedMarker.label}: ${
                   resolvedMarker.title ?? name
                 }`}
@@ -787,22 +791,8 @@ function RoomLabel({
   name: string;
 }) {
   return (
-    <Html position={position} center distanceFactor={11}>
-      <div
-        dir="rtl"
-        style={{
-          padding: "5px 9px",
-          border: "1px solid rgba(11,93,72,.22)",
-          borderRadius: 999,
-          color: "#143f35",
-          background: "rgba(255,255,255,.91)",
-          boxShadow: "0 5px 14px rgba(20,50,42,.12)",
-          fontSize: 10,
-          fontWeight: 800,
-          whiteSpace: "nowrap",
-          pointerEvents: "none",
-        }}
-      >
+    <Html position={position} center distanceFactor={11} zIndexRange={[30, 0]}>
+      <div dir="rtl" className="v3-room">
         {name}
       </div>
     </Html>
@@ -837,21 +827,8 @@ function DimensionLine({
         <sphereGeometry args={[0.055, 12, 10]} />
         <meshBasicMaterial color={color} />
       </mesh>
-      <Html position={midpoint} center distanceFactor={8}>
-        <div
-          dir="rtl"
-          style={{
-            padding: "4px 7px",
-            borderRadius: 5,
-            color: "#fff",
-            background: color,
-            boxShadow: "0 4px 12px rgba(0,0,0,.18)",
-            fontSize: 9,
-            fontWeight: 850,
-            whiteSpace: "nowrap",
-            pointerEvents: "none",
-          }}
-        >
+      <Html position={midpoint} center distanceFactor={8} zIndexRange={[30, 0]}>
+        <div dir="rtl" className="v3-dim" style={{ background: color }}>
           {label}
         </div>
       </Html>
@@ -3109,16 +3086,6 @@ function FacilityScene({
   );
 }
 
-const chromePanelStyle: React.CSSProperties = {
-  position: "absolute",
-  zIndex: 6,
-  color: "#263832",
-  background: "rgba(255,255,255,.96)",
-  border: "1px solid rgba(190,203,196,.95)",
-  borderRadius: 10,
-  boxShadow: "0 8px 22px rgba(30,52,44,.13)",
-};
-
 export function Viewer3D({
   activityId,
   scenario,
@@ -3236,7 +3203,7 @@ export function Viewer3D({
 
   return (
     <div
-      className="viewer"
+      className="v3"
       ref={containerRef}
       onPointerLeave={() => {
         document.body.style.cursor = "default";
@@ -3244,7 +3211,7 @@ export function Viewer3D({
       data-activity={activityId}
     >
       <div
-        className="viewer__canvas"
+        className="v3__canvas"
         aria-label={`عارض ثلاثي الأبعاد تفاعلي لنشاط ${activityTitles[activityId]}`}
       >
         <Canvas
@@ -3287,53 +3254,50 @@ export function Viewer3D({
         </Canvas>
       </div>
 
-      <div
-        className="viewer__toolbar"
-        aria-label="أدوات العارض ثلاثي الأبعاد"
-        style={{ flexWrap: "wrap", maxWidth: "calc(100% - 24px)" }}
-      >
+      <div className="v3__tools" role="toolbar" aria-label="أدوات العارض ثلاثي الأبعاد">
         <button
           type="button"
+          className="icon-btn"
           onClick={resetView}
           title="إعادة ضبط المشهد"
           aria-label="إعادة ضبط المشهد"
           data-testid="viewer-reset"
         >
-          <RotateCcw size={17} />
+          <RotateCcw size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={preset === "top" ? "is-active" : ""}
+          className={`icon-btn${preset === "top" ? " is-active" : ""}`}
           onClick={() => selectPreset("top")}
           title="المسقط الأفقي"
           aria-label="المسقط الأفقي"
           data-testid="viewer-preset-top"
         >
-          <ScanLine size={18} />
+          <ScanLine size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={preset === "front" ? "is-active" : ""}
+          className={`icon-btn${preset === "front" ? " is-active" : ""}`}
           onClick={() => selectPreset("front")}
           title="الواجهة الأمامية"
           aria-label="الواجهة الأمامية"
           data-testid="viewer-preset-front"
         >
-          <Box size={18} />
+          <Box size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={preset === "walk" ? "is-active" : ""}
+          className={`icon-btn${preset === "walk" ? " is-active" : ""}`}
           onClick={() => selectPreset("walk")}
           title="منظور داخلي"
           aria-label="منظور داخلي"
           data-testid="viewer-preset-walk"
         >
-          <Footprints size={18} />
+          <Footprints size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={isolate ? "is-active" : ""}
+          className={`icon-btn${isolate ? " is-active" : ""}`}
           onClick={() => setIsolate((value) => !value)}
           disabled={!selectedElement}
           title="عزل العنصر المحدد"
@@ -3341,66 +3305,66 @@ export function Viewer3D({
           aria-pressed={isolate}
           data-testid="viewer-isolate"
         >
-          <BoxSelect size={18} />
+          <BoxSelect size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={ghost ? "is-active" : ""}
+          className={`icon-btn${ghost ? " is-active" : ""}`}
           onClick={() => setGhost((value) => !value)}
           title="شفافية الغلاف المعماري"
           aria-label="شفافية الغلاف المعماري"
           aria-pressed={ghost}
           data-testid="viewer-ghost"
         >
-          <Eye size={18} />
+          <Eye size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={labels ? "is-active" : ""}
+          className={`icon-btn${labels ? " is-active" : ""}`}
           onClick={() => setLabels((value) => !value)}
           title="إظهار أسماء المساحات"
           aria-label="إظهار أسماء المساحات"
           aria-pressed={labels}
           data-testid="viewer-labels-toggle"
         >
-          <Tags size={18} />
+          <Tags size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={dimensions ? "is-active" : ""}
+          className={`icon-btn${dimensions ? " is-active" : ""}`}
           onClick={() => setDimensions((value) => !value)}
           title="إظهار القياسات"
           aria-label="إظهار القياسات"
           aria-pressed={dimensions}
           data-testid="viewer-dimensions-toggle"
         >
-          <Ruler size={18} />
+          <Ruler size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={exploded ? "is-active" : ""}
+          className={`icon-btn${exploded ? " is-active" : ""}`}
           onClick={() => setExploded((value) => !value)}
           title="عرض المشهد المفكك"
           aria-label="عرض المشهد المفكك"
           aria-pressed={exploded}
           data-testid="viewer-exploded-toggle"
         >
-          <Move3d size={18} />
+          <Move3d size={18} strokeWidth={1.6} />
         </button>
-        <div className="viewer__layer-wrap">
+        <div className="v3__layer-wrap">
           <button
             type="button"
-            className={layersOpen ? "is-active" : ""}
+            className={`icon-btn${layersOpen ? " is-active" : ""}`}
             onClick={() => setLayersOpen((value) => !value)}
             title="طبقات النموذج"
             aria-label="طبقات النموذج"
             aria-expanded={layersOpen}
             data-testid="viewer-layers"
           >
-            <Layers3 size={18} />
+            <Layers3 size={18} strokeWidth={1.6} />
           </button>
           {layersOpen && (
-            <div className="viewer__layers" dir="rtl">
+            <div className="v3__layers" dir="rtl">
               <strong>طبقات النموذج</strong>
               {(
                 [
@@ -3424,98 +3388,70 @@ export function Viewer3D({
         </div>
         <button
           type="button"
+          className="icon-btn"
           onClick={() => void requestFullscreen()}
           title="ملء الشاشة"
           aria-label="ملء الشاشة"
           data-testid="viewer-fullscreen"
         >
-          <Maximize2 size={18} />
+          <Maximize2 size={18} strokeWidth={1.6} />
         </button>
         <button
           type="button"
-          className={helpOpen ? "is-active" : ""}
+          className={`icon-btn${helpOpen ? " is-active" : ""}`}
           onClick={() => setHelpOpen((value) => !value)}
           title="مساعدة التحكم"
           aria-label="مساعدة التحكم"
           aria-expanded={helpOpen}
           data-testid="viewer-help"
         >
-          <CircleHelp size={18} />
+          <CircleHelp size={18} strokeWidth={1.6} />
         </button>
       </div>
 
       {helpOpen && (
         <div
+          className="v3__help"
           dir="rtl"
           role="status"
           data-testid="viewer-help-panel"
-          style={{
-            ...chromePanelStyle,
-            top: 61,
-            right: 12,
-            width: 230,
-            padding: "12px 14px",
-            fontSize: 10,
-            lineHeight: 1.8,
-          }}
         >
-          <strong style={{ display: "block", marginBottom: 4 }}>
-            التحكم في النموذج
-          </strong>
-          <span style={{ display: "block" }}>السحب: تدوير • العجلة: تقريب</span>
-          <span style={{ display: "block" }}>الزر الأيمن: تحريك المشهد</span>
-          <span style={{ display: "block" }}>١–٤: زوايا العرض • F: تركيز</span>
-          <span style={{ display: "block" }}>Esc: إلغاء التحديد</span>
+          <strong>التحكم في النموذج</strong>
+          <span>السحب: تدوير • العجلة: تقريب</span>
+          <span>الزر الأيمن: تحريك المشهد</span>
+          <span>1–4: زوايا العرض • F: تركيز</span>
+          <span>Esc: إلغاء التحديد</span>
         </div>
       )}
 
-      <div className="viewer__meta">
-        <span className="viewer__live-dot" />
+      <div className="v3__meta">
+        <span className="v3__live-dot" />
         مشهد {activityTitles[activityId]} دلالي توضيحي
         <span>•</span>
         الطابق الأرضي
       </div>
 
-      <div
-        aria-label="بوصلة النموذج"
-        title="الشمال"
-        style={{
-          ...chromePanelStyle,
-          left: 13,
-          top: 48,
-          width: 38,
-          height: 38,
-          display: "grid",
-          placeItems: "center",
-          color: "#0b5d48",
-          pointerEvents: "none",
-        }}
-      >
-        <Compass size={23} />
-        <strong
-          style={{
-            position: "absolute",
-            top: 1,
-            fontSize: 7,
-            lineHeight: 1,
-          }}
-        >
-          ش
-        </strong>
+      <div className="v3__compass" aria-label="بوصلة النموذج" title="الشمال">
+        <Compass size={22} strokeWidth={1.6} />
+        <strong>ش</strong>
       </div>
 
       {(selectedElement || selectedFindingTitle) && (
         <div
-          className={`viewer__selection viewer__selection--${selectionStatus} ${
-            isFileResult ? "viewer__selection--file" : ""
+          className={`v3__selection v3__selection--${selectionStatus} ${
+            isFileResult ? "v3__selection--file" : ""
           }`}
           dir="rtl"
           role="status"
         >
-          <span className="viewer__selection-icon">
-            {isFileResult ? <FileCheck2 size={17} /> : <Focus size={17} />}
+          <span className="v3__selection-icon">
+            {isFileResult ? (
+              <FileCheck2 size={18} strokeWidth={1.6} />
+            ) : (
+              <Focus size={18} strokeWidth={1.6} />
+            )}
           </span>
-          <span className="viewer__selection-copy">
+          <span className="v3__selection-copy">
             <small>
               {isFileResult
                 ? "نتيجة على مستوى الملف"
@@ -3535,15 +3471,15 @@ export function Viewer3D({
         </div>
       )}
 
-      <div className="viewer__legend">
+      <div className="v3__legend">
         <span>
-          <i className="legend-dot legend-dot--fail" /> ملاحظة
+          <i className="v3__dot v3__dot--fail" /> {viewerStatusLabels.fail}
         </span>
         <span>
-          <i className="legend-dot legend-dot--unknown" /> معلومات ناقصة
+          <i className="v3__dot v3__dot--unknown" /> {viewerStatusLabels.unknown}
         </span>
         <span>
-          <i className="legend-dot legend-dot--pass" /> مطابق
+          <i className="v3__dot v3__dot--pass" /> {viewerStatusLabels.pass}
         </span>
       </div>
     </div>

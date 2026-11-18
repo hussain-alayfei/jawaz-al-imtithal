@@ -1,101 +1,87 @@
-/* Report screen («ختم»): a formal document on a stone desk, framed by a gold double hairline,
-   with a print stylesheet that leaves only the document in black. Prefix: rp-. */
+/* Report (formal v2): a printable document. On screen a white sheet on the light grey surface with the
+   actions above it; in print only the sheet, in black, each group of findings on its own page.
+   Prefix: rp-. */
 
 .rp {
-  min-height: 100vh;
-  padding-block-end: 72px;
-  background: var(--stone-soft);
+  padding-block: 28px 72px;
+  background: var(--surface);
 }
 
-.rp-bar {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 20;
+.rp-tools,
+.rp-sheet {
+  width: min(880px, calc(100% - 2 * var(--gutter)));
+  margin-inline: auto;
+}
+
+.rp-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px 24px;
-  min-height: 72px;
-  padding: 10px 28px;
-  border-block-end: 3px double var(--gold);
-  background: var(--paper);
+  margin-block-end: 20px;
 }
 
-.rp-bar__brand {
-  min-height: 44px;
-  color: var(--palm);
-}
-
-.rp-bar__actions {
+.rp-tools__end {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 20px;
-  margin-inline-start: auto;
+  gap: 8px 24px;
 }
 
 .rp-sheet {
-  max-width: 920px;
-  margin: 44px auto 0;
-  padding: 52px 64px 44px;
-  border: 1px solid var(--gold);
-  border-radius: var(--radius-panel);
+  padding-block: 56px 48px;
+  padding-inline: 64px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--paper);
-  box-shadow:
-    0 0 0 5px var(--paper),
-    0 0 0 6px var(--gold);
 }
 
-.rp-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding-block-end: 22px;
-}
-
-.rp-head__brand {
-  display: inline-flex;
+/* Letterhead: the site header names the service on screen, so the sheet shows it in print only. */
+.rp-letterhead {
+  display: none;
   align-items: center;
   gap: 10px;
-  margin-block-end: 10px;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
+  margin-block-end: 28px;
+  font-size: 20px;
+  font-weight: 800;
   line-height: 1;
-  color: var(--palm);
+  color: var(--brand);
 }
 
-.rp-head__mark {
-  width: 32px;
-  height: 32px;
-  color: var(--palm);
+.rp-letterhead__mark {
+  width: 28px;
+  height: 28px;
+  color: var(--brand);
 }
 
 .rp-head h1 {
   font-size: 40px;
+  font-weight: 800;
   line-height: 1.3;
 }
 
 .rp-head__file {
-  margin-block-start: 4px;
-  font-size: 16px;
-  font-weight: 500;
+  margin-block-start: 6px;
+  font-size: 17px;
+  line-height: 1.6;
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 
+/* File record */
 .rp-record {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(0, 1fr));
-  gap: 0;
-  margin: 22px 0 0;
-  border-block-start: 1px solid var(--line);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.7fr) minmax(0, 0.85fr) minmax(0, 1.25fr);
+  margin-block: 32px 0;
+  margin-inline: 0;
+  border-block-start: 1px solid var(--ink);
 }
 
 .rp-record > div {
   min-width: 0;
-  padding: 10px 16px 12px;
+  padding-block: 12px;
+  padding-inline: 16px;
   border-block-end: 1px solid var(--line);
 }
 
@@ -104,77 +90,74 @@
 }
 
 .rp-record > div:first-child,
-.rp-record__wide {
+.rp-record > .rp-record__wide {
   padding-inline-start: 0;
 }
 
-.rp-record__wide {
+.rp-record > .rp-record__wide {
   grid-column: 1 / -1;
 }
 
 .rp-record dt {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.6;
-  color: var(--slate);
+  color: var(--muted);
 }
 
 .rp-record dd {
   margin: 0;
   font-size: 15px;
-  font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.7;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
 
 .rp-hash {
   font-size: 14px;
-  letter-spacing: 0.01em;
 }
 
+/* Summary */
 .rp-summary {
-  padding-block: 32px 8px;
+  padding-block-start: 40px;
 }
 
 .rp-summary h2 {
-  font-size: 26px;
+  font-size: 28px;
+  font-weight: 700;
 }
 
 .rp-summary__scope {
-  margin-block-start: 6px;
-  font-size: 16px;
-  color: var(--ink);
+  margin-block-start: 8px;
+  font-size: 17px;
+  color: var(--ink-2);
 }
 
 .rp-summary__scope strong {
-  font-family: var(--font-display);
-  font-size: 20px;
-  color: var(--palm);
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .rp-counts {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 32px;
-  margin: 14px 0 0;
+  margin-block: 16px 0;
+  margin-inline: 0;
   padding: 0;
   list-style: none;
 }
 
-.rp-counts .status {
-  font-size: 16px;
-}
-
 .rp-note {
-  margin-block-start: 10px;
+  margin-block-start: 12px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: var(--muted);
 }
 
+/* Groups and findings */
 .rp-group {
-  padding-block-start: 36px;
+  padding-block-start: 48px;
 }
 
 .rp-group__head {
@@ -182,124 +165,119 @@
   align-items: center;
   gap: 12px;
   padding-block-end: 10px;
-  border-block-end: 3px double var(--gold);
+  border-block-end: 1px solid var(--ink);
 }
 
 .rp-group__head h2 {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 24px;
-}
-
-.rp-group--fail .rp-group__head h2 {
-  color: var(--burgundy);
-}
-
-.rp-group--unknown .rp-group__head h2 {
-  color: var(--slate);
-}
-
-.rp-group--pass .rp-group__head h2 {
-  color: var(--green);
+  font-weight: 700;
 }
 
 .rp-group__head .count {
-  font-size: 22px;
+  font-size: 20px;
+}
+
+.rp-group__note {
+  margin-block-start: 10px;
 }
 
 .rp-finding {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-block: 22px;
+  gap: 16px;
+  padding-block: 24px;
   border-block-end: 1px solid var(--line);
 }
 
 .rp-finding__head {
   display: flex;
   align-items: baseline;
-  gap: 14px;
-}
-
-.rp-finding__no {
-  flex: none;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--palm);
-  font-variant-numeric: tabular-nums;
+  gap: 16px;
 }
 
 .rp-finding__head h3 {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
   font-size: 19px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.rp-finding__no {
+  flex: none;
+  font-weight: 800;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .rp-meas {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
   margin: 0;
-  border-block: 1px solid var(--gold);
 }
 
 .rp-meas > div {
   min-width: 0;
-  padding-block: 8px 10px;
-}
-
-.rp-meas > div:first-child {
-  padding-inline-end: 20px;
-}
-
-.rp-meas > div + div {
-  padding-inline-start: 20px;
-  border-inline-start: 1px solid var(--gold);
 }
 
 .rp-meas dt {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--slate);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 .rp-meas dd {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   margin: 0;
 }
 
 .rp-meas__num {
-  font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--palm);
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .rp-meas__num small {
+  display: inline-block;
   margin-inline-start: 8px;
-  font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 500;
-  color: var(--slate);
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .rp-meas__num--fail {
-  color: var(--burgundy);
+  color: var(--fail);
+}
+
+.rp-meas__num--pass {
+  color: var(--pass);
 }
 
 .rp-meas__note {
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--muted);
 }
 
 .rp-meas__note--lead {
   font-size: 15px;
-  color: var(--ink);
+  line-height: 1.8;
+  color: var(--ink-2);
 }
 
 .rp-quote {
@@ -308,11 +286,11 @@
 
 .rp-quote blockquote {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
+  padding-inline-start: 14px;
+  border-inline-start: 2px solid var(--line-strong);
+  font-size: 15px;
   line-height: 1.9;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .rp-quote figcaption {
@@ -321,19 +299,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 0 16px;
+  margin-block-start: 4px;
 }
 
 .rp-quote cite {
   font-size: 13px;
   font-style: normal;
   line-height: 1.6;
-  color: var(--slate);
+  color: var(--muted);
+}
+
+/* A data check's description: Mowaem's own wording, so it is not set as a quotation. */
+.rp-desc {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-2);
 }
 
 .rp-facts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 10px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 32px;
   margin: 0;
 }
 
@@ -347,15 +333,19 @@
 
 .rp-facts dt {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.6;
-  color: var(--slate);
+  color: var(--muted);
 }
 
 .rp-facts dd {
   margin: 0;
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.7;
+}
+
+.rp-facts__name {
+  font-weight: 700;
 }
 
 .rp-facts__sub {
@@ -364,58 +354,49 @@
 }
 
 .rp-guid {
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
+/* Closing: the disclaimer and the basis of the check. */
 .rp-foot {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-block-start: 40px;
+  margin-block-start: 48px;
+  padding-block-start: 20px;
+  border-block-start: 1px solid var(--ink);
 }
 
 .rp-foot__disclaimer {
-  margin-block-start: 8px;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.8;
-  color: var(--palm);
+  color: var(--ink);
 }
 
 .rp-foot__basis {
+  margin-block-start: 6px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: var(--muted);
 }
 
 @media screen and (max-width: 860px) {
-  .rp-bar {
-    padding: 10px 16px;
+  .rp {
+    padding-block: 16px 40px;
   }
 
-  .rp-bar__actions {
+  .rp-tools {
+    margin-block-end: 16px;
+  }
+
+  .rp-tools__end {
     width: 100%;
-    margin-inline-start: 0;
-  }
-
-  .rp-bar__actions .btn {
-    flex: 1;
-  }
-
-  .rp-bar__actions .link {
-    order: 3;
+    justify-content: space-between;
   }
 
   .rp-sheet {
-    margin: 24px 16px 0;
-    padding: 28px 20px 28px;
-  }
-
-  .rp-head {
-    flex-direction: column-reverse;
-    align-items: flex-start;
+    padding-block: 28px 32px;
+    padding-inline: 20px;
   }
 
   .rp-head h1 {
@@ -426,25 +407,57 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .rp-record > div:nth-child(3) {
-    padding-inline-start: 0;
+  .rp-record > div,
+  .rp-record > div:not(.rp-record__wide) + div:not(.rp-record__wide) {
+    padding-inline: 0;
     border-inline-start: 0;
   }
 
-  .rp-facts {
-    grid-template-columns: minmax(0, 1fr);
+  /* Schema and elements share a row; the second keeps a gutter without breaking the row's hairline. */
+  .rp-record > div:nth-child(3) {
+    padding-inline-start: 16px;
+  }
+
+  .rp-record__file {
+    grid-column: 1 / -1;
+  }
+
+  .rp-record > div:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+
+  .rp-summary h2 {
+    font-size: 24px;
+  }
+
+  .rp-group__head h2 {
+    font-size: 21px;
   }
 
   .rp-finding__head {
     flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  .rp-finding__head h3 {
+    flex-basis: 100%;
+    font-size: 17px;
+  }
+
+  .rp-meas {
+    column-gap: 20px;
   }
 
   .rp-meas__num {
     font-size: 24px;
   }
+
+  .rp-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-/* Print: only the document, black text, each status group on its own page. */
+/* Print: only the document, black text, each group of findings on its own page. */
 @media print {
   @page {
     size: A4;
@@ -452,34 +465,51 @@
   }
 
   html,
-  body {
+  body,
+  .app {
     background: #ffffff !important;
   }
 
-  .rp-bar,
+  .site-header,
+  .site-footer,
+  .rp-tools,
   .rp-screen,
   .toast {
     display: none !important;
   }
 
   .rp {
-    min-height: 0;
     padding: 0;
     background: #ffffff;
   }
 
   .rp-sheet {
-    max-width: none;
+    width: auto;
     margin: 0;
     padding: 0;
     border: 0;
     border-radius: 0;
-    box-shadow: none;
+    font-size: 12.5px;
+  }
+
+  .rp-letterhead {
+    display: flex;
   }
 
   .rp-sheet,
   .rp-sheet * {
     color: #000000 !important;
+    border-color: #000000;
+  }
+
+  .rp-record > div,
+  .rp-finding,
+  .rp-record > div:not(.rp-record__wide) + div:not(.rp-record__wide) {
+    border-color: #9a9a9a;
+  }
+
+  .rp-quote blockquote {
+    border-inline-start-color: #9a9a9a;
   }
 
   .rp-sheet .status__glyph,
@@ -492,11 +522,7 @@
     color: #000000 !important;
   }
 
-  .rp-sheet .seal,
-  .rp-sheet .status__glyph,
-  .rp-sheet .gold-rule,
-  .rp-group__head,
-  .rp-meas {
+  .rp-sheet .status__glyph {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -510,10 +536,7 @@
     break-after: avoid;
   }
 
-  .rp-finding {
-    break-inside: avoid;
-  }
-
+  .rp-finding,
   .rp-foot {
     break-inside: avoid;
   }
@@ -522,12 +545,20 @@
     font-size: 30px;
   }
 
-  .rp-sheet {
-    font-size: 12.5px;
+  .rp-record {
+    margin-block-start: 22px;
   }
 
   .rp-summary {
-    padding-block-start: 22px;
+    padding-block-start: 24px;
+  }
+
+  .rp-summary h2 {
+    font-size: 22px;
+  }
+
+  .rp-group__head h2 {
+    font-size: 20px;
   }
 
   .rp-finding {
@@ -539,25 +570,21 @@
     font-size: 16px;
   }
 
-  .rp-finding__no {
-    font-size: 18px;
-  }
-
   .rp-meas__num {
     font-size: 22px;
   }
 
   .rp-meas__note--lead,
-  .rp-facts dd {
+  .rp-facts dd,
+  .rp-quote blockquote {
     font-size: 13px;
   }
 
   .rp-quote blockquote {
-    font-size: 13.5px;
     line-height: 1.75;
   }
 
-  .rp-group__head h2 {
-    font-size: 20px;
+  .rp-foot {
+    margin-block-start: 28px;
   }
 }

@@ -1,0 +1,475 @@
+/* The procedural scene for older MOWAEM-IFC-1.0 contract files (Viewer3D), in the formal v2 chrome: white
+   panels with a hairline, the site's 44px icon buttons, the three status colours and nothing else.
+   Ported from the pre-redesign stylesheet (78c4123:src/styles.css) and restyled. Prefix: v3-. */
+
+.v3 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  /* The scene's own background colour, so the frame never shows a different one while it loads. */
+  background: #dfe9e6;
+  container-type: inline-size;
+  container-name: v3;
+}
+
+.v3:fullscreen {
+  background: #dfe9e6;
+}
+
+.v3__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.v3__canvas canvas {
+  display: block;
+}
+
+/* Chrome sits above the scene's HTML labels (they use z-index 0 to 30). */
+.v3__tools,
+.v3__help,
+.v3__meta,
+.v3__compass,
+.v3__selection,
+.v3__legend {
+  position: absolute;
+  z-index: 40;
+}
+
+.v3__help,
+.v3__meta,
+.v3__compass,
+.v3__selection,
+.v3__legend,
+.v3__layers {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-2);
+  box-shadow: 0 4px 14px rgba(22, 22, 22, 0.08);
+}
+
+/* Tools: two rows of the site's icon buttons at the top end corner. */
+.v3__tools {
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-inline-size: calc(6 * 44px + 5 * 6px);
+}
+
+.v3__tools .icon-btn {
+  box-shadow: 0 2px 8px rgba(22, 22, 22, 0.08);
+}
+
+.v3__tools .icon-btn.is-active {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #ffffff;
+}
+
+.v3__tools .icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.v3__tools .icon-btn:disabled:hover {
+  border-color: var(--line-strong);
+}
+
+.v3__layer-wrap {
+  position: relative;
+}
+
+.v3__layers {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  width: 230px;
+  padding: 10px 14px 6px;
+  border-radius: var(--radius);
+  color: var(--ink);
+}
+
+.v3__layers strong {
+  display: block;
+  padding-block-end: 8px;
+  border-block-end: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.v3__layers label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.v3__layers label + label {
+  border-block-start: 1px solid var(--line);
+}
+
+.v3__layers input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.v3__help {
+  inset-block-start: calc(16px + 2 * 44px + 6px + 8px);
+  inset-inline-end: 16px;
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.v3__help strong {
+  margin-block-end: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* What the scene is, at the top start corner. */
+.v3__meta {
+  inset-block-start: 16px;
+  inset-inline-start: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-inline-size: calc(100% - 360px);
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.v3__live-dot {
+  display: none;
+}
+
+.v3__compass {
+  inset-block-start: 64px;
+  inset-inline-start: 16px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--brand);
+  pointer-events: none;
+}
+
+.v3__compass strong {
+  position: absolute;
+  inset-block-start: 1px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* The selected element, at the bottom start corner. */
+.v3__selection {
+  inset-block-end: 16px;
+  inset-inline-start: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(360px, calc(100% - 32px));
+  padding: 12px 14px;
+  border-radius: var(--radius);
+}
+
+.v3__selection-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-block-start: 2px;
+}
+
+.v3__selection--pass .v3__selection-icon {
+  color: var(--pass);
+}
+
+.v3__selection--fail .v3__selection-icon {
+  color: var(--fail);
+}
+
+.v3__selection--unknown .v3__selection-icon {
+  color: var(--unknown);
+}
+
+.v3__selection--file {
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+
+.v3__selection-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.5;
+}
+
+.v3__selection-copy > small {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.v3__selection--pass .v3__selection-copy > small {
+  color: var(--pass);
+}
+
+.v3__selection--fail .v3__selection-copy > small {
+  color: var(--fail);
+}
+
+.v3__selection--unknown .v3__selection-copy > small {
+  color: var(--unknown);
+}
+
+.v3__selection-copy > strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v3__selection-copy > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v3__selection code {
+  flex: none;
+  margin-inline-start: auto;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Status legend, at the bottom end corner. */
+.v3__legend {
+  inset-block-end: 16px;
+  inset-inline-end: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  max-inline-size: calc(100% - 410px);
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.v3__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.v3__dot {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.v3__dot--fail {
+  background: var(--fail);
+}
+
+.v3__dot--unknown {
+  background: var(--unknown);
+}
+
+.v3__dot--pass {
+  background: var(--pass);
+}
+
+/* Labels drawn in the scene (drei <Html>). */
+.v3-room {
+  padding: 4px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.v3-dim {
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.v3-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.45;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.v3-tip strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.v3-tip small,
+.v3-tip span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.v3-tip small {
+  font-weight: 700;
+}
+
+.v3-tip--selected {
+  border-width: 2px;
+}
+
+.v3-tip--fail {
+  border-color: var(--fail);
+}
+
+.v3-tip--fail small {
+  color: var(--fail);
+}
+
+.v3-tip--unknown {
+  border-color: var(--unknown);
+}
+
+.v3-tip--pass {
+  border-color: var(--pass);
+}
+
+.v3-tip--pass small {
+  color: var(--pass);
+}
+
+/* Status pins over linked elements: round, still (no pulsing halo). */
+.v3-pins {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  direction: ltr;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.v3-pin {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding-inline: 6px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 6px rgba(22, 22, 22, 0.2);
+  cursor: pointer;
+}
+
+.v3-pin:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.v3-pin--fail {
+  background: var(--fail);
+}
+
+.v3-pin--unknown {
+  background: var(--unknown);
+}
+
+.v3-pin--pass {
+  background: var(--pass);
+}
+
+/* Narrow frames (phones): the tools take the top edge, the selection the bottom edge. The caption above the
+   frame already names the scene, and the register carries the statuses. */
+@container v3 (max-width: 640px) {
+  .v3__meta,
+  .v3__compass,
+  .v3__legend {
+    display: none;
+  }
+
+  .v3__tools {
+    inset-block-start: 12px;
+    inset-inline: 12px;
+    max-inline-size: none;
+  }
+
+  .v3__help {
+    inset-block-start: calc(12px + 2 * 44px + 6px + 8px);
+    inset-inline-end: 12px;
+  }
+
+  .v3__selection {
+    inset-block-end: 12px;
+    inset-inline: 12px;
+    width: auto;
+  }
+}

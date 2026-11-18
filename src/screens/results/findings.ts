@@ -1,4 +1,5 @@
-import type { Finding, ResultStatus } from "../../data";
+import { activityExamples, type Finding, type ResultStatus } from "../../data";
+import { copy } from "../../content/copy";
 import type { ComplianceRun } from "../../ifc/types";
 import { RESTAURANT_REQUIREMENTS } from "../../ifc/standard/requirements";
 
@@ -145,6 +146,26 @@ export function elementOf(run: ComplianceRun, finding: Finding): ElementInfo | u
 export function coverageOf(run: ComplianceRun): { verified: number; total: number } {
   const { verified, total } = tallyOf(run);
   return { verified, total };
+}
+
+/** The scope as words, e.g. "13 من 17 بندًا" (clauses only, data checks excluded). */
+export function scopeOf(run: ComplianceRun): string {
+  const { verified, total } = tallyOf(run);
+  return `${verified} من ${counted(total, CLAUSE_FORMS)}`;
+}
+
+/** The requirements a run was checked against: the ministry's document, or the contract file's rule pack. */
+export function referenceOf(run: ComplianceRun): string {
+  if (run.source === "standard-ifc") return copy.footer.basis;
+  return activityExamples.find((item) => item.id === run.activityId)?.rulePack ?? copy.footer.basis;
+}
+
+/** The suggested action for a finding that is not a pass, as the engine wrote it. */
+export function actionOf(finding: Finding): string | undefined {
+  if (finding.status === "pass") return undefined;
+  const text = finding.recommendation?.trim();
+  if (text) return text;
+  return finding.ruleId === "MOMAH-REST-4.5.2-CLADDING" ? copy.results.detail.action452 : undefined;
 }
 
 /** Arabic counted noun: 1 عنصر، 2 عنصران، 3 عناصر، 11 عنصرًا، 100 عنصر. */
