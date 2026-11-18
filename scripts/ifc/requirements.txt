@@ -1,1 +1,3 @@
 ifcopenshell==0.9.0.post1
+# only for checking files with `python -m ifcopenshell.validate --rules` (IfcOpenShell's rule runner imports pytest)
+pytest==9.2.0

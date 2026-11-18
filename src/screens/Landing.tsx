@@ -31,14 +31,15 @@ interface ClauseRow {
   subject: string;
 }
 
-/** "4.9.1 → SBC-801" and "4.10.1 (2)" read as their clause number: the text up to the first space or arrow. */
+/** Same reading as the results screen (results/findings.ts clauseOf): "4.9.1 → SBC-801" is 4.9.1,
+    "4.10.1 (2)" keeps its item number so the rows match the results register. */
 function clauseNumber(clause: string): string {
-  return clause.split(/[\s→]/)[0];
+  return /^\d+(?:\.\d+)*(?:\s*\(\d+\))?/.exec(clause)?.[0] ?? clause;
 }
 
 function byClauseNumber(a: ClauseRow, b: ClauseRow): number {
-  const left = a.number.split(".").map(Number);
-  const right = b.number.split(".").map(Number);
+  const left = (a.number.match(/\d+/g) ?? []).map(Number);
+  const right = (b.number.match(/\d+/g) ?? []).map(Number);
   for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
     const diff = (left[index] ?? 0) - (right[index] ?? 0);
     if (diff) return diff;

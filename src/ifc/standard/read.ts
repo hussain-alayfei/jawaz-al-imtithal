@@ -10,6 +10,8 @@ import type {
   StandardModel,
   StandardProduct,
   StandardSpace,
+  StandardSystem,
+  SystemKind,
 } from "./model";
 
 /*
@@ -104,8 +106,14 @@ function readUnits(api: WebIFC.IfcAPI, modelID: number): { length: LengthUnitInf
   return { length, area };
 }
 
-function categoryFor(ifcType: string, predefined?: string): GeometryCategory {
+/**
+ * Display category of a product. `distribution` is true for every IfcDistributionElement
+ * (IFC4 classes such as IfcPipeSegment, and IFC2X3 IfcFlow* occurrences); `typeClass` is the
+ * class of its IfcTypeObject, which IFC2X3 files need to tell a sink from a fan.
+ */
+function categoryFor(ifcType: string, predefined: string | undefined, distribution: boolean, typeClass?: string): GeometryCategory {
   const t = ifcType.toUpperCase();
+  const tt = (typeClass ?? "").toUpperCase();
   if (t === "IFCWALL" || t === "IFCWALLSTANDARDCASE" || t === "IFCCURTAINWALL" || t === "IFCCOLUMN" || t === "IFCBEAM") return "wall";
   if (t === "IFCSLAB") return predefined === "ROOF" ? "roof" : "floor";
   if (t === "IFCCOVERING") return predefined === "FLOORING" ? "floor" : predefined === "CLADDING" ? "wall" : "roof";
@@ -113,10 +121,137 @@ function categoryFor(ifcType: string, predefined?: string): GeometryCategory {
   if (t === "IFCDOOR") return "door";
   if (t === "IFCWINDOW" || t === "IFCPLATE") return "window";
   if (t === "IFCFURNITURE" || t === "IFCFURNISHINGELEMENT" || t === "IFCSYSTEMFURNITUREELEMENT") return "furniture";
-  if (t === "IFCSANITARYTERMINAL") return "sanitary";
+  if (t === "IFCSANITARYTERMINAL" || tt === "IFCSANITARYTERMINALTYPE") return "sanitary";
   if (t === "IFCSPACE") return "space";
-  if (t.startsWith("IFCFLOW") || t.includes("APPLIANCE") || t === "IFCBUILDINGELEMENTPROXY" || t.includes("TERMINAL")) return "equipment";
+  // kitchen and other appliances stay equipment; every other distribution element is a building service
+  if (t.includes("APPLIANCE") || tt.includes("APPLIANCETYPE")) return "equipment";
+  if (distribution || t.startsWith("IFCFLOW") || t.includes("TERMINAL")) return "mep";
+  if (t === "IFCBUILDINGELEMENTPROXY") return "equipment";
   return "other";
+}
+
+/** IfcDistributionSystemEnum (IFC4 / IFC4X3) to the kind the app shows. */
+const KIND_BY_PREDEFINED: Record<string, SystemKind> = {
+  DOMESTICCOLDWATER: "water", DOMESTICHOTWATER: "water", WATERSUPPLY: "water",
+  DRAINAGE: "drainage", WASTEWATER: "drainage", SEWAGE: "drainage", STORMWATER: "drainage",
+  RAINWATER: "drainage", VENT: "drainage", DISPOSAL: "drainage",
+  AIRCONDITIONING: "hvac", VENTILATION: "hvac", EXHAUST: "hvac", HEATING: "hvac", CHILLEDWATER: "hvac",
+  CONDENSERWATER: "hvac", REFRIGERATION: "hvac",
+  ELECTRICAL: "electrical", LIGHTING: "electrical", POWERGENERATION: "electrical", EARTHING: "electrical",
+  LIGHTNINGPROTECTION: "electrical", COMMUNICATION: "electrical", DATA: "electrical", TELEPHONE: "electrical",
+  TV: "electrical", AUDIOVISUAL: "electrical", ELECTROACOUSTIC: "electrical", SIGNAL: "electrical",
+  SECURITY: "electrical", CONTROL: "electrical",
+  FIREPROTECTION: "fire",
+};
+
+/** Names exporters give systems without a usable PredefinedType (IFC2X3 IfcSystem, USERDEFINED). Order matters. */
+const KIND_BY_NAME: [SystemKind, RegExp][] = [
+  ["fire", /fire|sprinkler|حريق|رشاش|إطفاء|اطفاء/i],
+  ["drainage", /drain|sanitary|sewer|sewage|waste|soil|storm|\brain|\bvent(?!ilat)|صرف|مجاري/i],
+  ["hvac", /hvac|\bair|duct|exhaust|extract|ventilat|heating|cooling|chilled|refrigera|تكييف|تهوية|عادم|تبريد/i],
+  ["water", /water|potable|domestic|\bcold\b|\bhot\b|مياه|ماء/i],
+  ["electrical", /electric|power|light|circuit|كهرب|إنارة|انارة|قوى/i],
+];
+
+export function systemKind(predefined: string | undefined, ...labels: (string | undefined)[]): SystemKind {
+  const byType = predefined ? KIND_BY_PREDEFINED[predefined.toUpperCase()] : undefined;
+  if (byType) return byType;
+  for (const [kind, pattern] of KIND_BY_NAME) {
+    if (labels.some((label) => label && pattern.test(label))) return kind;
+  }
+  return "other";
+}
+
+/** Groups that are building-services systems (not zones, structural models or asset groups). */
+const SYSTEM_CLASSES = new Set(["IFCDISTRIBUTIONSYSTEM", "IFCDISTRIBUTIONCIRCUIT", "IFCSYSTEM", "IFCELECTRICALCIRCUIT"]);
+
+function lineIds(api: WebIFC.IfcAPI, modelID: number, type: number, inherited = false): number[] {
+  try {
+    return ids(api.GetLineIDsWithType(modelID, type, inherited));
+  } catch {
+    return []; // a class the file's schema does not define (e.g. IFC2X3-only relationships in IFC4X3)
+  }
+}
+
+/**
+ * Building services as the file states them: each port's owning element (IFC4 IfcRelNests,
+ * IFC2X3 IfcRelConnectsPortToElement), element pairs joined by IfcRelConnectsPorts, and the
+ * systems (IfcRelAssignsToGroup to IfcDistributionSystem / IfcSystem) with their members.
+ */
+function readServices(
+  api: WebIFC.IfcAPI,
+  modelID: number,
+  typeName: (expressId: number) => string,
+): { systems: StandardSystem[]; connections: { a: number; b: number }[] } {
+  const ports = new Set(lineIds(api, modelID, WebIFC.IFCDISTRIBUTIONPORT, true));
+  const owner = new Map<number, number>();
+  if (ports.size) {
+    for (const rel of lineIds(api, modelID, WebIFC.IFCRELNESTS)) {
+      const line = api.GetLine(modelID, rel) as Record<string, unknown>;
+      const parent = num(line.RelatingObject);
+      if (parent === undefined) continue;
+      for (const child of (line.RelatedObjects ?? []) as unknown[]) {
+        const id = num(child);
+        if (id !== undefined && ports.has(id)) owner.set(id, parent);
+      }
+    }
+    for (const rel of lineIds(api, modelID, WebIFC.IFCRELCONNECTSPORTTOELEMENT)) {
+      const line = api.GetLine(modelID, rel) as Record<string, unknown>;
+      const port = num(line.RelatingPort);
+      const element = num(line.RelatedElement);
+      if (port !== undefined && element !== undefined && !owner.has(port)) owner.set(port, element);
+    }
+  }
+
+  const connections: { a: number; b: number }[] = [];
+  const joined = new Set<string>();
+  for (const rel of lineIds(api, modelID, WebIFC.IFCRELCONNECTSPORTS)) {
+    const line = api.GetLine(modelID, rel) as Record<string, unknown>;
+    const relating = num(line.RelatingPort);
+    const related = num(line.RelatedPort);
+    const a = relating !== undefined ? owner.get(relating) : undefined;
+    const b = related !== undefined ? owner.get(related) : undefined;
+    if (a === undefined || b === undefined || a === b) continue;
+    const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+    if (joined.has(key)) continue;
+    joined.add(key);
+    connections.push({ a, b });
+  }
+
+  const members = new Map<number, Set<number>>();
+  for (const rel of lineIds(api, modelID, WebIFC.IFCRELASSIGNSTOGROUP, true)) {
+    const line = api.GetLine(modelID, rel) as Record<string, unknown>;
+    const group = num(line.RelatingGroup);
+    if (group === undefined || !SYSTEM_CLASSES.has(typeName(group).toUpperCase())) continue;
+    const set = members.get(group) ?? new Set<number>();
+    members.set(group, set);
+    for (const object of (line.RelatedObjects ?? []) as unknown[]) {
+      const id = num(object);
+      if (id !== undefined) set.add(owner.get(id) ?? id); // a port assigned to a system stands for its element
+    }
+  }
+  const systems = [...members.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([expressId, set]): StandardSystem => {
+      const line = api.GetLine(modelID, expressId) as Record<string, unknown>;
+      const name = str(line.Name);
+      const predefined = str(line.PredefinedType);
+      const predefinedType = predefined && predefined !== "NOTDEFINED" ? predefined : undefined;
+      return {
+        expressId,
+        globalId: str(line.GlobalId) ?? "",
+        name,
+        kind: systemKind(
+          predefinedType === "USERDEFINED" ? undefined : predefinedType,
+          str(line.ObjectType),
+          name,
+          str(line.LongName),
+        ),
+        predefinedType,
+        members: [...set],
+      };
+    });
+  return { systems, connections };
 }
 
 class ChunkBuilder {
@@ -246,11 +381,39 @@ export async function readStandardModel(
       return name;
     };
 
+    // Distribution elements (building services) and each occurrence's type object, read
+    // before meshing so every triangle lands in the right display category.
+    const distribution = new Set(lineIds(api, modelID, WebIFC.IFCDISTRIBUTIONELEMENT, true));
+    const typeOf = new Map<number, { typeClass: string; predefined?: string }>();
+    for (const rel of lineIds(api, modelID, WebIFC.IFCRELDEFINESBYTYPE)) {
+      const line = api.GetLine(modelID, rel) as Record<string, unknown>;
+      const typeId = num(line.RelatingType);
+      if (typeId === undefined) continue;
+      const typeLine = api.GetLine(modelID, typeId) as Record<string, unknown>;
+      const info = { typeClass: typeName(typeId), predefined: str(typeLine.PredefinedType) };
+      for (const object of (line.RelatedObjects ?? []) as unknown[]) {
+        const id = num(object);
+        if (id !== undefined) typeOf.set(id, info);
+      }
+    }
+    /** The occurrence's PredefinedType, or its type's when the occurrence leaves it open. */
+    const predefinedOf = (expressId: number, line: Record<string, unknown>): string | undefined => {
+      const own = str(line.PredefinedType);
+      if (own && own !== "NOTDEFINED") return own;
+      const fromType = typeOf.get(expressId)?.predefined;
+      return fromType && fromType !== "NOTDEFINED" ? fromType : own;
+    };
+
     const onMesh = (mesh: WebIFC.FlatMesh) => {
       const expressId = mesh.expressID;
       const ifcType = typeName(expressId);
       const line = api.GetLine(modelID, expressId) as Record<string, unknown>;
-      const category = categoryFor(ifcType, str(line.PredefinedType));
+      const category = categoryFor(
+        ifcType,
+        predefinedOf(expressId, line),
+        distribution.has(expressId),
+        typeOf.get(expressId)?.typeClass,
+      );
       const builder = builders.get(category) ?? new ChunkBuilder();
       builders.set(category, builder);
       const box = boxes.get(expressId) ?? emptyBox();
@@ -342,12 +505,14 @@ export async function readStandardModel(
 
     const product = (expressId: number): StandardProduct => {
       const line = api.GetLine(modelID, expressId) as Record<string, unknown>;
+      const typeClass = typeOf.get(expressId)?.typeClass;
       return {
         expressId,
         globalId: str(line.GlobalId) ?? "",
         ifcType: typeName(expressId),
         name: str(line.Name),
-        predefinedType: str(line.PredefinedType),
+        predefinedType: predefinedOf(expressId, line),
+        ...(typeClass ? { typeClass } : {}),
         containerId: container.get(expressId),
         bbox: boxes.get(expressId),
       };
@@ -412,6 +577,7 @@ export async function readStandardModel(
       typeCounts[p.ifcType] = (typeCounts[p.ifcType] ?? 0) + 1;
     }
 
+    const services = readServices(api, modelID, typeName);
     const facts: StandardFacts = {
       schema,
       records,
@@ -423,12 +589,11 @@ export async function readStandardModel(
       products,
       typeCounts,
       ports: {
-        count: api.GetLineIDsWithType(modelID, WebIFC.IFCDISTRIBUTIONPORT).size(),
-        connected: api.GetLineIDsWithType(modelID, WebIFC.IFCRELCONNECTSPORTS).size(),
+        count: lineIds(api, modelID, WebIFC.IFCDISTRIBUTIONPORT, true).length,
+        connected: lineIds(api, modelID, WebIFC.IFCRELCONNECTSPORTS).length,
       },
-      // Filled by the building-services reader (systems and port connectivity).
-      systems: [],
-      connections: [],
+      systems: services.systems,
+      connections: services.connections,
     };
     const chunks = [...builders.entries()].map(([category, builder]) => builder.build(category));
     onProgress?.(1, `${products.length} عنصرًا بمعرّف دائم`);

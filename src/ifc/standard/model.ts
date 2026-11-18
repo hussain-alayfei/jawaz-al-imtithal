@@ -25,8 +25,11 @@ export interface StandardProduct {
   /** IFC class name as web-ifc reports it, e.g. "IfcDoor". */
   ifcType: string;
   name?: string;
-  /** IFC PredefinedType when the file states it, e.g. "CLADDING", "WASHHANDBASIN". */
+  /** IFC PredefinedType when the file states it, e.g. "CLADDING", "WASHHANDBASIN" (from the
+      element's type object when the occurrence leaves it open). */
   predefinedType?: string;
+  /** Class of the element's type object when it has one, e.g. "IfcSanitaryTerminalType". */
+  typeClass?: string;
   /** expressId of the spatial element that contains it (storey or space). */
   containerId?: number;
   bbox?: Box3;
@@ -68,7 +71,9 @@ export interface StandardFacts {
   ports: { count: number; connected: number };
   /** Building-services systems read from IfcRelAssignsToGroup (IfcDistributionSystem / IfcSystem). */
   systems: StandardSystem[];
-  /** Element pairs whose ports are joined by IfcRelConnectsPorts (expressIds of the owning elements). */
+  /** Element pairs whose ports are joined by IfcRelConnectsPorts (expressIds of the owning elements).
+      `a` owns the RelatingPort and `b` the RelatedPort, which is the flow direction when the file's
+      ports state SOURCE and SINK; each pair is listed once. */
   connections: { a: number; b: number }[];
 }
 

@@ -1,7 +1,15 @@
 import type { FacilityDetails } from "../../data";
 import { hasCompleteFacility } from "../rules";
 import type { ExtractedIfcEntity, RuleEvaluation } from "../types";
-import type { Box3, SpaceRole, StandardDoor, StandardFacts, StandardProduct, StandardSpace } from "./model";
+import type {
+  Box3,
+  SpaceRole,
+  StandardDoor,
+  StandardFacts,
+  StandardProduct,
+  StandardSpace,
+  StandardSystem,
+} from "./model";
 import { atLevel, distanceToSpace, doorSides, spaceGap } from "./plan";
 
 /*
@@ -74,6 +82,71 @@ function unknown(ruleId: string, reason: string, target?: ExtractedIfcEntity): S
 
 const label = (p: { name?: string; longName?: string; reference?: string; globalId: string }) =>
   [p.reference, p.longName ?? p.name].filter(Boolean).join("، ") || p.globalId;
+
+/* ---- building services (clause 4.1.3) ---- */
+
+const NOT_FOUL_WATER = new Set(["STORMWATER", "RAINWATER", "VENT"]);
+
+/** A drainage system that carries foul water to the sewer: not storm water and not a vent. */
+export function isSewerSystem(system: StandardSystem): boolean {
+  if (system.kind !== "drainage") return false;
+  const type = system.predefinedType;
+  if (type && type !== "USERDEFINED") return !NOT_FOUL_WATER.has(type);
+  return !/storm|\brain|\bvent(?!ilat)/i.test(system.name ?? "");
+}
+
+/** Fixtures and equipment that discharge water: sinks, basins, WCs, floor traps, dishwashers. */
+export function dischargesWater(p: StandardProduct): boolean {
+  const cls = p.ifcType.toUpperCase();
+  const type = (p.typeClass ?? "").toUpperCase();
+  const predefined = p.predefinedType ?? "";
+  if (cls === "IFCSANITARYTERMINAL" || type === "IFCSANITARYTERMINALTYPE") return predefined !== "CISTERN";
+  if (cls === "IFCWASTETERMINAL" || type === "IFCWASTETERMINALTYPE") return predefined !== "ROOFDRAIN";
+  if (cls === "IFCELECTRICAPPLIANCE" || type === "IFCELECTRICAPPLIANCETYPE") {
+    return predefined === "DISHWASHER" || predefined === "WASHINGMACHINE";
+  }
+  return false;
+}
+
+/**
+ * The sewer drainage network of a file and, for any element, the first element of that network
+ * it reaches through port connections. The search may pass through elements that belong to no
+ * other service system and through other fixtures (a dishwasher may drain through a sink), but
+ * never through the water supply or another network, so a sink whose drain port is left open is
+ * not "connected" by way of its taps.
+ */
+export function drainageNetwork(facts: StandardFacts) {
+  const sewers = facts.systems.filter(isSewerSystem);
+  const sewerMembers = new Set(sewers.flatMap((s) => s.members));
+  const otherMembers = new Set(facts.systems.filter((s) => !isSewerSystem(s)).flatMap((s) => s.members));
+  const fixtures = new Set(facts.products.filter(dischargesWater).map((p) => p.expressId));
+  const adjacency = new Map<number, number[]>();
+  const link = (from: number, to: number) => {
+    const list = adjacency.get(from);
+    if (list) list.push(to);
+    else adjacency.set(from, [to]);
+  };
+  for (const { a, b } of facts.connections) {
+    link(a, b);
+    link(b, a);
+  }
+  const reach = (start: number): number | undefined => {
+    const seen = new Set([start]);
+    const queue = [start];
+    for (let i = 0; i < queue.length; i++) {
+      for (const next of adjacency.get(queue[i]) ?? []) {
+        if (seen.has(next)) continue;
+        seen.add(next);
+        const fixture = fixtures.has(next);
+        if (sewerMembers.has(next) && !fixture) return next;
+        if (fixture || !otherMembers.has(next)) queue.push(next);
+      }
+    }
+    return undefined;
+  };
+  const ported = facts.connections.some((c) => sewerMembers.has(c.a) || sewerMembers.has(c.b));
+  return { sewers, sewerMembers, ported, reach };
+}
 
 export function evaluateStandardRestaurant(
   facts: StandardFacts,
@@ -304,54 +377,87 @@ export function evaluateStandardRestaurant(
     }
   }
 
-  // 4.1.3 drainage connection: needs MEP ports
-  const sanitary = facts.products.filter((p) => p.ifcType.toUpperCase() === "IFCSANITARYTERMINAL");
-  results.push(
-    sanitary.length && facts.ports.connected > 0
-      ? {
-          ruleId: "MOMAH-REST-4.1.3-DRAIN",
-          status: "pass",
-          actual: `${sanitary.length} تجهيزات صحية، والملف يحتوي ${facts.ports.connected} وصلات منافذ MEP`,
-          target: entity(sanitary[0].expressId),
-        }
-      : unknown(
-          "MOMAH-REST-4.1.3-DRAIN",
-          sanitary.length
-            ? `${sanitary.length} تجهيزات صحية في الملف، لكن لا توجد منافذ أو شبكة صرف موصولة بها`
-            : "لا توجد تجهيزات صحية ولا شبكة صرف في الملف",
-          entity(sanitary[0]?.expressId),
-        ),
-  );
+  // 4.1.3 every fixture that discharges water reaches the sewer drainage network through its ports
+  const drainage = drainageNetwork(facts);
+  const dischargers = facts.products.filter(dischargesWater);
+  if (!dischargers.length) {
+    results.push(
+      unknown(
+        "MOMAH-REST-4.1.3-DRAIN",
+        "لا توجد في الملف تجهيزات تصرف ماءً (أحواض أو مغاسل أو مراحيض أو صفايات أرضية أو غسالات صحون)",
+      ),
+    );
+  } else if (!drainage.sewers.length) {
+    results.push(
+      unknown(
+        "MOMAH-REST-4.1.3-DRAIN",
+        `${dischargers.length} تجهيزات تصرف ماءً في الملف، لكن لا توجد شبكة صرف صحي (IfcDistributionSystem من نوع DRAINAGE) لتتبع اتصالها بها`,
+        entity(dischargers[0].expressId),
+      ),
+    );
+  } else if (!drainage.ported) {
+    results.push(
+      unknown(
+        "MOMAH-REST-4.1.3-DRAIN",
+        "شبكة الصرف في الملف بلا منافذ موصولة (IfcDistributionPort وIfcRelConnectsPorts)، فلا يمكن تتبع اتصال التجهيزات بها",
+        entity(dischargers[0].expressId),
+      ),
+    );
+  } else {
+    const open = dischargers.filter((p) => drainage.reach(p.expressId) === undefined);
+    const measured = `${dischargers.length - open.length} من ${dischargers.length} تجهيزات موصولة بشبكة الصرف`;
+    const network = drainage.sewers.map((s) => s.name ?? s.predefinedType ?? s.globalId).join("، ");
+    if (open.length) {
+      const first = open[0];
+      const room = facts.spaces.find((s) => s.expressId === first.containerId);
+      results.push({
+        ruleId: "MOMAH-REST-4.1.3-DRAIN",
+        status: "fail",
+        actual: `${measured}: ${label(first)}${room ? ` (${label(room)})` : ""} لا يصل إلى شبكة الصرف (${network}) عبر منافذه${open.length > 1 ? `، و${open.length - 1} تجهيزات أخرى` : ""}`,
+        target: entity(first.expressId),
+      });
+    } else {
+      const outlet =
+        facts.products.find((p) => drainage.sewerMembers.has(p.expressId) && p.ifcType.toUpperCase() === "IFCINTERCEPTOR") ??
+        facts.products.find(
+          (p) => drainage.sewerMembers.has(p.expressId) && p.ifcType.toUpperCase() === "IFCDISTRIBUTIONCHAMBERELEMENT",
+        );
+      results.push({
+        ruleId: "MOMAH-REST-4.1.3-DRAIN",
+        status: "pass",
+        actual: `${measured}: كل تجهيز يصرف ماءً يصل إلى شبكة الصرف (${network}) عبر وصلات المنافذ في الملف`,
+        target: entity(outlet?.expressId ?? dischargers[0].expressId),
+      });
+    }
+  }
 
-  // 4.3.2 facade services: an architectural model cannot prove absence
+  // 4.3.2 facade services: a services model can place units, but visibility needs a sight-line analysis
   results.push(
     unknown(
       "MOMAH-REST-4.3.2-FACADE",
-      "النموذج المعماري لا يحتوي نموذج خدمات يحدد مواقع وحدات التكييف والتمديدات، فلا يثبت غيابها عن الواجهة",
+      facts.systems.length
+        ? `يحتوي الملف نموذج خدمات (${facts.systems.length} أنظمة)، لكن الحكم بظهور التمديدات ووحدات التكييف على الواجهة أو السطح يحتاج تحليل خطوط الرؤية، ولم يُفعّل بعد`
+        : "النموذج المعماري لا يحتوي نموذج خدمات يحدد مواقع وحدات التكييف والتمديدات، فلا يثبت غيابها عن الواجهة",
     ),
   );
 
-  // 4.7.1 ventilation per SBC: needs ducts / fans
-  const ventilation = facts.products.find(
-    (p) =>
-      /AIRTERMINAL|FAN|DUCT/.test(p.ifcType.toUpperCase()) ||
-      (kitchens.some((k) => p.containerId === k.expressId) && /hood|exhaust|شفاط|تهوية/i.test(p.name ?? "")),
+  // 4.7.1 ventilation per SBC: the network can be read, but compliance needs airflow figures
+  const hvac = facts.systems.filter((s) => s.kind === "hvac");
+  const hood = facts.products.find(
+    (p) => kitchens.some((k) => p.containerId === k.expressId) && /hood|exhaust|شفاط|تهوية/i.test(p.name ?? ""),
   );
+  const ventilation = hood ?? facts.products.find((p) => /AIRTERMINAL|FAN|DUCT/.test(p.ifcType.toUpperCase()));
+  const hvacNames = hvac.map((s) => s.name ?? s.predefinedType ?? s.globalId);
   results.push(
-    ventilation && facts.ports.connected > 0
-      ? {
-          ruleId: "MOMAH-REST-4.7.1-VENT",
-          status: "pass",
-          actual: `${ventilation.name ?? ventilation.ifcType} موصول بمنافذ MEP`,
-          target: entity(ventilation.expressId),
-        }
-      : unknown(
-          "MOMAH-REST-4.7.1-VENT",
-          ventilation
-            ? `${ventilation.name ?? "عنصر التهوية"} موجود في المطبخ، لكن لا توجد مجارٍ أو مراوح موصولة به`
-            : "لا يوجد عنصر تهوية في المطبخ",
-          entity(ventilation?.expressId ?? kitchens[0]?.expressId),
-        ),
+    unknown(
+      "MOMAH-REST-4.7.1-VENT",
+      hvac.length
+        ? `يحتوي الملف ${hvac.length} أنظمة تهوية وتكييف (${hvacNames.slice(0, 3).join("، ")}${hvac.length > 3 ? "…" : ""})، لكن مطابقة تصميمها لكود البناء السعودي تحتاج معدلات تدفق الهواء ومتطلبات الكود، ولم تُطابق بعد`
+        : ventilation
+          ? `${ventilation.name ?? "عنصر التهوية"} موجود، لكن لا توجد شبكة تهوية (مجارٍ ومراوح) مسجلة كنظام في الملف`
+          : "لا يوجد عنصر تهوية في المطبخ",
+      entity(ventilation?.expressId ?? kitchens[0]?.expressId),
+    ),
   );
 
   // 4.4.1 accessibility per SBC-201

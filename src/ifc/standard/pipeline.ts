@@ -230,9 +230,12 @@ export async function runStandardStages({
       if (!facts.spaces.length) {
         throw new IfcProcessingError("extract", "NO_SPACES", "لا يحتوي الملف على مساحات IfcSpace يمكن فحصها.");
       }
+      const services = facts.systems.length
+        ? ` • ${facts.systems.length} أنظمة خدمات بـ ${facts.connections.length} وصلة منافذ`
+        : "";
       return {
         value,
-        detail: `${facts.spaces.length} مساحات • ${facts.doors.length} أبواب • ${facts.products.length} عنصرًا • ${geometry.triangles} مثلثًا • الوحدة ${facts.lengthUnit.declared}`,
+        detail: `${facts.spaces.length} مساحات • ${facts.doors.length} أبواب • ${facts.products.length} عنصرًا${services} • ${geometry.triangles} مثلثًا • الوحدة ${facts.lengthUnit.declared}`,
         evidence: {
           spaces: facts.spaces.length,
           doors: facts.doors.length,
@@ -240,6 +243,8 @@ export async function runStandardStages({
           elements: facts.products.length,
           triangles: geometry.triangles,
           lengthUnit: facts.lengthUnit.declared,
+          systems: facts.systems.length,
+          portConnections: facts.connections.length,
         },
       };
     } catch (error) {
