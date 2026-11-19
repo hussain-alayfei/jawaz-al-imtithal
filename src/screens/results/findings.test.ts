@@ -7,6 +7,7 @@ import {
   defaultFinding,
   groupFindings,
   isDataCheck,
+  issueGroupsOf,
   scopeOf,
   splitValue,
   tallyOf,
@@ -56,6 +57,13 @@ describe("results views over a run", () => {
     expect(groups.at(-1)?.status).toBeUndefined();
     expect(groups.at(-1)?.items.map((item) => item.ruleId)).toEqual(["MOWAEM-DATA-IFC", "MOWAEM-DATA-SPACES"]);
     expect(groups[0].items.map((item) => item.ruleId)).toEqual(["MOMAH-REST-4.5.2-CLADDING"]);
+  });
+
+  it("keeps failures, unknowns and failing data checks for the violations tab, and drops every pass", () => {
+    const issues = issueGroupsOf(groupFindings(FINDINGS));
+    expect(issues.map((group) => group.key)).toEqual(["fail", "unknown", "data"]);
+    expect(issues.at(-1)?.items.map((item) => item.ruleId)).toEqual(["MOWAEM-DATA-SPACES"]);
+    expect(issueGroupsOf(groupFindings([FINDINGS[0], FINDINGS[3], FINDINGS[4]]))).toEqual([]);
   });
 
   it("counts requirement clauses only, so a failing data check never changes the scope", () => {

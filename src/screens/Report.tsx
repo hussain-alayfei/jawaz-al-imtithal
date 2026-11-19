@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { BrandMark, Button, StatusGlyph, StatusMark, statusLabel } from "../brand/ui";
+import { ChevronRight } from "lucide-react";
+import { BrandMark, StatusGlyph, StatusMark, statusLabel } from "../brand/ui";
 import { copy } from "../content/copy";
 import type { Finding } from "../data";
 import type { ComplianceRun } from "../ifc/types";
@@ -219,20 +220,20 @@ export default function Report({ run, onBack, notify }: ReportProps) {
 <html lang="ar" dir="rtl">
 <head><meta charset="utf-8"><title>${escapeHtml(copy.report.title)}: ${escapeHtml(run.file.name)}</title>
 <style>
-body{font-family:"Noto Sans Arabic","Noto Sans",Tahoma,Arial,sans-serif;color:#0f172a;margin:40px auto;max-width:72ch;padding:0 24px;font-size:16px;line-height:1.7}
-h1,h2,h3{color:#0f172a;line-height:1.4;font-weight:700}
-.brand{margin:0 0 20px;font-weight:700;font-size:18px;color:#1e3a8a}
-h1{margin:0;font-size:32px}.file{margin:2px 0 0;color:#475569}
-hr{border:0;border-top:1px solid #cbd5e1;margin:20px 0}
-dl.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin:0}dl.meta dt{font-size:13px;color:#475569}dl.meta dd{margin:0 0 8px;overflow-wrap:anywhere}
-h2{font-size:24px;margin:28px 0 6px}.counts span{margin-inline-end:20px;font-weight:700}
-section{margin-top:28px;page-break-before:always}section h2{font-size:20px;margin:0;padding-bottom:6px;border-bottom:1px solid #0f172a}.count{color:#475569}
-article{padding:14px 0;border-bottom:1px solid #e2e8f0;page-break-inside:avoid}h3{font-size:17px;margin:0 0 8px}.no{color:#1e3a8a;font-variant-numeric:tabular-nums}
-.st{font-size:14px;margin-inline-start:8px}.st-fail{color:#dc2626}.st-pass{color:#15803d}.st-unknown{color:#475569}
-table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:6px 8px;text-align:right;vertical-align:top;border-bottom:1px solid #e2e8f0}th{width:140px;color:#475569;font-weight:400}
+body{font-family:"Noto Sans Arabic","Noto Sans",Tahoma,Arial,sans-serif;color:#1d1d1f;margin:56px auto;max-width:72ch;padding:0 24px;font-size:16px;line-height:1.7}
+h1,h2,h3{color:#1d1d1f;line-height:1.3;font-weight:700}
+.brand{margin:0 0 28px;font-weight:800;font-size:20px;color:#0a7a4d}
+h1{margin:0;font-size:36px}.file{margin:4px 0 0;color:#6e6e73}
+hr{border:0;border-top:1px solid #d2d2d7;margin:28px 0}
+dl.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin:0}dl.meta dt{font-size:13px;color:#6e6e73}dl.meta dd{margin:0 0 10px;overflow-wrap:anywhere}
+h2{font-size:24px;margin:36px 0 8px}.counts span{margin-inline-end:20px;font-weight:600}
+section{margin-top:36px;page-break-before:always}section h2{font-size:21px;margin:0;padding-bottom:8px;border-bottom:1px solid #d2d2d7}.count{color:#6e6e73;font-weight:400}
+article{padding:18px 0;border-bottom:1px solid #d2d2d7;page-break-inside:avoid}h3{font-size:17px;margin:0 0 10px}.no{color:#0a7a4d;font-variant-numeric:tabular-nums}
+.st{font-size:14px;font-weight:600;margin-inline-start:8px}.st-fail{color:#c9182b}.st-pass{color:#0a7a4d}.st-unknown{color:#6e6e73}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:7px 8px;text-align:right;vertical-align:top;border-bottom:1px solid #e8e8ed}th{width:140px;color:#6e6e73;font-weight:400}
 td b{font-size:18px;font-variant-numeric:tabular-nums}
-blockquote{margin:10px 0 0;padding-inline-start:12px;border-inline-start:3px solid #cbd5e1}cite{display:block;font-style:normal;font-size:13px;color:#475569}
-.note{font-size:14px;color:#475569}.foot{margin-top:32px;font-size:14px;color:#475569}
+blockquote{margin:12px 0 0;padding-inline-start:14px;border-inline-start:2px solid #0a7a4d}cite{display:block;font-style:normal;font-size:13px;color:#6e6e73}
+.note{font-size:14px;color:#6e6e73}.foot{margin-top:40px;font-size:14px;color:#6e6e73}
 @media print{body{margin:0;max-width:none;font-size:12.5px}}
 </style></head><body>
 <p class="brand">${escapeHtml(copy.brand.name)}</p>
@@ -267,14 +268,15 @@ ${sections}
   return (
     <main className="rp">
       <div className="rp-tools" role="toolbar" aria-label={L.tools}>
-        <Button variant="secondary" onClick={onBack}>
+        <button type="button" className="link rp-tools__back" onClick={onBack}>
+          <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
           {copy.report.back}
-        </Button>
+        </button>
         <div className="rp-tools__end">
           <button type="button" className="link" onClick={downloadReport}>
             {L.download}
           </button>
-          <button type="button" className="btn btn--accent" onClick={() => window.print()}>
+          <button type="button" className="btn btn--primary" onClick={() => window.print()}>
             {copy.report.print}
           </button>
         </div>
@@ -330,7 +332,8 @@ ${sections}
         <section className="rp-summary" aria-labelledby="rp-summary-title">
           <h2 id="rp-summary-title">{copy.report.summary}</h2>
           <p className="rp-summary__scope">
-            {copy.results.scope}: <strong>{scopeText}</strong>
+            <span className="rp-summary__label">{copy.results.scope}</span>
+            <strong className="rp-summary__figure">{scopeText}</strong>
           </p>
           <ul className="rp-counts" aria-label={L.counts}>
             <li>

@@ -1,26 +1,40 @@
-/* The procedural scene for older MOWAEM-IFC-1.0 contract files (Viewer3D), in the formal v2 chrome: white
-   panels with a hairline, the site's 44px icon buttons, the three status colours and nothing else.
-   Ported from the pre-redesign stylesheet (78c4123:src/styles.css) and restyled. Prefix: v3-. */
+/* The procedural scene for older MOWAEM-IFC-1.0 contract files (Viewer3D), in the v4 chrome: white panels
+   with a --line hairline and --radius corners, the site's round 44px icon buttons (green when pressed),
+   Noto Sans Arabic, the three status colours and nothing else. Prefix: v3-.
+
+   Like the standard viewer (ifcViewer/viewer.css), it honours a host panel over its inline-start side:
+   --vw-safe-start moves the chrome on that side out of the way, centres the scene in the free part and
+   narrows the container the queries measure; --vw-safe-top clears the top inline-start corner. */
 
 .v3 {
+  --v3-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   position: relative;
   width: 100%;
   height: 100%;
   min-height: 420px;
   overflow: hidden;
+  /* Clip without being a scroll container: focus on a scene label past the edge never shifts the view. */
+  overflow: clip;
+  padding-inline-start: var(--vw-safe-start, 0px);
   /* The scene's own background colour, so the frame never shows a different one while it loads. */
   background: #dfe9e6;
+  font-family: var(--font);
   container-type: inline-size;
   container-name: v3;
 }
 
+/* Full screen, no host panel covers the scene. */
 .v3:fullscreen {
+  --vw-safe-start: 0px;
+  --vw-safe-top: 0px;
   background: #dfe9e6;
 }
 
 .v3__canvas {
   position: absolute;
   inset: 0;
+  /* Past the far edge by the panel's footprint, so the scene sits in the middle of the free part. */
+  inset-inline-end: calc(-1 * var(--vw-safe-start, 0px));
 }
 
 .v3__canvas canvas {
@@ -47,7 +61,7 @@
   border: 1px solid var(--line);
   background: var(--paper);
   color: var(--ink-2);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--v3-shadow);
 }
 
 /* Tools: two rows of the site's icon buttons at the top end corner. */
@@ -61,22 +75,31 @@
 }
 
 .v3__tools .icon-btn {
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--v3-shadow);
 }
 
-.v3__tools .icon-btn.is-active {
-  border-color: var(--brand);
+.v3__tools .icon-btn:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.v3__tools .icon-btn.is-active,
+.v3__tools .icon-btn[aria-pressed="true"],
+.v3__tools .icon-btn.is-active:hover,
+.v3__tools .icon-btn[aria-pressed="true"]:hover {
   background: var(--brand);
-  color: #ffffff;
+  color: var(--brand-ink);
+  box-shadow:
+    0 0 0 1px var(--brand),
+    var(--v3-shadow);
 }
 
 .v3__tools .icon-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.v3__tools .icon-btn:disabled:hover {
-  border-color: var(--line-strong);
 }
 
 .v3__layer-wrap {
@@ -99,7 +122,7 @@
   padding-block-end: 8px;
   border-block-end: 1px solid var(--line);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -140,22 +163,22 @@
 .v3__help strong {
   margin-block-end: 2px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
 }
 
 /* What the scene is, at the top start corner. */
 .v3__meta {
-  inset-block-start: 16px;
-  inset-inline-start: 16px;
+  inset-block-start: calc(16px + var(--vw-safe-top, 0px));
+  inset-inline-start: calc(16px + var(--vw-safe-start, 0px));
   display: flex;
   align-items: center;
   gap: 6px;
-  max-inline-size: calc(100% - 360px);
+  max-inline-size: calc(100% - 360px - var(--vw-safe-start, 0px));
   padding: 7px 12px;
   border-radius: var(--radius);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -164,8 +187,8 @@
 }
 
 .v3__compass {
-  inset-block-start: 64px;
-  inset-inline-start: 16px;
+  inset-block-start: calc(64px + var(--vw-safe-top, 0px));
+  inset-inline-start: calc(16px + var(--vw-safe-start, 0px));
   display: grid;
   place-items: center;
   width: 44px;
@@ -186,11 +209,11 @@
 /* The selected element, at the bottom start corner. */
 .v3__selection {
   inset-block-end: 16px;
-  inset-inline-start: 16px;
+  inset-inline-start: calc(16px + var(--vw-safe-start, 0px));
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  width: min(360px, calc(100% - 32px));
+  width: min(360px, calc(100% - 32px - var(--vw-safe-start, 0px)));
   padding: 12px 14px;
   border-radius: var(--radius);
 }
@@ -233,7 +256,7 @@
 
 .v3__selection-copy > small {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .v3__selection--pass .v3__selection-copy > small {
@@ -252,7 +275,7 @@
   max-width: 100%;
   overflow: hidden;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -287,11 +310,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 16px;
-  max-inline-size: calc(100% - 410px);
+  max-inline-size: calc(100% - 410px - var(--vw-safe-start, 0px));
   padding: 7px 12px;
   border-radius: var(--radius);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -325,8 +348,8 @@
 /* Labels drawn in the scene (drei <Html>). */
 .v3-room {
   padding: 4px 9px;
-  border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
   font-size: 10px;
@@ -338,7 +361,7 @@
 
 .v3-dim {
   padding: 3px 7px;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #ffffff;
   font-size: 9px;
   font-weight: 700;
@@ -353,8 +376,8 @@
   flex-direction: column;
   gap: 1px;
   padding: 6px 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: var(--paper);
   color: var(--ink);
   line-height: 1.45;
@@ -364,7 +387,7 @@
 
 .v3-tip strong {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .v3-tip small,
@@ -426,7 +449,9 @@
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.18);
   cursor: pointer;
 }
 
@@ -447,8 +472,8 @@
   background: var(--pass);
 }
 
-/* Narrow frames (phones): the tools take the top edge, the selection the bottom edge. The caption above the
-   frame already names the scene, and the register carries the statuses. */
+/* Narrow frames (phones, or the free part beside a panel): the tools take the top edge, the selection the
+   bottom edge. The host names the scene, and its list carries the statuses. */
 @container v3 (max-width: 640px) {
   .v3__meta,
   .v3__compass,
@@ -457,19 +482,21 @@
   }
 
   .v3__tools {
-    inset-block-start: 12px;
-    inset-inline: 12px;
+    inset-block-start: calc(12px + var(--vw-safe-top, 0px));
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
+    inset-inline-end: 12px;
     max-inline-size: none;
   }
 
   .v3__help {
-    inset-block-start: calc(12px + 2 * 44px + 6px + 8px);
+    inset-block-start: calc(12px + 2 * 44px + 6px + 8px + var(--vw-safe-top, 0px));
     inset-inline-end: 12px;
   }
 
   .v3__selection {
     inset-block-end: 12px;
-    inset-inline: 12px;
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
+    inset-inline-end: 12px;
     width: auto;
   }
 }

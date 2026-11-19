@@ -1,30 +1,33 @@
-/* Results (v3): mobile first. A summary bar, then the selected finding as the hero of the screen, with the
-   measured value against the required one in big tabular figures (the one memorable element), then the
-   register. Phones open the 3D model full screen on demand; from 1024 px the model fills one side and the
-   detail and register share the other, which scrolls on its own. Prefix: rs-. */
+/* Results (v4): the model is the stage. A white results bar under the global nav, then the 3D stage edge to
+   edge. From 1024 px the stage fills the rest of the screen and the details float over its inline-start side
+   in a white panel that scrolls on its own and folds away to a pill; below 1024 px the stage is a band at the
+   top and the same details follow it in the page. The stage tells the viewer how much of it the panel covers
+   through --vw-safe-start / --vw-safe-top (read by the viewers' own stylesheets). Prefix: rs-. */
 
 .rs {
-  background: var(--surface);
+  background: var(--paper);
 }
 
-/* Summary bar */
-.rs-summary {
+/* ---------------------------------------------------------------- Results bar */
+
+.rs-bar {
   background: var(--paper);
   border-block-end: 1px solid var(--line);
 }
 
-.rs-summary__inner {
+.rs-bar__inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "file"
-    "meta"
-    "actions";
-  gap: 16px;
-  padding-block: 20px;
+    "figures"
+    "actions"
+    "note";
+  gap: 12px;
+  padding-block: 18px 14px;
 }
 
-.rs-file {
+.rs-bar__file {
   grid-area: file;
   display: flex;
   flex-wrap: wrap;
@@ -33,116 +36,217 @@
   min-width: 0;
 }
 
-.rs-file__name {
+.rs-bar__name {
   min-width: 0;
-  font-size: clamp(19px, 1.2rem + 0.6vw, 26px);
-  font-weight: 700;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-
-.rs-file__schema {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.rs-meta {
-  grid-area: meta;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 28px;
-  min-width: 0;
-}
-
-.rs-scope {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.4;
-}
-
-.rs-scope__label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.rs-scope__figure {
   font-size: 17px;
   font-weight: 600;
-  color: var(--ink-2);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.rs-scope__figure strong {
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--brand);
+.rs-bar__schema {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
-.rs-counts {
+.rs-bar__figures {
+  grid-area: figures;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 20px;
+  gap: 8px 28px;
+  min-width: 0;
+}
+
+.rs-bar__scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  line-height: 1.3;
+}
+
+.rs-bar__scope-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.rs-bar__scope-figure {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-bar__counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.rs-counts .status {
-  font-size: 15px;
+.rs-bar__counts .status {
   font-variant-numeric: tabular-nums;
 }
 
-.rs-actions {
+.rs-bar__actions {
   grid-area: actions;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 0 24px;
 }
 
-.rs-actions .btn {
-  flex: 1 1 140px;
+.rs-bar__actions .link {
+  font-size: 15px;
 }
 
-.rs-actions__main {
-  flex-basis: 100% !important;
+.rs-bar__note {
+  grid-area: note;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 80ch;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-2);
 }
 
-.rs-actions__twin {
-  margin-inline: 8px;
+.rs-bar__note svg {
+  flex: none;
+  margin-block-start: 3px;
+  color: var(--muted);
 }
 
-/* Layout: one column on phones, the side column first. */
-.rs-layout {
+.rs-bar__note strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- Stage */
+
+.rs-stage {
+  --rs-gap: 20px;
+  --rs-panel-w: 400px;
+  position: relative;
+}
+
+.rs-stage__view {
+  position: relative;
+  /* Its own stacking context: the viewer's chrome and scene labels stay under the floating panel. */
+  isolation: isolate;
+  height: 62svh;
+  min-height: 420px;
+  background: var(--surface-2);
+}
+
+.rs-stage__state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  /* Centred in the part of the stage the panel leaves free. */
+  padding-inline-start: calc(24px + var(--vw-safe-start, 0px));
+  color: var(--muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.rs-stage__state--none p {
+  max-width: 30ch;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- Details panel (in the page below 1024 px) */
+
+.rs-panel {
+  width: 100%;
+  max-width: calc(var(--text-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-block: 28px 72px;
+  padding-inline: var(--gutter);
+}
+
+.rs-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 32px;
+}
+
+/* Pill segmented control: «المخالفات» and «كل البنود». */
+.rs-seg {
+  flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  padding-block: 16px 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
 }
 
-.rs-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
+.rs-seg__item {
+  min-height: 40px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 240ms var(--ease-out),
+    color 240ms var(--ease-out),
+    box-shadow 240ms var(--ease-out);
 }
 
-/* Selected finding: the hero */
+.rs-seg__item:hover:not([aria-pressed="true"]) {
+  background: var(--surface-2);
+}
+
+.rs-seg__item[aria-pressed="true"] {
+  background: var(--brand);
+  color: var(--brand-ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.rs-seg__item:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Touch screens: every segment is a full 44 px target. */
+@media (pointer: coarse) {
+  .rs-seg__item {
+    min-height: 44px;
+  }
+}
+
+.rs-panel__hide {
+  flex: none;
+  /* At the inline end, also when there are no findings and so no tabs beside it. */
+  margin-inline-start: auto;
+}
+
+/* The selected finding */
 .rs-detail {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-  /* Picks bring it to just below the site header. */
-  scroll-margin-block-start: calc(var(--header-h) + 12px);
+  /* A pick in the list brings it to just below the global navigation. */
+  scroll-margin-block-start: calc(var(--header-h) + 16px);
 }
 
 .rs-detail__empty {
@@ -151,45 +255,39 @@
   color: var(--muted);
 }
 
-.rs-detail__head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .rs-detail__kicker {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 16px;
+  gap: 4px 14px;
 }
 
 .rs-detail__no {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
   color: var(--brand);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .rs-detail__title {
-  font-size: clamp(20px, 1.1rem + 0.5vw, 24px);
+  margin-block-start: 8px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
   text-wrap: balance;
 }
 
-/* The measurement signature */
+/* Measured against required */
 .rs-sig {
-  margin-block-start: 20px;
-  padding-block: 18px;
-  border-block: 1px solid var(--line);
+  margin-block-start: 24px;
 }
 
 .rs-sig__figs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 20px;
+  gap: 16px 24px;
   margin: 0;
 }
 
@@ -197,14 +295,8 @@
   min-width: 0;
 }
 
-.rs-sig__fig + .rs-sig__fig {
-  padding-inline-start: 20px;
-  border-inline-start: 1px solid var(--line);
-}
-
 .rs-sig dt {
   font-size: 14px;
-  font-weight: 600;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -214,8 +306,8 @@
 }
 
 .rs-sig__num {
-  display: inline-block;
-  font-size: clamp(34px, 1.6rem + 2.4vw, 48px);
+  display: block;
+  font-size: 44px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--ink);
@@ -235,29 +327,33 @@
   color: var(--unknown);
 }
 
-.rs-sig__num small {
+.rs-sig__unit {
+  font-size: 0.5em;
+  font-weight: 600;
+}
+
+.rs-sig__bound {
   display: block;
   font-size: 14px;
-  font-weight: 600;
   line-height: 1.5;
   color: var(--muted);
-  white-space: normal;
 }
 
 /* No figure: the engine's sentence stands in for it, readable rather than big. */
 .rs-sig__lead {
   display: block;
+  max-width: 72ch;
   font-size: 16px;
-  font-weight: 600;
   line-height: 1.7;
   color: var(--ink-2);
 }
 
 .rs-sig__note {
-  max-width: 70ch;
-  margin-block-start: 12px;
+  display: block;
+  max-width: 72ch;
+  margin-block-start: 16px;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.7;
   color: var(--muted);
 }
 
@@ -265,37 +361,98 @@
   margin-block-start: 4px;
 }
 
-/* Parts below the signature */
-.rs-part {
-  margin: 0;
-  padding-block: 16px 0;
+.rs-sig__fig .rs-sig__note {
+  margin-block-start: 6px;
 }
 
-.rs-part + .rs-part {
-  margin-block-start: 16px;
+/* No measured figure (the file cannot prove the clause): the two sentences stack at reading width. */
+.rs-sig--text .rs-sig__figs {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* Latin names inside a sentence keep together (with their parentheses) when the line wraps. */
+.rs-sig__note bdi,
+.rs-sig__lead bdi,
+.rs-prose bdi,
+.rs-quote cite bdi {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* Parts under the figures, divided by hairlines */
+.rs-part {
+  margin: 24px 0 0;
+  padding-block-start: 20px;
   border-block-start: 1px solid var(--line);
 }
 
 .rs-label {
   margin-block-end: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.6;
   color: var(--muted);
 }
 
 .rs-prose {
-  max-width: 70ch;
+  max-width: 72ch;
   font-size: 16px;
   line-height: 1.7;
   color: var(--ink-2);
 }
 
+/* «نص البند»: a disclosure with the quoted clause and its source. */
+.rs-clause {
+  padding-block-start: 8px;
+}
+
+.rs-clause__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rs-clause__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.rs-clause__toggle svg {
+  flex: none;
+  color: var(--muted);
+  transition: transform 260ms var(--ease-out);
+}
+
+.rs-clause[open] .rs-clause__toggle svg {
+  transform: rotate(180deg);
+}
+
+.rs-clause__toggle:hover {
+  color: var(--brand);
+}
+
+.rs-clause__toggle:focus-visible {
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.rs-quote {
+  margin: 8px 0 4px;
+}
+
 .rs-quote blockquote {
-  max-width: 70ch;
+  max-width: 72ch;
   margin: 0;
-  padding-inline-start: 14px;
-  border-inline-start: 3px solid var(--brand-tint);
+  padding-inline-start: 16px;
+  border-inline-start: 2px solid var(--brand);
   font-size: 16px;
   line-height: 1.8;
   color: var(--ink);
@@ -307,16 +464,21 @@
   align-items: center;
   justify-content: space-between;
   gap: 0 16px;
-  margin-block-start: 6px;
+  margin-block-start: 10px;
 }
 
 .rs-quote__cite cite {
-  font-size: 14px;
+  font-size: 13px;
   font-style: normal;
   line-height: 1.6;
   color: var(--muted);
 }
 
+.rs-quote__cite .link {
+  font-size: 15px;
+}
+
+/* The linked element */
 .rs-element__name {
   display: flex;
   flex-wrap: wrap;
@@ -339,8 +501,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-block-start: 10px;
-  padding: 8px 12px;
+  margin-block-start: 12px;
+  padding-block: 6px;
+  padding-inline: 16px 6px;
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -367,10 +530,15 @@
 
 .rs-guid .icon-btn {
   flex: none;
+  background: var(--paper);
+}
+
+.rs-guid .icon-btn:hover {
+  background: var(--brand-tint);
+  color: var(--brand);
 }
 
 .rs-guid .icon-btn.is-done {
-  border-color: var(--pass);
   color: var(--pass);
 }
 
@@ -379,37 +547,31 @@
   color: var(--ink);
 }
 
-.rs-detail__open {
-  width: 100%;
-  margin-block-start: 20px;
+/* ---------------------------------------------------------------- The list (active tab) */
+
+.rs-list {
+  margin-block-start: 40px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--line);
+  scroll-margin-block-start: calc(var(--header-h) + 16px);
 }
 
-/* Register */
-.rs-register {
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-  overflow: hidden;
+.rs-list__empty {
+  padding-block: 16px 4px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-2);
 }
 
-.rs-register__title {
-  padding: 16px 20px 4px;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.rs-group {
-  padding-block-start: 8px;
+.rs-group + .rs-group {
+  margin-block-start: 24px;
 }
 
 .rs-group__head {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 48px;
-  padding-inline: 20px;
-  border-block-end: 1px solid var(--line);
+  min-height: 44px;
 }
 
 .rs-group__head h3 {
@@ -418,27 +580,31 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.5;
 }
 
+.rs-group__head .status__glyph {
+  flex: none;
+}
+
 .rs-group__head .count {
-  min-width: 2em;
-  font-size: 15px;
-  text-align: end;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .rs-group__note {
-  padding: 8px 20px;
-  border-block-end: 1px solid var(--line);
-  font-size: 14px;
+  margin-block-end: 6px;
+  font-size: 13px;
   line-height: 1.7;
   color: var(--muted);
 }
 
-.rs-list {
+.rs-rows {
   margin: 0;
+  /* Rows bleed into the panel's padding so their tint lines up with the content edge. */
+  margin-inline: -12px;
   padding: 0;
   list-style: none;
 }
@@ -451,21 +617,17 @@
   width: 100%;
   min-height: 48px;
   padding-block: 12px;
-  padding-inline: 20px;
+  padding-inline: 12px;
   border: 0;
-  border-block-end: 1px solid var(--line);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.55;
   text-align: start;
   cursor: pointer;
-  transition: background-color 160ms var(--ease);
-}
-
-.rs-list li:last-child .rs-row {
-  border-block-end: 0;
+  transition: background-color 200ms var(--ease);
 }
 
 .rs-row:hover {
@@ -477,20 +639,11 @@
 }
 
 .rs-row:focus-visible {
-  outline-offset: -3px;
+  outline-offset: -2px;
 }
 
 .rs-row.is-selected {
   background: var(--brand-tint);
-}
-
-.rs-row.is-selected::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: 4px;
-  background: var(--brand);
 }
 
 .rs-row.is-selected .rs-row__title {
@@ -500,7 +653,7 @@
 .rs-row__no {
   flex: none;
   /* Wide enough for sub-clauses such as "4.10.1 (2)", so the subjects line up. */
-  min-width: 5.4em;
+  min-width: 4.8em;
   font-weight: 600;
   color: var(--brand);
   font-variant-numeric: tabular-nums;
@@ -519,7 +672,7 @@
 .rs-row__value {
   flex: none;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -529,253 +682,227 @@
   color: var(--fail);
 }
 
-.rs-register__basis {
-  margin-block-start: 8px;
-  padding: 14px 20px 18px;
-  border-block-start: 1px solid var(--line);
+.rs-list__basis {
+  margin-block-start: 28px;
   font-size: 13px;
   line-height: 1.7;
   color: var(--muted);
 }
 
-/* Model */
-.rs-model {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* The collapsed panel's pill (desktop only). */
+.rs-reopen {
+  display: none;
 }
 
-/* Phones and tablets: closed, it waits off screen at full size so the viewer keeps its canvas;
-   open, it covers the whole screen. */
-.rs-model.is-compact {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  padding: 12px var(--gutter) 16px;
-  background: var(--paper);
-  visibility: hidden;
-  pointer-events: none;
-}
+/* ---------------------------------------------------------------- 768 */
 
-.rs-model.is-compact.is-open {
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.rs-model__bar {
-  flex: none;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-}
-
-.rs-model__selected {
-  flex: 1 1 180px;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.5;
-  color: var(--ink);
-}
-
-.rs-model__selected .status__glyph {
-  color: #ffffff;
-}
-
-.rs-model__note {
-  flex: none;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-
-.rs-model__note svg {
-  flex: none;
-  margin-block-start: 3px;
-  color: var(--muted);
-}
-
-.rs-model__note strong {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.rs-frame {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-}
-
-.rs-frame__state {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  color: var(--muted);
-  text-align: center;
-}
-
-.rs-frame__state--none p {
-  max-width: 28ch;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-
-/* Glyph colours inside the plain status wrappers. */
-.rs-model__selected .status__glyph,
-.rs-group__head .status__glyph {
-  flex: none;
-}
-
-/* 768: the summary spreads out, the actions sit on one line. */
 @media (min-width: 768px) {
-  .rs-summary__inner {
-    padding-block: 22px;
+  .rs-bar__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "file actions"
+      "figures figures"
+      "note note";
+    gap: 4px 40px;
+    padding-block: 14px 18px;
   }
 
-  .rs-actions .btn,
-  .rs-actions__main {
-    flex: 0 0 auto !important;
+  .rs-bar__actions {
+    flex-wrap: nowrap;
   }
 
-  .rs-detail {
-    padding: 24px 28px;
+  .rs-stage__view {
+    min-height: 480px;
   }
 
-  .rs-sig__figs {
-    gap: 12px 32px;
+  .rs-panel {
+    padding-block-start: 36px;
   }
 
-  .rs-sig__fig + .rs-sig__fig {
-    padding-inline-start: 32px;
-  }
-
-  .rs-detail__open {
-    width: auto;
-    align-self: flex-start;
+  .rs-seg {
+    flex: 0 1 360px;
   }
 }
 
-/* 1024: the model fills one side; detail and register share the other, which scrolls on its own. */
+/* ---------------------------------------------------------------- 1024: the stage fills the screen */
+
 @media (min-width: 1024px) {
   .rs {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - var(--header-h));
-    min-height: 640px;
+    /* The screen under the global navigation (its height plus its 1 px hairline). */
+    min-height: calc(100svh - var(--header-h) - 1px);
   }
 
-  .rs-summary {
+  .rs-bar {
     flex: none;
   }
 
-  .rs-summary__inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "file actions"
-      "meta actions";
-    gap: 6px 32px;
-    padding-block: 16px 18px;
+  .rs-bar__inner {
+    gap: 2px 40px;
+    padding-block: 12px 16px;
   }
 
-  .rs-actions {
-    flex-wrap: nowrap;
+  .rs-bar__note {
+    max-width: none;
+    margin-block-start: 8px;
   }
 
-  .rs-layout {
-    flex: 1;
+  /* The stage takes what the bar leaves of the screen (at least 560 px). The panel's footprint
+     (its width and both gaps) is what the viewers keep free of their own chrome. */
+  .rs-stage {
+    flex: 1 0 auto;
+    min-height: 560px;
+    --vw-safe-start: calc(var(--rs-panel-w) + 2 * var(--rs-gap));
+  }
+
+  .rs-stage.is-collapsed {
+    --vw-safe-start: 0px;
+    /* The 44 px pill sits in the top inline-start corner: chrome there steps down below it
+       (the viewers place that chrome 16 px from the top, so this leaves 12 px under the pill). */
+    --vw-safe-top: calc(var(--rs-gap) + 40px);
+  }
+
+  .rs-stage__view {
+    position: absolute;
+    inset: 0;
+    height: auto;
     min-height: 0;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 24px;
-    padding-block: 0;
   }
 
-  .rs-side {
+  .rs-panel {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: var(--rs-gap);
+    inset-inline-start: var(--rs-gap);
+    display: flex;
+    flex-direction: column;
+    width: var(--rs-panel-w);
+    max-width: none;
+    max-height: calc(100% - 2 * var(--rs-gap));
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--paper);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  }
+
+  .rs-panel[hidden] {
+    display: none;
+  }
+
+  .rs-panel__head {
+    flex: none;
+    margin: 0;
+    padding-block: 16px 12px;
+    padding-inline: 16px;
+  }
+
+  .rs-seg {
+    flex: 1;
+  }
+
+  .rs-panel__body {
+    flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-block: 20px 28px;
-    /* Room for the scroll bar, so cards never touch it. */
-    padding-inline-end: 6px;
-    margin-inline-end: -6px;
-    scrollbar-gutter: stable;
+    padding: 12px 28px 28px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
   }
 
-  .rs-detail {
-    flex: none;
-    padding: 22px 24px;
+  .rs-detail__title {
+    font-size: 22px;
   }
 
-  .rs-register {
-    flex: none;
+  .rs-sig__num {
+    font-size: 42px;
   }
 
-  .rs-model {
-    padding-block: 20px 24px;
+  .rs-list {
+    margin-block-start: 32px;
+  }
+
+  .rs-reopen {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: var(--rs-gap);
+    inset-inline-start: var(--rs-gap);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding-inline: 16px 20px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+    transition:
+      background-color 200ms var(--ease),
+      color 200ms var(--ease);
+  }
+
+  .rs-reopen:hover {
+    color: var(--brand);
+  }
+
+  .rs-reopen svg {
+    color: var(--brand);
   }
 }
 
 @media (min-width: 1440px) {
-  .rs-layout {
-    gap: 32px;
-  }
-
-  .rs-detail {
-    padding: 26px 30px;
+  .rs-stage {
+    --rs-gap: 24px;
   }
 }
 
-.rs-sig__unit {
-  font-size: 0.55em;
-  font-weight: 600;
+/* Motion: the panel settles in from its edge, the pill appears in its place. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .rs-panel {
+    animation: rs-panel-in 480ms var(--ease-out) both;
+  }
+
+  .rs-reopen {
+    animation: rs-pill-in 360ms var(--ease-out) both;
+  }
+
+  @keyframes rs-panel-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
+  @keyframes rs-pill-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
 }
 
-/* Latin names inside a sentence keep together (with their parentheses) when the line wraps. */
-.rs-sig__note bdi,
-.rs-sig__lead bdi,
-.rs-prose bdi,
-.rs-quote cite bdi {
-  display: inline-block;
-  max-width: 100%;
+/* With the details panel open on desktop, the viewer's own selection card would repeat the panel:
+   hide it there and show it again when the panel is collapsed or on narrow screens. */
+@media (min-width: 1024px) {
+  .rs-stage:not(.is-collapsed) .vw__selection {
+    display: none;
+  }
 }
 
-/* No measured figure (the file cannot prove the clause): the two sentences stack at reading width. */
-.rs-sig--text .rs-sig__figs {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-}
-
-.rs-sig--text .rs-sig__fig + .rs-sig__fig {
-  padding-inline-start: 0;
-  padding-block-start: 14px;
-  border-inline-start: 0;
-  border-block-start: 1px solid var(--line);
-}
-
-.rs-sig--text .rs-sig__lead {
-  max-width: 70ch;
-  font-weight: 400;
-}
-
-.rs-sig__fig .rs-sig__note {
-  display: block;
-  margin-block-start: 4px;
+/* Phones and tablets: the clause details follow the stage in the page, so the viewer keeps only its
+   controls and the measurement on the model. */
+@media (max-width: 1023px) {
+  .rs-stage .vw__selection,
+  .rs-stage .vw__meta {
+    display: none;
+  }
 }

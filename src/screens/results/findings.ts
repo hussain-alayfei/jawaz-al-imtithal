@@ -53,6 +53,17 @@ export function groupFindings(findings: Finding[]): FindingGroup[] {
   return groups;
 }
 
+/** The «المخالفات» view of the groups: what failed and what the file cannot prove, then any data check
+ *  that is not a pass. Passing clauses and passing data checks are left out. */
+export function issueGroupsOf(groups: FindingGroup[]): FindingGroup[] {
+  return groups.flatMap((group) => {
+    if (group.key === "pass") return [];
+    if (group.key !== "data") return [group];
+    const items = group.items.filter((finding) => finding.status !== "pass");
+    return items.length > 0 ? [{ ...group, items }] : [];
+  });
+}
+
 export interface ClauseTally {
   verified: number;
   total: number;

@@ -1,14 +1,23 @@
-/* 3D viewer chrome in the formal identity: white panels with hairline borders and 8 px corners
-   over the scene, Noto Sans Arabic, ink and muted text, navy (--brand) only for the pressed state.
-   No gradients, no glows; floating panels carry one faint shadow so they lift off bright sky.
-   Prefix: vw-. Only tokens from src/brand/tokens.css. */
+/* 3D viewer chrome (v4): white panels with a --line hairline and --radius corners over the scene, pill
+   controls, round icon buttons, Noto Sans Arabic, ink and muted text, green (--brand) for every pressed
+   state. No gradients, no glows; floating chrome carries one soft shadow so it lifts off a bright sky.
+   Prefix: vw-. Only tokens from src/brand/tokens.css.
+
+   A host can float its own panel over the viewer's inline-start side. It sets --vw-safe-start to that
+   panel's footprint (and --vw-safe-top when only a small control sits in the top inline-start corner):
+   the chrome on that side steps aside, the canvas centres the scene in the part left free, and the
+   container queries below measure that free part (the padding narrows the container). */
 
 .vw {
+  --vw-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   position: relative;
   width: 100%;
   height: 100%;
   min-height: 420px;
   overflow: hidden;
+  /* Clip without being a scroll container: focus on a scene label past the edge never shifts the view. */
+  overflow: clip;
+  padding-inline-start: var(--vw-safe-start, 0px);
   background: var(--surface-2);
   font-family: var(--font);
   color: var(--ink);
@@ -18,6 +27,8 @@
 
 /* Capture shots (?capture=hero|networks): the scene alone, filling the window. */
 .vw--shot {
+  --vw-safe-start: 0px;
+  --vw-safe-top: 0px;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
@@ -27,6 +38,9 @@
 .vw__canvas {
   position: absolute;
   inset: 0;
+  /* Past the far edge by the panel's footprint, so the scene sits in the middle of the free part.
+     The overflow is clipped by .vw. */
+  inset-inline-end: calc(-1 * var(--vw-safe-start, 0px));
   touch-action: none;
 }
 
@@ -51,15 +65,15 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--vw-shadow);
 }
 
 .vw__meta {
-  inset-block-start: 16px;
-  inset-inline-start: 16px;
+  inset-block-start: calc(16px + var(--vw-safe-top, 0px));
+  inset-inline-start: calc(16px + var(--vw-safe-start, 0px));
   display: flex;
   flex-direction: column;
-  max-width: calc(100% - 32px);
+  max-width: calc(100% - 32px - var(--vw-safe-start, 0px));
   margin: 0;
   padding: 8px 14px 9px;
   line-height: 1.5;
@@ -67,7 +81,7 @@
 
 .vw__meta strong {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
 }
 
@@ -84,7 +98,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 2px 14px;
-  max-width: min(420px, calc(100% - 300px));
+  max-width: min(420px, calc(100% - 300px - var(--vw-safe-start, 0px)));
   margin: 0;
   padding: 7px 14px 8px;
   list-style: none;
@@ -128,44 +142,47 @@
   border: 1.5px dashed var(--unknown);
 }
 
-/* Bottom bar: the view switcher (one segmented control, text labels), then the icon tools. */
+/* Bottom bar: the view switcher (one pill segmented control, text labels), then the icon tools. */
 .vw__bar {
   inset-block-end: 16px;
   inset-inline-end: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .vw__views {
   display: inline-flex;
   padding: 3px;
   gap: 2px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   background: var(--paper);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--vw-shadow);
 }
 
 .vw-seg {
   min-width: 64px;
-  height: 36px;
-  padding-inline: 12px;
+  height: 38px;
+  padding-inline: 14px;
   border: 0;
-  border-radius: calc(var(--radius) - 3px);
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--ink);
+  color: var(--ink-2);
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+  transition:
+    background-color 200ms var(--ease),
+    color 200ms var(--ease);
 }
 
 .vw-seg:hover:not(:disabled):not([aria-pressed="true"]) {
   background: var(--surface);
+  color: var(--ink);
 }
 
 .vw-seg[aria-pressed="true"] {
@@ -183,30 +200,59 @@
   outline-offset: 1px;
 }
 
+/* Touch screens: every view is a full 44 px target. */
+@media (pointer: coarse) {
+  .vw-seg {
+    height: 44px;
+  }
+}
+
 .vw__tools {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+/* Round icon buttons, white over the scene; pressed is green. */
+.vw__tools .icon-btn {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--vw-shadow);
+}
+
+.vw__tools .icon-btn:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.vw__tools .icon-btn[aria-pressed="true"],
+.vw__tools .icon-btn[aria-pressed="true"]:hover {
+  background: var(--brand);
+  color: var(--brand-ink);
+  box-shadow:
+    0 0 0 1px var(--brand),
+    var(--vw-shadow);
 }
 
 .vw__tools .icon-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  border-color: var(--line);
 }
 
 .vw-level {
   height: 44px;
   max-width: 160px;
-  padding-inline: 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  padding-inline: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   background: var(--paper);
   color: var(--ink);
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--vw-shadow);
 }
 
 /* Building-services layers. */
@@ -225,7 +271,7 @@
 .vw__layers h3 {
   margin: 0 0 6px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
 }
 
@@ -257,7 +303,7 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--swatch);
   flex: none;
 }
@@ -282,11 +328,11 @@
 
 .vw__selection {
   inset-block-end: 16px;
-  inset-inline-start: 16px;
+  inset-inline-start: calc(16px + var(--vw-safe-start, 0px));
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: min(340px, calc(100% - 560px));
+  width: min(340px, calc(100% - 560px - var(--vw-safe-start, 0px)));
   min-width: 240px;
   padding: 11px 14px 12px;
 }
@@ -305,14 +351,14 @@
 
 .vw__selection-copy small {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
 }
 
 .vw__selection-copy strong {
   overflow: hidden;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -339,7 +385,7 @@
 
 .vw__systems-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -373,6 +419,7 @@
   pointer-events: none;
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
+  box-shadow: var(--vw-shadow);
 }
 
 .vw-dim strong {
@@ -382,7 +429,7 @@
 
 .vw-dim span {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
 }
 
@@ -410,8 +457,10 @@
   border-radius: 50%;
   color: var(--paper);
   cursor: pointer;
-  box-shadow: 0 0 0 1px var(--line-strong);
-  transition: transform 160ms var(--ease);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: transform 200ms var(--ease-out);
 }
 
 /* 44px touch target around the disc. */
@@ -449,14 +498,14 @@
   color: var(--ink);
   font-family: var(--font);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
   white-space: nowrap;
   pointer-events: none;
 }
 
 .vw-space small {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--muted);
 }
@@ -464,9 +513,9 @@
 /* Medium viewers: the selection moves up under the title so the bottom row keeps the controls. */
 @container vw (max-width: 860px) {
   .vw__selection {
-    inset-block-start: 76px;
+    inset-block-start: calc(76px + var(--vw-safe-top, 0px));
     inset-block-end: auto;
-    width: min(340px, calc(100% - 32px));
+    width: min(340px, calc(100% - 32px - var(--vw-safe-start, 0px)));
   }
 
   .vw__legend {
@@ -479,12 +528,13 @@
   }
 }
 
-/* Narrow viewers (phones, narrow columns): switcher along the bottom, tools stacked on the end edge. */
+/* Narrow viewers (phones, or the free part beside a panel): switcher along the bottom, tools stacked
+   on the end edge. */
 @container vw (max-width: 620px) {
   .vw__meta {
-    inset-block-start: 12px;
-    inset-inline-start: 12px;
-    max-width: calc(100% - 80px);
+    inset-block-start: calc(12px + var(--vw-safe-top, 0px));
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
+    max-width: calc(100% - 80px - var(--vw-safe-start, 0px));
     padding: 6px 12px 7px;
   }
 
@@ -504,7 +554,8 @@
     position: absolute;
     z-index: 40;
     inset-block-end: 12px;
-    inset-inline: 12px;
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
+    inset-inline-end: 12px;
     display: flex;
   }
 
@@ -531,16 +582,17 @@
   .vw__selection {
     inset-block-start: auto;
     inset-block-end: 66px;
-    inset-inline: 12px;
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
+    inset-inline-end: 12px;
     width: auto;
     min-width: 0;
     padding: 9px 12px 10px;
   }
 
   .vw__layers {
-    inset-block-start: 64px;
+    inset-block-start: calc(64px + var(--vw-safe-top, 0px));
     inset-block-end: auto;
-    inset-inline-start: 12px;
+    inset-inline-start: calc(12px + var(--vw-safe-start, 0px));
     inset-inline-end: 68px;
     width: auto;
     padding: 7px 10px 8px;
@@ -564,6 +616,8 @@
     font-size: 13px;
   }
 
+  /* Names on one line; the element counts stay in the wider layouts. */
+  .vw__layer-count,
   .vw__layers p {
     display: none;
   }

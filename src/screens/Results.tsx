@@ -1,6 +1,6 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Box, Check, Copy, Info } from "lucide-react";
-import { Button, IconButton, StatusGlyph, StatusMark } from "../brand/ui";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Box, Check, ChevronDown, Copy, Info, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { IconButton, StatusGlyph, StatusMark } from "../brand/ui";
 import { copy } from "../content/copy";
 import type { Finding } from "../data";
 import type { ComplianceRun } from "../ifc/types";
@@ -17,15 +17,17 @@ import {
   elementOf,
   groupFindings,
   isDataCheck,
+  issueGroupsOf,
   referenceOf,
   splitValue,
   stepIdOf,
   tallyOf,
+  type FindingGroup,
   type SplitValue,
 } from "./results/findings";
 import "./results.css";
 
-/* Both viewers pull in three.js, so they load after the register is on screen. */
+/* Both viewers pull in three.js, so they load after the results bar is on screen. */
 const IfcModelViewer = lazy(() => import("../components/IfcModelViewer"));
 /* The procedural scene for the older MOWAEM-IFC-1.0 contract files, which carry no geometry. */
 const Viewer3D = lazy(() => import("../components/Viewer3D").then((module) => ({ default: module.Viewer3D })));
@@ -35,23 +37,34 @@ const L = {
   pageTitle: "نتائج الفحص",
   counts: "النتائج حسب الحالة",
   of: "من",
+  report: "التقرير",
   modelLoading: "جارٍ تجهيز النموذج ثلاثي الأبعاد",
   noModel: "لا يتوفر نموذج ثلاثي الأبعاد لهذا الملف.",
-  viewerFailed: "تعذر عرض النموذج ثلاثي الأبعاد في هذا المتصفح. النتائج في السجل كاملة.",
+  viewerFailed: "تعذر عرض النموذج ثلاثي الأبعاد في هذا المتصفح. النتائج في لوحة التفاصيل كاملة.",
   copyGuid: "نسخ معرّف العنصر",
   copiedShort: "تم النسخ",
   copied: "تم نسخ معرّف العنصر.",
   copyFailed: "تعذر النسخ تلقائيًا. حدّد المعرّف وانسخه يدويًا.",
   newTab: "يفتح في نافذة جديدة",
-  showInModel: "عرض في النموذج",
-  closeModel: "العودة إلى النتائج",
   checkDescription: "وصف الفحص",
   selected: "البند المحدد",
-  nothingSelected: "اختر بندًا من السجل لعرض المقاس ونص البند والعنصر المرتبط به.",
+  nothingSelected: "اختر بندًا من القائمة لعرض المقاس ونص البند والعنصر المرتبط به.",
   bound: { min: "على الأقل", max: "على الأكثر" },
+  panel: "تفاصيل النتائج",
+  tabs: "البنود المعروضة",
+  tabIssues: "المخالفات",
+  tabAll: "كل البنود",
+  hide: "إخفاء التفاصيل",
+  show: "عرض التفاصيل",
+  noIssues: "لا توجد مخالفات. كل البنود المقيسة مطابقة.",
 } as const;
 
-/* Below 1024 px the model opens full screen on demand instead of sitting beside the register. */
+type Tab = "issues" | "all";
+/** Where a pick came from: the list scrolls the detail into view, the model leaves the page where it is. */
+type PickSource = "list" | "model";
+
+/* Below 1024 px the stage is a band at the top and the details follow it in the page;
+   from 1024 px they float over the stage in a panel that scrolls on its own. */
 const COMPACT_QUERY = "(max-width: 1023px)";
 
 function useMediaQuery(query: string): boolean {
@@ -71,8 +84,14 @@ function useMediaQuery(query: string): boolean {
 
 const rowId = (ruleId: string) => `rs-row-${ruleId}`;
 const DETAIL_ID = "rs-detail";
+const PANEL_ID = "rs-panel";
+const LIST_ID = "rs-list";
 
 const prefersReducedMotion = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+const scrollBehavior = (): ScrollBehavior => (prefersReducedMotion() ? "auto" : "smooth");
+
+/** The sticky global navigation covers the top of the page. */
+const headerHeight = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 0;
 
 /** "1.50 م" as a big figure with a smaller unit after it. */
 function Figure({ value }: { value: string }) {
@@ -93,8 +112,8 @@ function countFigure(split: SplitValue): SplitValue {
   return match ? { value: match[1], rest: match[2] } : split;
 }
 
-/** The signature of the screen: the measured value against the required one, in big tabular figures.
- *  The engine's explanation follows as a muted paragraph, never inside the figure. */
+/** The measured value against the required one, in big tabular figures. The engine's explanation
+ *  follows as a muted line, never inside the figure. */
 function Signature({ finding }: { finding: Finding }) {
   const measured = countFigure(splitValue(finding.actual));
   const required = splitValue(finding.expected);
@@ -132,8 +151,8 @@ function Signature({ finding }: { finding: Finding }) {
               <>
                 <span className="rs-sig__num rs-sig__num--req">
                   <Figure value={required.value} />
-                  {required.bound && <small>{L.bound[required.bound]}</small>}
                 </span>
+                {required.bound && <span className="rs-sig__bound">{L.bound[required.bound]}</span>}
                 {stacked && required.rest && (
                   <span className="rs-sig__note">
                     <Bidi text={required.rest} />
@@ -181,7 +200,7 @@ function FindingDetail({
       <header className="rs-detail__head">
         <p className="rs-detail__kicker">
           {clause.number && <span className="rs-detail__no">{clause.number}</span>}
-          <StatusMark status={finding.status} size="large" />
+          <StatusMark status={finding.status} />
         </p>
         <h2 className="rs-detail__title" id="rs-detail-title">
           {clause.subject}
@@ -200,21 +219,26 @@ function FindingDetail({
       )}
 
       {finding.clauseText && !isDataCheck(finding) && (
-        <figure className="rs-part rs-quote">
-          <figcaption className="rs-label">{copy.results.detail.clause}</figcaption>
-          <blockquote>«{finding.clauseText}»</blockquote>
-          <div className="rs-quote__cite">
-            <cite>
-              <Bidi text={citationOf(finding)} />
-            </cite>
-            {finding.sourceUrl && (
-              <a className="link" href={finding.sourceUrl} target="_blank" rel="noreferrer">
-                {copy.results.detail.showClause}
-                <span className="sr-only"> ({L.newTab})</span>
-              </a>
-            )}
-          </div>
-        </figure>
+        <details className="rs-part rs-clause">
+          <summary className="rs-clause__toggle">
+            <span>{copy.results.detail.clause}</span>
+            <ChevronDown size={18} strokeWidth={1.8} aria-hidden="true" />
+          </summary>
+          <figure className="rs-quote">
+            <blockquote>«{finding.clauseText}»</blockquote>
+            <figcaption className="rs-quote__cite">
+              <cite>
+                <Bidi text={citationOf(finding)} />
+              </cite>
+              {finding.sourceUrl && (
+                <a className="link link--more" href={finding.sourceUrl} target="_blank" rel="noreferrer">
+                  {copy.results.detail.showClause}
+                  <span className="sr-only"> ({L.newTab})</span>
+                </a>
+              )}
+            </figcaption>
+          </figure>
+        </details>
       )}
 
       {!finding.clauseText && finding.clause && (
@@ -271,21 +295,86 @@ function FindingDetail({
   );
 }
 
+/** One status group of the list: a quiet heading with its count, then calm rows. */
+function ListGroup({
+  group,
+  selectedRule,
+  onSelect,
+}: {
+  group: FindingGroup;
+  selectedRule?: string;
+  onSelect: (finding: Finding) => void;
+}) {
+  return (
+    <section className={`rs-group rs-group--${group.key}`} aria-labelledby={`rs-g-${group.key}`}>
+      <div className="rs-group__head">
+        <h3 id={`rs-g-${group.key}`}>
+          {group.status && (
+            <span className={`status status--${group.status}`}>
+              <StatusGlyph status={group.status} size={18} />
+            </span>
+          )}
+          {copy.results.groups[group.key]}
+        </h3>
+        <span className="count">{group.items.length}</span>
+      </div>
+      {group.key === "unknown" && <p className="rs-group__note">{copy.results.groups.unknownNote}</p>}
+      {group.key === "data" && <p className="rs-group__note">{copy.results.groups.dataNote}</p>}
+      <ul className="rs-rows">
+        {group.items.map((finding) => {
+          const selected = finding.ruleId === selectedRule;
+          const clause = clauseOf(finding);
+          const value = finding.status === "unknown" ? undefined : splitValue(finding.actual).value;
+          return (
+            <li key={finding.ruleId}>
+              <button
+                type="button"
+                id={rowId(finding.ruleId)}
+                className={`rs-row${selected ? " is-selected" : ""}`}
+                aria-pressed={selected}
+                aria-controls={DETAIL_ID}
+                onClick={() => onSelect(finding)}
+              >
+                <span className="rs-row__no">{clause.number}</span>
+                <span className="rs-row__title">{clause.subject}</span>
+                {value && <span className={`rs-row__value rs-row__value--${finding.status}`}>{value}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function StageState({ children, none = false }: { children: ReactNode; none?: boolean }) {
+  return (
+    <div className={`rs-stage__state${none ? " rs-stage__state--none" : ""}`} role="status">
+      {children}
+    </div>
+  );
+}
+
 export default function Results({ run, onReport, onNew, onTwin, notify }: ResultsProps) {
   const { findings } = run;
   const summary = tallyOf(run);
   const compact = useMediaQuery(COMPACT_QUERY);
+  const groups = useMemo(() => groupFindings(findings), [findings]);
+  const issueGroups = useMemo(() => issueGroupsOf(groups), [groups]);
   const [selectedRule, setSelectedRule] = useState<string | undefined>(() => defaultFinding(findings)?.ruleId);
   const [selectedElement, setSelectedElement] = useState<string | undefined>(() => defaultFinding(findings)?.elementId);
-  /** Phones and tablets: the model is open full screen. */
-  const [modelOpen, setModelOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>(() => (issueGroups.length > 0 ? "issues" : "all"));
+  /** Desktop: the details float over the stage; collapsed, the stage is free and a pill brings them back. */
+  const [panelOpen, setPanelOpen] = useState(true);
   const [copiedGuid, setCopiedGuid] = useState<string | undefined>(undefined);
-  /** Bring the detail into view after a pick in the register or the model. */
-  const revealDetail = useRef(false);
-  const sideRef = useRef<HTMLDivElement>(null);
+  /** Every pick, even of the row already selected, brings the detail into view; the source decides how. */
+  const [pick, setPick] = useState<{ n: number; source?: PickSource }>({ n: 0 });
+  const listShown = useRef(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLElement>(null);
-  const openerRef = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLElement>(null);
+  const hideRef = useRef<HTMLButtonElement>(null);
+  const showRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const first = defaultFinding(findings);
@@ -293,13 +382,16 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
     setSelectedElement(first?.elementId);
   }, [findings]);
 
-  const groups = useMemo(() => groupFindings(findings), [findings]);
+  useEffect(() => {
+    setTab(issueGroups.length > 0 ? "issues" : "all");
+  }, [issueGroups]);
+
   const selectedFinding = findings.find((finding) => finding.ruleId === selectedRule);
   const standard = run.standard;
   /* Older MOWAEM-IFC-1.0 contract files carry no geometry: their findings are shown on the procedural scene. */
   const contract = !standard && run.source !== "standard-ifc";
-  const hasModel = Boolean(standard) || contract;
-  const overlay = compact && modelOpen;
+  const visibleGroups = tab === "issues" ? issueGroups : groups;
+  const floating = !compact;
 
   const markers = useMemo(
     () =>
@@ -320,7 +412,7 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
     [markers, selectedRule],
   );
 
-  /* Pins on the contract scene, as before the redesign: every finding that is not a pass, on its scene element,
+  /* Pins on the contract scene: every finding that is not a pass, on its scene element,
      numbered by its clause where it has one and by its order otherwise. */
   const sceneMarkers = useMemo(() => {
     let ordinal = 0;
@@ -344,7 +436,7 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
   const selectFinding = (finding: Finding) => {
     setSelectedRule(finding.ruleId);
     setSelectedElement(finding.elementId);
-    revealDetail.current = true;
+    setPick((current) => ({ n: current.n + 1, source: "list" }));
   };
 
   const selectElement = useCallback(
@@ -359,7 +451,7 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
         findings.find((finding) => finding.elementId === elementId && finding.status !== "pass") ??
         findings.find((finding) => finding.elementId === elementId);
       setSelectedRule(linked?.ruleId);
-      if (linked) revealDetail.current = true;
+      if (linked) setPick((current) => ({ n: current.n + 1, source: "model" }));
     },
     [findings],
   );
@@ -370,48 +462,65 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
       if (!target) return;
       setSelectedRule(target.ruleId);
       setSelectedElement(target.elementId);
-      revealDetail.current = true;
+      setPick((current) => ({ n: current.n + 1, source: "model" }));
     },
     [findings],
   );
 
-  /* After a pick, show the detail: on desktop the side column returns to its top (the detail leads it);
-     on phones the page scrolls to the detail, unless the model is open over it. */
+  /* After a pick, show the detail. Over the stage, the panel returns to its top (the detail leads it).
+     Below the stage, a pick in the list scrolls the page to the detail; a pick in the model does not,
+     so the model stays in view (its own selection card names the element). */
   useEffect(() => {
-    if (!revealDetail.current) return;
-    revealDetail.current = false;
-    const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
-    if (!compact) {
-      sideRef.current?.scrollTo({ top: 0, behavior });
+    const { source } = pick;
+    if (!source) return;
+    if (floating) {
+      if (panelOpen) bodyRef.current?.scrollTo({ top: 0, behavior: scrollBehavior() });
       return;
     }
-    if (modelOpen) return;
+    if (source !== "list") return;
     const detail = detailRef.current;
     if (!detail) return;
-    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 0;
-    const top = detail.getBoundingClientRect().top + window.scrollY - header - 12;
-    window.scrollTo({ top: Math.max(0, top), behavior });
-  }, [selectedRule, compact, modelOpen]);
+    const top = detail.getBoundingClientRect().top + window.scrollY - headerHeight() - 16;
+    window.scrollTo({ top: Math.max(0, top), behavior: scrollBehavior() });
+    // Only a new pick moves the view; the layout and the panel state are read as they are then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick]);
 
-  /* The full-screen model: focus moves to its close button, Escape closes it, the page behind does not scroll. */
+  /* A new tab changes the list under the detail: if the list is out of sight, bring its top into view. */
   useEffect(() => {
-    if (!overlay) return;
-    closeRef.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setModelOpen(false);
-    };
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = previous;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [overlay]);
+    if (!listShown.current) return;
+    listShown.current = false;
+    const list = listRef.current;
+    if (!list) return;
+    if (floating) {
+      const body = bodyRef.current;
+      if (!body) return;
+      const top = list.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+      const visible = top >= body.scrollTop && top <= body.scrollTop + body.clientHeight - 96;
+      if (!visible) body.scrollTo({ top: Math.max(0, top - 12), behavior: scrollBehavior() });
+      return;
+    }
+    const rect = list.getBoundingClientRect();
+    const header = headerHeight();
+    if (rect.top < header || rect.top > window.innerHeight - 120) {
+      window.scrollTo({ top: Math.max(0, rect.top + window.scrollY - header - 16), behavior: scrollBehavior() });
+    }
+  }, [tab, floating]);
 
-  const closeModel = () => {
-    setModelOpen(false);
-    requestAnimationFrame(() => openerRef.current?.focus());
+  const chooseTab = (next: Tab) => {
+    if (next === tab) return;
+    listShown.current = true;
+    setTab(next);
+  };
+
+  const hidePanel = () => {
+    setPanelOpen(false);
+    requestAnimationFrame(() => showRef.current?.focus());
+  };
+
+  const showPanel = () => {
+    setPanelOpen(true);
+    requestAnimationFrame(() => hideRef.current?.focus());
   };
 
   useEffect(() => {
@@ -438,28 +547,152 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
     ? [selectedClause.number, selectedClause.subject].filter(Boolean).join(" ")
     : undefined;
 
+  const panel = (
+    <aside id={PANEL_ID} className="rs-panel" aria-label={L.panel} hidden={floating && !panelOpen ? true : undefined}>
+      {(findings.length > 0 || floating) && (
+        <div className="rs-panel__head">
+          {findings.length > 0 && (
+            <div className="rs-seg" role="group" aria-label={L.tabs}>
+              <button
+                type="button"
+                className="rs-seg__item"
+                aria-pressed={tab === "issues"}
+                aria-controls={LIST_ID}
+                onClick={() => chooseTab("issues")}
+              >
+                {L.tabIssues}
+              </button>
+              <button
+                type="button"
+                className="rs-seg__item"
+                aria-pressed={tab === "all"}
+                aria-controls={LIST_ID}
+                onClick={() => chooseTab("all")}
+              >
+                {L.tabAll}
+              </button>
+            </div>
+          )}
+          {floating && (
+            <button
+              ref={hideRef}
+              type="button"
+              className="icon-btn rs-panel__hide"
+              aria-label={L.hide}
+              title={L.hide}
+              aria-expanded={true}
+              aria-controls={PANEL_ID}
+              onClick={hidePanel}
+            >
+              <PanelRightClose size={20} strokeWidth={1.6} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="rs-panel__body" ref={bodyRef}>
+        <section
+          className="rs-detail"
+          id={DETAIL_ID}
+          ref={detailRef}
+          aria-labelledby={selectedFinding ? "rs-detail-title" : "rs-detail-empty"}
+        >
+          {selectedFinding ? (
+            <FindingDetail
+              run={run}
+              finding={selectedFinding}
+              copied={Boolean(copiedGuid)}
+              onCopyGuid={(guid) => void copyGuid(guid)}
+            />
+          ) : (
+            <p className="rs-detail__empty" id="rs-detail-empty">
+              <span className="sr-only">{L.selected}: </span>
+              {findings.length === 0 ? copy.results.empty : L.nothingSelected}
+            </p>
+          )}
+        </section>
+
+        {findings.length > 0 && (
+          <section
+            className="rs-list"
+            id={LIST_ID}
+            ref={listRef}
+            aria-label={tab === "issues" ? L.tabIssues : L.tabAll}
+          >
+            {visibleGroups.length === 0 && <p className="rs-list__empty">{L.noIssues}</p>}
+            {visibleGroups.map((group) => (
+              <ListGroup key={group.key} group={group} selectedRule={selectedRule} onSelect={selectFinding} />
+            ))}
+            <p className="rs-list__basis">
+              {copy.dossier.referenceLabel}: {referenceOf(run)}
+            </p>
+          </section>
+        )}
+      </div>
+    </aside>
+  );
+
+  const viewer = standard ? (
+    <Suspense fallback={<StageState>{L.modelLoading}</StageState>}>
+      <IfcModelViewer
+        key={run.file.sha256}
+        fileName={run.file.name}
+        facts={standard.facts}
+        geometry={standard.geometry}
+        selectedStepId={selectedFinding?.elementStepId ?? stepIdOf(selectedElement)}
+        selectedStatus={selectedFinding?.status}
+        selectedTitle={selectedLabel}
+        selectedRuleId={selectedFinding?.ruleId}
+        measurement={selectedFinding ? standard.measurements[selectedFinding.ruleId] : undefined}
+        markers={visibleMarkers}
+        onSelectStep={(stepId) => selectElement(stepId === undefined ? "" : `STEP-${stepId}`)}
+        onSelectFinding={selectFromPin}
+      />
+    </Suspense>
+  ) : contract ? (
+    <Suspense fallback={<StageState>{L.modelLoading}</StageState>}>
+      <Viewer3D
+        key={`${run.activityId}-${run.scenario}`}
+        activityId={run.activityId}
+        scenario={run.scenario}
+        selectedElement={selectedElement}
+        selectedStatus={selectedFinding?.status}
+        selectedFindingTitle={selectedClause?.subject}
+        selectedRuleId={selectedFinding?.ruleId}
+        findingMarkers={sceneMarkers}
+        onSelectElement={selectElement}
+        onSelectFinding={selectFromPin}
+      />
+    </Suspense>
+  ) : (
+    <StageState none>
+      <Box size={30} strokeWidth={1.6} aria-hidden="true" />
+      <p>{L.noModel}</p>
+    </StageState>
+  );
+
   return (
     <main className="rs">
-      <header className="rs-summary">
-        <div className="page rs-summary__inner">
-          <div className="rs-file">
-            <h1 className="rs-file__name">
+      <header className="rs-bar">
+        <div className="page rs-bar__inner">
+          <div className="rs-bar__file">
+            <h1 className="rs-bar__name">
               <span className="sr-only">{L.pageTitle}: </span>
               <bdi dir="ltr">{run.file.name}</bdi>
             </h1>
-            <p className="rs-file__schema">
+            <p className="rs-bar__schema">
               <bdi dir="ltr">{run.metadata.schema}</bdi>
             </p>
           </div>
 
-          <div className="rs-meta">
-            <p className="rs-scope">
-              <span className="rs-scope__label">{copy.results.scope}</span>
-              <span className="rs-scope__figure">
-                <strong className="num">{summary.verified}</strong> {L.of} {counted(summary.total, CLAUSE_FORMS)}
+          <div className="rs-bar__figures">
+            <p className="rs-bar__scope">
+              <span className="rs-bar__scope-label">{copy.results.scope}</span>
+              <span className="rs-bar__scope-figure">
+                {summary.verified} {L.of} {counted(summary.total, CLAUSE_FORMS)}
               </span>
             </p>
-            <ul className="rs-counts" aria-label={L.counts}>
+            <ul className="rs-bar__counts" aria-label={L.counts}>
               <li>
                 <StatusMark status="fail" label={`${summary.failed} ${copy.status.fail}`} />
               </li>
@@ -472,204 +705,60 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
             </ul>
           </div>
 
-          <div className="rs-actions">
-            <button type="button" className="btn btn--accent rs-actions__main" onClick={onReport}>
-              {copy.results.report}
+          <div className="rs-bar__actions">
+            <button type="button" className="btn btn--secondary btn--small" onClick={onReport}>
+              {L.report}
             </button>
-            <Button variant="secondary" onClick={onNew}>
+            <button type="button" className="link" onClick={onNew}>
               {copy.results.another}
-            </Button>
-            <button type="button" className="link rs-actions__twin" onClick={onTwin}>
+            </button>
+            <button type="button" className="link" onClick={onTwin}>
               {copy.results.twin}
             </button>
           </div>
-        </div>
-      </header>
 
-      <div className="page rs-layout">
-        <div className="rs-side" ref={sideRef}>
-          <section
-            className="rs-detail"
-            id={DETAIL_ID}
-            ref={detailRef}
-            aria-labelledby={selectedFinding ? "rs-detail-title" : "rs-detail-empty"}
-          >
-            {selectedFinding ? (
-              <FindingDetail
-                run={run}
-                finding={selectedFinding}
-                copied={Boolean(copiedGuid)}
-                onCopyGuid={(guid) => void copyGuid(guid)}
-              />
-            ) : (
-              <p className="rs-detail__empty" id="rs-detail-empty">
-                <span className="sr-only">{L.selected}: </span>
-                {findings.length === 0 ? copy.results.empty : L.nothingSelected}
-              </p>
-            )}
-
-            {compact && hasModel && (
-              <button
-                ref={openerRef}
-                type="button"
-                className="btn btn--primary rs-detail__open"
-                aria-haspopup="dialog"
-                onClick={() => setModelOpen(true)}
-              >
-                <Box size={20} strokeWidth={1.8} aria-hidden="true" />
-                {L.showInModel}
-              </button>
-            )}
-          </section>
-
-          <section className="rs-register" aria-labelledby="rs-register-title">
-            <h2 id="rs-register-title" className="rs-register__title">
-              {copy.register.title}
-            </h2>
-
-            {groups.map((group) => (
-              <section
-                key={group.key}
-                className={`rs-group rs-group--${group.key}`}
-                aria-labelledby={`rs-g-${group.key}`}
-              >
-                <div className="rs-group__head">
-                  <h3 id={`rs-g-${group.key}`}>
-                    {group.status && (
-                      <span className={`status status--${group.status}`}>
-                        <StatusGlyph status={group.status} size={20} />
-                      </span>
-                    )}
-                    {copy.results.groups[group.key]}
-                  </h3>
-                  <span className="count">{group.items.length}</span>
-                </div>
-                {group.key === "unknown" && <p className="rs-group__note">{copy.results.groups.unknownNote}</p>}
-                {group.key === "data" && <p className="rs-group__note">{copy.results.groups.dataNote}</p>}
-                <ul className="rs-list">
-                  {group.items.map((finding) => {
-                    const selected = finding.ruleId === selectedRule;
-                    const clause = clauseOf(finding);
-                    const value = finding.status === "unknown" ? undefined : splitValue(finding.actual).value;
-                    return (
-                      <li key={finding.ruleId}>
-                        <button
-                          type="button"
-                          id={rowId(finding.ruleId)}
-                          className={`rs-row${selected ? " is-selected" : ""}`}
-                          aria-pressed={selected}
-                          aria-controls={DETAIL_ID}
-                          onClick={() => selectFinding(finding)}
-                        >
-                          <span className="rs-row__no">{clause.number}</span>
-                          <span className="rs-row__title">{clause.subject}</span>
-                          {value && <span className={`rs-row__value rs-row__value--${finding.status}`}>{value}</span>}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
-
-            <p className="rs-register__basis">
-              {copy.dossier.referenceLabel}: {referenceOf(run)}
-            </p>
-          </section>
-        </div>
-
-        <section
-          className={`rs-model${compact ? " is-compact" : ""}${overlay ? " is-open" : ""}`}
-          aria-label={copy.model.title}
-          role={overlay ? "dialog" : undefined}
-          aria-modal={overlay ? true : undefined}
-          inert={compact && !modelOpen ? true : undefined}
-        >
-          {compact && (
-            <div className="rs-model__bar">
-              <button ref={closeRef} type="button" className="btn btn--secondary btn--small" onClick={closeModel}>
-                <ArrowRight size={18} strokeWidth={1.8} aria-hidden="true" />
-                {L.closeModel}
-              </button>
-              {selectedFinding && selectedLabel && (
-                <p className="rs-model__selected">
-                  <StatusGlyph status={selectedFinding.status} size={18} />
-                  <span>{selectedLabel}</span>
-                </p>
-              )}
-            </div>
-          )}
           {contract && (
-            <p className="rs-model__note" role="note">
+            <p className="rs-bar__note" role="note">
               <Info size={18} strokeWidth={1.6} aria-hidden="true" />
               <span>
                 <strong>{copy.results.contractModel}</strong> {copy.results.contractNote}
               </span>
             </p>
           )}
-          <div className="rs-frame">
-            <ViewerBoundary
-              resetKey={run.file.sha256}
-              fallback={
-                <div className="rs-frame__state rs-frame__state--none" role="status">
-                  <Box size={30} strokeWidth={1.6} aria-hidden="true" />
-                  <p>{L.viewerFailed}</p>
-                </div>
-              }
-            >
-              {standard ? (
-                <Suspense
-                  fallback={
-                    <div className="rs-frame__state" role="status">
-                      {L.modelLoading}
-                    </div>
-                  }
-                >
-                  <IfcModelViewer
-                    key={run.file.sha256}
-                    fileName={run.file.name}
-                    facts={standard.facts}
-                    geometry={standard.geometry}
-                    selectedStepId={selectedFinding?.elementStepId ?? stepIdOf(selectedElement)}
-                    selectedStatus={selectedFinding?.status}
-                    selectedTitle={selectedLabel}
-                    selectedRuleId={selectedFinding?.ruleId}
-                    measurement={selectedFinding ? standard.measurements[selectedFinding.ruleId] : undefined}
-                    markers={visibleMarkers}
-                    onSelectStep={(stepId) => selectElement(stepId === undefined ? "" : `STEP-${stepId}`)}
-                    onSelectFinding={selectFromPin}
-                  />
-                </Suspense>
-              ) : contract ? (
-                <Suspense
-                  fallback={
-                    <div className="rs-frame__state" role="status">
-                      {L.modelLoading}
-                    </div>
-                  }
-                >
-                  <Viewer3D
-                    key={`${run.activityId}-${run.scenario}`}
-                    activityId={run.activityId}
-                    scenario={run.scenario}
-                    selectedElement={selectedElement}
-                    selectedStatus={selectedFinding?.status}
-                    selectedFindingTitle={selectedClause?.subject}
-                    selectedRuleId={selectedFinding?.ruleId}
-                    findingMarkers={sceneMarkers}
-                    onSelectElement={selectElement}
-                    onSelectFinding={selectFromPin}
-                  />
-                </Suspense>
-              ) : (
-                <div className="rs-frame__state rs-frame__state--none">
-                  <Box size={30} strokeWidth={1.6} aria-hidden="true" />
-                  <p>{L.noModel}</p>
-                </div>
-              )}
-            </ViewerBoundary>
-          </div>
+        </div>
+      </header>
+
+      <div className={`rs-stage${panelOpen ? "" : " is-collapsed"}`}>
+        {floating && panel}
+        {floating && !panelOpen && (
+          <button
+            ref={showRef}
+            type="button"
+            className="rs-reopen"
+            aria-expanded={false}
+            aria-controls={PANEL_ID}
+            onClick={showPanel}
+          >
+            <PanelRightOpen size={18} strokeWidth={1.6} aria-hidden="true" />
+            {L.show}
+          </button>
+        )}
+
+        <section className="rs-stage__view" aria-label={copy.model.title}>
+          <ViewerBoundary
+            resetKey={run.file.sha256}
+            fallback={
+              <StageState none>
+                <Box size={30} strokeWidth={1.6} aria-hidden="true" />
+                <p>{L.viewerFailed}</p>
+              </StageState>
+            }
+          >
+            {viewer}
+          </ViewerBoundary>
         </section>
+
+        {!floating && panel}
       </div>
     </main>
   );
