@@ -23,27 +23,27 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  max-width: calc(1024px + 2 * var(--gutter));
+  max-width: calc(var(--page-max) + 2 * var(--gutter));
   height: var(--header-h);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
 .gn__brand {
-  --wm-size: 21px;
+  --wm-size: 27px;
   flex: none;
 }
 
 .gn__nav {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .gn__nav ul {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 40px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -54,9 +54,9 @@
   align-items: center;
   min-height: 44px;
   color: var(--ink);
-  opacity: 0.82;
-  font-size: 14px;
-  font-weight: 400;
+  opacity: 0.86;
+  font-size: 16px;
+  font-weight: 500;
   text-decoration: none;
   transition: opacity 200ms var(--ease), color 200ms var(--ease);
 }
@@ -65,10 +65,6 @@
 .gn__link[aria-current="page"] {
   opacity: 1;
   color: var(--brand);
-}
-
-.gn__cta {
-  flex: none;
 }
 
 .gn__menu {
@@ -138,10 +134,6 @@
   text-decoration: none;
 }
 
-.gn__sheet-cta {
-  width: 100%;
-}
-
 @keyframes gn-sheet {
   from {
     opacity: 0;
@@ -150,23 +142,22 @@
 }
 
 @media (max-width: 833px) {
-  .gn__nav,
-  .gn__cta {
+  .gn__nav {
     display: none;
   }
 
   .gn__inner {
     justify-content: space-between;
-    height: 48px;
+  }
+
+  .gn__brand {
+    --wm-size: 24px;
   }
 
   .gn__menu {
     display: block;
   }
 
-  .gn__sheet {
-    inset-block-start: 48px;
-  }
 }
 
 @media (min-width: 834px) {

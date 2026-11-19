@@ -220,7 +220,7 @@ export default function Report({ run, onBack, notify }: ReportProps) {
 <html lang="ar" dir="rtl">
 <head><meta charset="utf-8"><title>${escapeHtml(copy.report.title)}: ${escapeHtml(run.file.name)}</title>
 <style>
-body{font-family:"Noto Sans Arabic","Noto Sans",Tahoma,Arial,sans-serif;color:#1d1d1f;margin:56px auto;max-width:72ch;padding:0 24px;font-size:16px;line-height:1.7}
+body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;color:#1d1d1f;margin:56px auto;max-width:72ch;padding:0 24px;font-size:16px;line-height:1.7}
 h1,h2,h3{color:#1d1d1f;line-height:1.3;font-weight:700}
 .brand{margin:0 0 28px;font-weight:800;font-size:20px;color:#0a7a4d}
 h1{margin:0;font-size:36px}.file{margin:4px 0 0;color:#6e6e73}

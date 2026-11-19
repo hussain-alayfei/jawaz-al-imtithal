@@ -18,7 +18,7 @@ const LINKS: { target: NavTarget; label: string; href: string }[] = [
   { target: "twin", label: copy.web.nav.twin, href: "#/twin" },
 ];
 
-/** Slim translucent global navigation (Apple-style): wordmark, four links, one small action. */
+/** Translucent global navigation: wordmark and four links. The check starts from the page content, not the header. */
 export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -77,10 +77,6 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
           </ul>
         </nav>
 
-        <a href="#/check" className="btn btn--primary btn--small gn__cta" onClick={go("check")}>
-          {copy.web.nav.cta}
-        </a>
-
         <button
           ref={toggleRef}
           type="button"
@@ -105,9 +101,6 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
             </li>
           ))}
         </ul>
-        <a href="#/check" className="btn btn--primary btn--large gn__sheet-cta" onClick={go("check")}>
-          {copy.web.nav.cta}
-        </a>
       </div>
     </header>
   );

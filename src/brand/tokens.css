@@ -1,5 +1,5 @@
-/* موائم v4: white mode. Green brand, orange accent, near-black ink, white and Apple-grey surfaces.
-   Big type, generous space, pill buttons, quiet chrome. Screens own their layout CSS. */
+/* موائم v5: white mode, IBM Plex Sans Arabic. Green brand, orange accent, near-black ink, white and
+   light-grey surfaces. Big type, generous space, pill buttons, quiet chrome. Screens own their layout CSS. */
 
 :root {
   --paper: #ffffff;
@@ -28,7 +28,7 @@
   --unknown: #6e6e73;
   --unknown-tint: #f0f0f3;
 
-  --font: "Noto Sans Arabic", "Noto Sans", system-ui, "Segoe UI", Tahoma, sans-serif;
+  --font: "IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
 
   /* Type scale */
   --t-hero: clamp(40px, 6.2vw, 80px);
@@ -49,7 +49,7 @@
   --radius-lg: 22px;
   --radius-xl: 30px;
   --radius-pill: 980px;
-  --header-h: 52px;
+  --header-h: 64px;
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -78,6 +78,12 @@
   --accent-ink: #ffffff;
 
   color-scheme: light;
+}
+
+@media (max-width: 833px) {
+  :root {
+    --header-h: 56px;
+  }
 }
 
 *,

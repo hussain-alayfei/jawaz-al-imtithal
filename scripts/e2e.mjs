@@ -26,15 +26,15 @@ const SLOW = 240_000;
 
 /* The check is a three-step wizard (src/screens/Check.tsx, copy.web.wizard). */
 const WIZARD = {
-  projectTitle: "أدخل بيانات المشروع.",
-  planTitle: "اختر مخطط المطعم.",
-  reviewTitle: "راجع بيانات الفحص.",
-  running: "جارٍ فحص المخطط.",
+  projectTitle: "بيانات المشروع",
+  planTitle: "ملف المخطط",
+  reviewTitle: "المراجعة وبدء الفحص",
+  running: "جارٍ قراءة الملف وقياس العناصر ومقارنتها بالاشتراطات.",
   errorTitle: "تعذر إكمال الفحص.",
   next: "التالي",
-  start: "ابدأ الفحص",
-  results: "اعرض النتائج",
-  change: "غيّر الملف",
+  start: "بدء الفحص",
+  results: "عرض النتائج",
+  change: "تغيير الملف",
 };
 
 if (!existsSync(chromePath)) {
@@ -129,7 +129,7 @@ const ensureNoHorizontalScroll = async (page, name) => {
   await page.screenshot({ path: path.join(artifactDirectory, `${name}.png`), fullPage: true });
 };
 
-/** The review step is open and nothing runs on its own: the check starts only from «ابدأ الفحص». */
+/** The review step is open and nothing runs on its own: the check starts only from «بدء الفحص». */
 const expectReview = async (page, context) => {
   await expectHeading(page, WIZARD.reviewTitle, context);
   await page.waitForTimeout(800);
@@ -154,7 +154,7 @@ const startAndOpenResults = async (page, context) => {
   await page.waitForURL(/#\/results/, { timeout: 60_000 });
 };
 
-/** A sample link opens the review step with that sample chosen; the check runs after «ابدأ الفحص». */
+/** A sample link opens the review step with that sample chosen; the check runs after «بدء الفحص». */
 const runSample = async (page, sampleId) => {
   await page.goto(`${baseUrl}/#/check?sample=${sampleId}`, { waitUntil: "domcontentloaded" });
   await expectReview(page, `Sample ${sampleId}`);
