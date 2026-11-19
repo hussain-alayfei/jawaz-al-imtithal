@@ -231,11 +231,8 @@ export function evaluateStandardRestaurant(
   const licensed = facility.area;
   const limit = Math.min(STORE_SHARE_LIMIT * licensed, STORE_AREA_CAP_M2);
   if (!stores.length) {
-    results.push({
-      ruleId: "MOMAH-REST-4.8.1-STORE",
-      status: "pass",
-      actual: "لا يوجد مستودع في الملف، فلا ينطبق حد المساحة",
-    });
+    // No room classified as a store: either there is none or it is not named. Not judged either way.
+    results.push(unknown("MOMAH-REST-4.8.1-STORE", "لم يُصنَّف أي فراغ في الملف مستودعًا، فلا تُقاس نسبة مساحته"));
   } else if (!(licensed > 0) || stores.some((s) => s.netFloorArea === undefined)) {
     results.push(unknown("MOMAH-REST-4.8.1-STORE", "مساحة المستودع أو المساحة الإجمالية للترخيص غير متوفرة", entity(stores[0].expressId)));
   } else {
@@ -247,13 +244,17 @@ export function evaluateStandardRestaurant(
     });
   }
 
-  // 4.10.1 (1) at least one WC (recommendation)
-  results.push({
-    ruleId: "MOMAH-REST-4.10.1-WC",
-    status: wcs.length >= 1 ? "pass" : "fail",
-    actual: wcs.length ? `${wcs.length} دورة مياه: ${wcs.map((w) => label(w)).join("، ")}` : "لا توجد دورة مياه في الملف",
-    target: entity(wcs[0]?.expressId),
-  });
+  // 4.10.1 (1) at least one WC (recommendation). A file without rooms cannot show a missing WC.
+  results.push(
+    !facts.spaces.length
+      ? unknown("MOMAH-REST-4.10.1-WC", "الملف لا يحتوي على فراغات IfcSpace")
+      : {
+          ruleId: "MOMAH-REST-4.10.1-WC",
+          status: wcs.length >= 1 ? "pass" : "fail",
+          actual: wcs.length ? `${wcs.length} دورة مياه: ${wcs.map((w) => label(w)).join("، ")}` : "لا توجد دورة مياه في الملف",
+          target: entity(wcs[0]?.expressId),
+        },
+  );
 
   // 4.10.1 (2) WC doors must not open directly onto a food handling room
   const spacesAt = (door: StandardDoor): StandardSpace[] => {
@@ -310,16 +311,21 @@ export function evaluateStandardRestaurant(
   }
 
   // 4.10.1 (2) hand-wash basins in or near the WC
-  const basins = facts.products.filter(
-    (p) => p.ifcType.toUpperCase() === "IFCSANITARYTERMINAL" && p.predefinedType === "WASHHANDBASIN",
+  // IFC4 writes IfcSanitaryTerminal; IFC2X3 writes IfcFlowTerminal typed by IfcSanitaryTerminalType,
+  // whose PredefinedType the reader already carries onto the occurrence.
+  const sanitary = facts.products.filter(
+    (p) => p.ifcType.toUpperCase() === "IFCSANITARYTERMINAL" || p.typeClass?.toUpperCase() === "IFCSANITARYTERMINALTYPE",
   );
+  const basins = sanitary.filter((p) => p.predefinedType === "WASHHANDBASIN");
   const nearWc = basins.find((b) =>
     wcs.some((w) => b.containerId === w.expressId || productToSpace(b, w) <= HANDWASH_NEAR_M),
   );
   results.push(
     !wcs.length
       ? unknown("MOMAH-REST-4.10.1-HANDWASH", "لا توجد دورة مياه في الملف")
-      : nearWc
+      : !sanitary.length
+        ? unknown("MOMAH-REST-4.10.1-HANDWASH", "الملف لا يصف الأدوات الصحية (IfcSanitaryTerminal)", entity(wcs[0].expressId))
+        : nearWc
         ? {
             ruleId: "MOMAH-REST-4.10.1-HANDWASH",
             status: "pass",

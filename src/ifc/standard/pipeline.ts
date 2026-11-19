@@ -113,11 +113,15 @@ export function hasMowaemContract(bytes: Uint8Array): boolean {
   return false;
 }
 
-function headerSchema(bytes: Uint8Array): { envelope: boolean; schema?: string } {
-  const head = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, 4096));
+function headerSchema(bytes: Uint8Array): { envelope: boolean; complete: boolean; schema?: string } {
+  const decoder = new TextDecoder("utf-8", { fatal: false });
+  const head = decoder.decode(bytes.subarray(0, 4096));
+  const tail = decoder.decode(bytes.subarray(Math.max(0, bytes.byteLength - 1024)));
   const envelope = head.trimStart().startsWith("ISO-10303-21;");
+  // A file cut off during export or upload still parses partly; refuse it rather than judge half a building.
+  const complete = /END-ISO-10303-21\s*;\s*$/i.test(tail.replace(/\0+$/, ""));
   const match = /FILE_SCHEMA\s*\(\s*\(\s*'([^']+)'/i.exec(head);
-  return { envelope, schema: match?.[1]?.toUpperCase() };
+  return { envelope, complete, schema: match?.[1]?.toUpperCase() };
 }
 
 async function sha256(bytes: Uint8Array): Promise<string> {
@@ -204,9 +208,16 @@ export async function runStandardStages({
     if (upload.bytes.byteLength > MAX_BYTES) {
       throw new IfcProcessingError("validate", "FILE_TOO_LARGE", "حجم الملف يتجاوز الحد الحالي البالغ 50 MB.");
     }
-    const { envelope, schema } = headerSchema(upload.bytes);
+    const { envelope, complete, schema } = headerSchema(upload.bytes);
     if (!envelope) {
       throw new IfcProcessingError("validate", "INVALID_ENVELOPE", "الملف لا يبدأ بغلاف STEP ‏(ISO-10303-21).");
+    }
+    if (!complete) {
+      throw new IfcProcessingError(
+        "validate",
+        "INVALID_ENVELOPE",
+        "الملف غير مكتمل: لا ينتهي بالسطر END-ISO-10303-21، وربما انقطع أثناء التصدير أو الرفع.",
+      );
     }
     if (!schema || !SUPPORTED_SCHEMAS.has(schema)) {
       throw new IfcProcessingError("validate", "UNSUPPORTED_SCHEMA", `إصدار IFC في الملف (${schema ?? "غير معروف"}) غير مدعوم.`);

@@ -278,6 +278,42 @@ describe("building services read from the file (systems, ports, connections)", (
     expect(ventOnly.status).toBe("unknown");
   });
 
+  it("reads an IFC2X3 hand-wash basin (IfcFlowTerminal typed by IfcSanitaryTerminalType)", async () => {
+    const { facts } = (await check(PASS)).standard!;
+    const facility = getDefaultFacility("restaurant");
+    const handwash = (changed: StandardFacts) =>
+      evaluateStandardRestaurant(changed, facility).find((e) => e.ruleId === "MOMAH-REST-4.10.1-HANDWASH")!;
+    const asIfc2x3 = facts.products.map((p) =>
+      p.ifcType.toUpperCase() === "IFCSANITARYTERMINAL"
+        ? { ...p, ifcType: "IfcFlowTerminal", typeClass: "IFCSANITARYTERMINALTYPE" }
+        : p,
+    );
+    expect(handwash({ ...facts, products: asIfc2x3 }).status).toBe("pass");
+    // no sanitary fittings described at all: not judged, never a failure
+    const bare = facts.products.filter((p) => p.ifcType.toUpperCase() !== "IFCSANITARYTERMINAL");
+    expect(handwash({ ...facts, products: bare }).status).toBe("unknown");
+  });
+
+  it("does not pass or fail room clauses for a file without rooms", async () => {
+    const { facts } = (await check(PASS)).standard!;
+    const results = evaluateStandardRestaurant({ ...facts, spaces: [] }, getDefaultFacility("restaurant"));
+    const status = (id: string) => results.find((e) => e.ruleId === id)!.status;
+    expect(status("MOMAH-REST-4.10.1-WC")).toBe("unknown");
+    expect(status("MOMAH-REST-4.8.1-STORE")).toBe("unknown");
+  });
+
+  it("refuses a file cut off before END-ISO-10303-21", async () => {
+    const whole = await upload(PASS);
+    const bytes = whole.bytes.subarray(0, Math.floor(whole.bytes.byteLength * 0.6));
+    await expect(
+      runIfcCompliance({
+        upload: { name: whole.name, size: bytes.byteLength, bytes },
+        activityId: "restaurant",
+        facility: getDefaultFacility("restaurant"),
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_ENVELOPE" });
+  });
+
   it.each([
     ["DRAINAGE", "Anything", "drainage"],
     ["DOMESTICCOLDWATER", undefined, "water"],
@@ -341,5 +377,8 @@ describe("an independent BIM export (Revit 2011 Duplex, buildingSMART, CC BY 4.0
     expect(finding(run, "MOMAH-REST-4.2.2-SPACES").status).toBe("fail");
     expect(finding(run, "MOMAH-REST-3.1-AREA").status).toBe("pass");
     expect(finding(run, "MOMAH-REST-4.5.2-CLADDING").status).not.toBe("pass");
+    // no store and no sanitary fittings in this file: neither is judged
+    expect(finding(run, "MOMAH-REST-4.8.1-STORE").status).toBe("unknown");
+    expect(finding(run, "MOMAH-REST-4.10.1-HANDWASH").status).toBe("unknown");
   }, 60000);
 });
