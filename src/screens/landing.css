@@ -1,8 +1,14 @@
-/* Home page (v3). Mobile-first: base styles are for phones, then min-width steps at 768, 1024 and 1440.
-   Every class carries the hm- prefix. Colours, type, buttons and the page container come from
-   src/brand/tokens.css. Spacing follows 8 / 16 / 24 / 40 / 64 / 96. No scroll animation. */
+/* Home page (v4). White, big type, big pictures, few words. Mobile-first: phones first, then 834px (rows
+   side by side, the framed hero picture) and 1024px (the pinned model story, the clause list in two
+   columns). Every class carries the hm- prefix; colours, type, space and buttons come from
+   src/brand/tokens.css. Motion: one hero entrance on load, then scroll-driven reveals where the browser
+   supports them; without support, or with reduced motion, everything is simply there. */
 
 .hm {
+  --hm-head-gap: clamp(56px, 7vw, 96px);
+  --hm-scroll-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* Ease-out (cubic) for the hero entrance: the movement spreads over the whole duration. */
+  --hm-entrance-ease: cubic-bezier(0.33, 1, 0.68, 1);
   display: block;
   background: var(--paper);
   color: var(--ink);
@@ -13,500 +19,580 @@
   outline: none;
 }
 
-/* Type */
-.hm-h2 {
-  font-size: clamp(24px, 2.2vw + 16px, 28px);
+.hm-section {
+  padding-block: var(--section-y);
+}
+
+/* Section heads: a centred headline and one sentence. */
+.hm-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.hm-title {
+  font-size: var(--t-h2);
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.hm-lead {
+  max-width: var(--text-max);
+  margin-block-start: 16px;
+  font-size: var(--t-lead);
+  line-height: 1.5;
+  color: var(--ink-2);
   text-wrap: balance;
 }
 
-.hm-h3 {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.5;
+.hm-head__link {
+  margin-block-start: 12px;
+  font-size: var(--t-body);
 }
 
-.hm-h4 {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.5;
+/* 1. Hero */
+.hm-hero {
+  padding-block: 48px 0;
 }
 
-.hm-lede,
-.hm-body {
-  max-width: 64ch;
-  font-size: 17px;
-  line-height: 1.7;
+.hm-hero__head {
+  max-width: calc(880px + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  text-align: center;
+}
+
+.hm-hero__title {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hm-hero__sub {
+  max-width: 760px;
+  margin: 24px auto 0;
+  font-size: var(--t-lead);
+  line-height: 1.5;
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
-.hm-lede {
-  margin-block-start: 8px;
+.hm-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 24px;
+  margin-block-start: 32px;
 }
 
-.hm-note {
-  max-width: 64ch;
-  margin-block-start: 8px;
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--muted);
+.hm-hero__media {
+  max-width: calc(1440px + 2 * var(--gutter));
+  margin: clamp(56px, 6vw, 72px) auto 0;
 }
 
-.hm-caption {
-  margin-block-start: 8px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-
-.hm-lede,
-.hm-body,
-.hm-note,
-.hm-caption,
-.hm-hero__lede,
-.hm-step__body,
-.hm-limits li {
-  text-wrap: pretty;
-}
-
-/* Sections: space and one hairline between them. */
-.hm-section {
-  padding-block: 64px;
-  border-block-start: 1px solid var(--line);
-}
-
-.hm-head {
-  margin-block-end: 40px;
-}
-
-.hm-figure {
-  margin: 0;
-  min-width: 0;
-}
-
-/* A real render of the sample model in a calm 16:9 frame. */
-.hm-render {
-  aspect-ratio: 16 / 9;
+.hm-hero__frame {
+  aspect-ratio: 2 / 1;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
-.hm-render__img {
+.hm-hero__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* 1. Hero */
-.hm-hero {
-  padding-block: 40px 64px;
-}
-
-.hm-hero__grid {
+/* 2 and 5. Zig-zag rows: the picture first on phones, then picture and words side by side. */
+.hm-rows {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 40px;
-}
-
-.hm-hero__title {
-  font-size: clamp(32px, 2.4vw + 22px, 44px);
-  font-weight: 700;
-  line-height: 1.35;
-  text-wrap: balance;
-}
-
-.hm-hero__lede {
-  max-width: 34em;
-  margin-block-start: 16px;
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-
-.hm-hero__cta {
-  width: 100%;
-  margin-block-start: 24px;
-}
-
-.hm-hero__cta:active,
-.hm-chip:active,
-.hm .btn:active {
-  transform: translateY(1px);
-}
-
-.hm-samples {
-  margin-block-start: 24px;
-}
-
-.hm-samples__lead {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-
-.hm-samples__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: clamp(96px, 10vw, 140px);
+  margin: var(--hm-head-gap) 0 0;
   padding: 0;
   list-style: none;
 }
 
-.hm-samples__list li {
-  display: flex;
-  flex: 1 1 100%;
+.hm-row {
+  --hm-from-x: 0px;
+  --hm-from-y: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "media"
+    "text";
+  gap: 32px;
+}
+
+.hm-row__media {
+  grid-area: media;
   min-width: 0;
 }
 
-.hm-samples__list .hm-chip {
-  flex: 1 1 auto;
-}
-
-.hm-caption bdi {
-  white-space: nowrap;
-}
-
-/* Sample chips: one tap runs that sample. */
-.hm-chip {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 8px;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition:
-    border-color 160ms var(--ease),
-    background-color 160ms var(--ease);
-}
-
-.hm-chip:hover {
-  border-color: var(--brand);
-  background: var(--brand-tint);
-}
-
-.hm-chip__label {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.hm-chip__note {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted);
-}
-
-/* The render with the measurement card: under the image on phones, over its corner from 768px. */
-.hm-hero__frame {
-  position: relative;
-}
-
-.hm-measure {
-  margin-block-start: 8px;
-  padding: 16px;
-  border: 1px solid var(--line-strong);
+.hm-row__img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   border-radius: var(--radius-lg);
-  background: var(--paper);
+  background: var(--surface);
 }
 
-.hm-measure__clause {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-  color: var(--ink-2);
+.hm-row__img--wide {
+  aspect-ratio: 16 / 10;
 }
 
-.hm-measure__row {
+.hm-row__text {
+  grid-area: text;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 16px;
-  margin-block-start: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
-.hm-measure__value {
-  font-size: 44px;
+.hm-row__title {
+  font-size: var(--t-h3);
   font-weight: 700;
-  line-height: 1.1;
-  color: var(--fail);
+  line-height: 1.3;
 }
 
-.hm-measure__unit {
-  font-size: 24px;
+.hm-row__heading {
+  font-size: var(--t-h2);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.hm-measure__required {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--ink);
+.hm-row__body {
+  max-width: 30em;
+  margin-block-start: 12px;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
 }
 
-.hm-measure__status {
-  margin-block-start: 8px;
+.hm-row__heading + .hm-row__body {
+  margin-block-start: 16px;
 }
 
-/* 2. Clauses: two columns of table-like rows from 1024px. */
-.hm-clauses__grid {
+.hm-row__link {
+  margin-block-start: 12px;
+}
+
+.hm-how,
+.hm-twin {
+  overflow-x: clip;
+}
+
+/* 3. The model story */
+.hm-model {
+  background: var(--surface);
+}
+
+.hm-story {
+  max-width: calc(1440px + 2 * var(--gutter));
+  margin: var(--hm-head-gap) auto 0;
+  padding-inline: var(--gutter);
+}
+
+.hm-story__steps {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: 40px;
-}
-
-.hm-clauses__col .hm-h3 {
-  margin-block-end: 8px;
-}
-
-.hm-clause-list {
+  gap: clamp(72px, 12vw, 112px);
   margin: 0;
   padding: 0;
   list-style: none;
-  border-block-start: 1px solid var(--line-strong);
+}
+
+.hm-step__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.hm-step__text {
+  max-width: var(--text-max);
+  margin-block-start: 24px;
+}
+
+.hm-step__title {
+  font-size: var(--t-h3);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hm-step__body {
+  margin-block-start: 12px;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* The renders: stacked in one frame on wide screens, one per step below that. */
+.hm-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hm-model__foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-block-start: clamp(56px, 6vw, 80px);
+  text-align: center;
+}
+
+.hm-caption {
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* 4. The clauses: a calm list, marked by what the file can prove. */
+.hm-clauses {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 980px;
+  margin: var(--hm-head-gap) auto 0;
+  padding: 0;
+  list-style: none;
 }
 
 .hm-clause {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: baseline;
-  gap: 16px;
-  padding-block: 8px;
+  column-gap: 16px;
+  padding-block: 16px;
   border-block-end: 1px solid var(--line);
 }
 
 .hm-clause__no {
-  white-space: nowrap;
+  min-width: 6.6em;
   font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-2);
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .hm-clause__subject {
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: var(--t-body);
+  line-height: 1.5;
+  color: var(--ink);
 }
 
-.hm-clauses__col .hm-note {
-  margin-block-start: 16px;
+.hm-mark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-inline-end: 14px;
+  border-radius: 50%;
+  vertical-align: 0.12em;
 }
 
-.hm-ref {
+.hm-mark--measured {
+  background: var(--pass);
+}
+
+.hm-mark--open {
+  border: 1.5px solid var(--unknown);
+}
+
+.hm-legend {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0 16px;
-  margin-block-start: 40px;
-  font-size: 14px;
-  line-height: 1.7;
+  justify-content: center;
+  gap: 8px 32px;
+  margin-block-start: 32px;
+  font-size: var(--t-small);
+  line-height: 1.6;
   color: var(--muted);
 }
 
-/* 3. How it works: the one section on --surface. */
-.hm-how {
+.hm-legend__item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hm-legend .hm-mark {
+  margin-inline-end: 10px;
+  vertical-align: 0;
+}
+
+/* 5. The digital twin. Its grey runs into the grey footer, so a hairline at the footer's content
+   width closes the page. */
+.hm-twin {
+  padding-block-end: 0;
   background: var(--surface);
 }
 
-.hm-steps {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
+.hm-twin::after {
+  content: "";
+  display: block;
+  width: min(980px, 100% - 2 * var(--gutter));
+  height: 1px;
+  margin: var(--section-y) auto 0;
+  background: var(--line);
 }
 
-.hm-step {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.hm-step__no {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--brand);
-  color: var(--brand-ink);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.hm-step__title {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.hm-step__body {
-  margin-block-start: 8px;
-  font-size: 16px;
-  color: var(--ink-2);
-}
-
-/* 4. The 3D model */
-.hm-model {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 40px;
-  align-items: center;
-}
-
-.hm-model__text .hm-h4 {
-  margin-block-start: 24px;
-}
-
-.hm-networks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 15px;
-  color: var(--ink-2);
-}
-
-.hm-networks li {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hm-networks__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.hm-model__cta,
-.hm-twin__cta {
-  width: 100%;
-  margin-block-start: 24px;
-}
-
-/* 5 and 6. Short blocks: a title, then the content. */
-.hm-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-}
-
-.hm-limits {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hm-limits li {
-  padding-block: 8px;
-  border-block-end: 1px solid var(--line);
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-
-.hm-limits li:first-child {
-  padding-block-start: 0;
-}
-
-.hm-limits li:last-child {
-  border-block-end: 0;
-}
-
-/* Tablet */
-@media (min-width: 768px) {
+/* From 834px: the hero picture sits inside the gutter with large corners; rows go side by side. */
+@media (min-width: 834px) {
   .hm-hero {
-    padding-block: 64px 96px;
+    padding-block-start: 80px;
   }
 
-  .hm-hero__cta,
-  .hm-model__cta,
-  .hm-twin__cta {
-    width: auto;
+  .hm-hero__actions {
+    margin-block-start: 40px;
   }
 
-  .hm-samples__list li {
-    flex: 0 1 auto;
+  .hm-hero__media {
+    padding-inline: var(--gutter);
   }
 
-  /* The card sits over the render's lower corner (the road), clear of the building. */
-  .hm-measure {
-    position: absolute;
-    inset-block-end: 16px;
-    inset-inline-end: 16px;
-    max-width: 300px;
-    margin: 0;
-    padding: 16px 24px;
+  .hm-hero__frame {
+    border-radius: var(--radius-xl);
   }
 
-  .hm-steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-  }
-
-  .hm-step {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-
-  .hm-split {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-    gap: 24px 64px;
-  }
-
-  .hm-twin__cta {
-    margin-block-start: 24px;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1024px) {
-  .hm-section {
-    padding-block: 96px;
-  }
-
-  .hm-hero__grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  .hm-row {
     align-items: center;
-    gap: 64px;
+    column-gap: clamp(48px, 6vw, 96px);
   }
 
-  .hm-hero__lede {
-    font-size: 18px;
-  }
-
-  .hm-clauses__grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 64px;
-  }
-
-  .hm-model {
+  /* In RTL the first track is on the right: "text media" puts the picture on the visual left. */
+  .hm-row--media-end {
+    --hm-from-x: -48px;
+    --hm-from-y: 0px;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: 64px;
+    grid-template-areas: "text media";
+  }
+
+  .hm-row--media-start {
+    --hm-from-x: 48px;
+    --hm-from-y: 0px;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-areas: "media text";
   }
 }
 
-@media (min-width: 1440px) {
-  .hm-hero {
-    padding-block: 96px;
+/* From 1024px: the clause list in two columns, read down the first column, then the second; the
+   model steps scroll beside one pinned frame that cross-fades between the renders. */
+@media (min-width: 1024px) {
+  .hm-clauses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--hm-rows, 7), auto);
+    grid-auto-flow: column;
+    column-gap: clamp(48px, 6vw, 80px);
   }
 
-  .hm-measure__value {
-    font-size: 52px;
+  .hm-story--pinned {
+    display: grid;
+    grid-template-columns: clamp(280px, 26vw, 380px) minmax(0, 1fr);
+    grid-template-areas: "steps media";
+    column-gap: clamp(64px, 7vw, 120px);
+  }
+
+  .hm-story--pinned .hm-story__steps {
+    grid-area: steps;
+    gap: 0;
+  }
+
+  .hm-story--pinned .hm-step {
+    display: flex;
+    align-items: center;
+    min-height: 80vh;
+    opacity: 0.35;
+    transition: opacity 500ms var(--ease);
+  }
+
+  .hm-story--pinned .hm-step[data-active],
+  .hm-story--pinned .hm-step:has(.hm-step__pick:focus-visible) {
+    opacity: 1;
+  }
+
+  .hm-story--pinned .hm-step:not([data-active]):has(.hm-step__pick:hover) {
+    opacity: 0.6;
+  }
+
+  .hm-story--pinned .hm-step__text {
+    margin: 0;
+  }
+
+  .hm-step__pick {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .hm-story__media {
+    grid-area: media;
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  /* The frame is 16:10 and at most 70vh tall (112vh wide). It pins at least 40px under the header;
+     when the column keeps it shorter than that, it centres in the space under the header instead,
+     level with the step crossing the middle of the viewport. */
+  .hm-story__pin {
+    --hm-pin-w: min(100cqi, 112vh);
+    position: sticky;
+    inset-block-start: max(
+      calc(var(--header-h) + 40px),
+      calc(50vh + var(--header-h) / 2 - var(--hm-pin-w) * 0.3125)
+    );
+    width: var(--hm-pin-w);
+    margin-inline: auto;
+  }
+
+  .hm-story__frame {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--surface-2);
+  }
+
+  .hm-story__frame .hm-shot {
+    opacity: 0;
+    transition: opacity 600ms var(--ease);
+  }
+
+  .hm-story__frame .hm-shot[data-active] {
+    opacity: 1;
+  }
+
+  /* Which render is showing: four small marks in the gap beside the frame, the current one longer. */
+  .hm-story__dots {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: -32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(-50%);
+  }
+
+  .hm-story__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line-strong);
+    transition:
+      height 400ms var(--ease-out),
+      background-color 400ms var(--ease);
+  }
+
+  .hm-story__dot[data-active] {
+    height: 22px;
+    background: var(--accent);
+  }
+}
+
+/* Motion: the hero's one entrance on load. Headline, sentence and actions rise in turn; the picture
+   fades in and settles once its file has arrived. */
+@media (prefers-reduced-motion: no-preference) {
+  .hm-hero__title,
+  .hm-hero__sub,
+  .hm-hero__actions {
+    animation: hm-rise 500ms var(--hm-entrance-ease) both;
+  }
+
+  .hm-hero__sub {
+    animation-delay: 100ms;
+  }
+
+  .hm-hero__actions {
+    animation-delay: 200ms;
+  }
+
+  .hm-hero__frame {
+    opacity: 0;
+  }
+
+  .hm-hero__frame[data-ready] {
+    animation: hm-fade 900ms var(--ease) 150ms both;
+  }
+
+  .hm-hero__frame[data-ready] .hm-hero__img {
+    animation: hm-settle 1200ms var(--hm-entrance-ease) 150ms both;
+  }
+}
+
+/* Motion on scroll, tied to each element's position in the viewport. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Rows: the picture slides in from its own side; the words follow a moment later. */
+    .hm-row {
+      view-timeline: --hm-row block;
+    }
+
+    .hm-row__media {
+      animation: hm-media-in var(--hm-scroll-ease) both;
+      animation-timeline: --hm-row;
+      animation-range: entry 0% cover 35%;
+    }
+
+    .hm-row__text {
+      animation: hm-text-in var(--hm-scroll-ease) both;
+      animation-timeline: --hm-row;
+      animation-range: entry 20% cover 45%;
+    }
+
+    /* Model steps on smaller screens: each picture and its words rise in together. */
+    .hm-story:not(.hm-story--pinned) .hm-step {
+      animation: hm-text-in var(--hm-scroll-ease) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+
+@keyframes hm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes hm-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hm-settle {
+  from {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes hm-media-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--hm-from-x), var(--hm-from-y)) scale(0.96);
+  }
+}
+
+@keyframes hm-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
   }
 }

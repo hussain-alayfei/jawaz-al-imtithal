@@ -8,8 +8,11 @@ import {
   clausesWord,
   describeFailure,
   formatDuration,
+  formatBytes,
   parseArea,
+  sampleSetup,
   stagesDone,
+  stepStatus,
   withFacilityDefaults,
 } from "./logic";
 
@@ -76,5 +79,28 @@ describe("looksLikeStep", () => {
     expect(
       stagesDone([{ state: "completed" }, { state: "completed" }, { state: "running" }, { state: "pending" }]),
     ).toBe(2);
+  });
+});
+
+describe("wizard steps", () => {
+  it("marks earlier steps done, the current step current and later steps upcoming", () => {
+    expect([1, 2, 3].map((step) => stepStatus(step as 1 | 2 | 3, 2))).toEqual(["done", "current", "upcoming"]);
+    expect([1, 2, 3].map((step) => stepStatus(step as 1 | 2 | 3, 1))).toEqual(["current", "upcoming", "upcoming"]);
+  });
+
+  it("shows the last step as done once the check has finished", () => {
+    expect([1, 2, 3].map((step) => stepStatus(step as 1 | 2 | 3, 3, true))).toEqual(["done", "done", "done"]);
+    expect(stepStatus(3, 3, false)).toBe("current");
+  });
+
+  it("fills only what a sample link needs before the review", () => {
+    expect(sampleSetup("cafe", 168)).toEqual({ activityId: "restaurant" });
+    expect(sampleSetup("restaurant", 0)).toEqual({ area: getDefaultFacility("restaurant").area });
+    expect(sampleSetup("restaurant", 120)).toBeUndefined();
+  });
+
+  it("formats the chosen file's size", () => {
+    expect(formatBytes(882_390)).toBe("861.7 KB");
+    expect(formatBytes(2_380_763)).toBe("2.3 MB");
   });
 });

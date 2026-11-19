@@ -21,6 +21,8 @@
  *   --software              force SwiftShader (machines without a GPU; frame times are then not representative)
  *   --timeout 300000        per-shot timeout in ms
  *
+ * The sample link opens the check on its review step (nothing runs on its own), so the script presses
+ * «ابدأ الفحص», waits for the summary and presses «اعرض النتائج», as a visitor would.
  * The viewer renders continuously in capture mode (its normal frame loop is on demand) and sets
  * window.__APP__.ready after its warm-up and 8 frames; the script waits for that, lets a few more
  * frames settle, screenshots the window and encodes WebP in the page. Prints one JSON summary line;
@@ -34,6 +36,10 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/* The check wizard's buttons (copy.web.wizard.start and copy.web.wizard.results in src/content/copy.ts). */
+const CHECK_START = "ابدأ الفحص";
+const CHECK_RESULTS = "اعرض النتائج";
 
 function parse(argv) {
   const o = { shots: "hero,networks", sample: "tiles", size: "2400x1350", quality: 0.9, out: "src/assets", timeout: 300000 };
@@ -196,6 +202,10 @@ async function main() {
       const target = `${server.url}/?capture=${shot}#/check?sample=${encodeURIComponent(o.sample)}`;
       const started = Date.now();
       await page.goto(target, { waitUntil: "load", timeout: o.timeout });
+      // The review step: start the check, then open its results (the viewer lives there).
+      const check = page.locator("main");
+      await check.getByRole("button", { name: CHECK_START }).click({ timeout: o.timeout });
+      await check.getByRole("button", { name: CHECK_RESULTS }).click({ timeout: o.timeout });
       await page.waitForFunction(
         (name) => window.__APP__?.ready === true && window.__APP__?.shot === name,
         shot,

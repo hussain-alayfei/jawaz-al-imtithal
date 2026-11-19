@@ -47,7 +47,7 @@ function sectionFromHash(hash: string): string | undefined {
   return match ? `home-${match[1]}` : undefined;
 }
 
-/** "#/check?sample=tiles" opens the check page and runs that ready sample (used by links and captures). */
+/** "#/check?sample=tiles" opens the check page on its review step with that ready sample chosen; the visitor starts the check. */
 function sampleFromHash(hash: string): SampleId | undefined {
   const query = hash.split("?")[1];
   if (!query) return undefined;

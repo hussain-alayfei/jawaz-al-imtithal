@@ -7,7 +7,7 @@ import type { SampleId } from "../content/samples";
 export interface LandingProps {
   /** Go to the new-check page. */
   onStart: () => void;
-  /** Go to the new-check page and run this sample straight away. */
+  /** Go to the new-check page with this sample chosen, on the review step (nothing runs until «ابدأ الفحص»). */
   onSample: (id: SampleId) => void;
   /** Open the digital twin studio (illustrative scenes, not a compliance result). */
   onTwin: () => void;
@@ -18,7 +18,7 @@ export interface CheckProps {
   facility: FacilityDetails;
   onActivityChange: (activityId: ActivityId) => void;
   onFacilityChange: (facility: FacilityDetails) => void;
-  /** When set, load this sample and start the check on mount. */
+  /** When set, choose this sample and open the review step; the check starts only from «ابدأ الفحص». */
   autoSample?: SampleId;
   /** Called once the check finished; the shell then shows the results screen. */
   onDone: (run: ComplianceRun) => void;

@@ -267,7 +267,7 @@ export async function parseStepDocument(
     throw new IfcProcessingError(
       "validate",
       "UNSUPPORTED_SCHEMA",
-      `المخطط ${schema} غير مدعوم في هذه النسخة. استخدم IFC4 أو IFC4X3.`,
+      `ملفات عقد موائم بإصدار ${schema} غير مدعومة. صدّر الملف بإصدار IFC4 أو IFC4X3.`,
     );
   }
   await reportPhase(

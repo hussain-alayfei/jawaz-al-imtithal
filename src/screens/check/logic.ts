@@ -2,7 +2,7 @@ import { copy } from "../../content/copy";
 import { getDefaultFacility, type ActivityId, type FacilityDetails } from "../../data";
 import { IfcProcessingError, type IfcUpload, type StageId } from "../../ifc/types";
 
-/* Pure helpers for the check screen: validation, error wording and number formatting. */
+/* Pure helpers for the check screen: validation, error wording, number formatting and the wizard's steps. */
 
 export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
@@ -82,7 +82,6 @@ const CODE_TO_KEY: Record<string, ErrorKey> = {
   UNSUPPORTED_EXTENSION: "type",
   INVALID_ENVELOPE: "type",
   MISSING_SCHEMA: "type",
-  UNSUPPORTED_SCHEMA: "type",
   NON_IFC_RECORD: "type",
   FILE_TOO_LARGE: "size",
   STANDARD_ACTIVITY_UNSUPPORTED: "activity",
@@ -91,7 +90,14 @@ const CODE_TO_KEY: Record<string, ErrorKey> = {
 };
 
 /* Data the file does carry but cannot be checked against; their engine message is clearer. */
-const OWN_MESSAGE_CODES = new Set(["NO_SPACES", "UNSUPPORTED_LENGTH_UNIT", "FACILITY_INCOMPLETE", "LEGACY_CONTRACT"]);
+const OWN_MESSAGE_CODES = new Set([
+  "NO_SPACES",
+  "UNSUPPORTED_LENGTH_UNIT",
+  "FACILITY_INCOMPLETE",
+  "LEGACY_CONTRACT",
+  // The engine names the exact IFC version and what to export instead.
+  "UNSUPPORTED_SCHEMA",
+]);
 
 export interface CheckFailure {
   /** Short sentence from copy.check.errors, or the engine message when none fits. */
@@ -145,4 +151,33 @@ export function clausesWord(total: number): string {
 /** How many of the run's stages have finished, for the determinate progress bar. */
 export function stagesDone(stages: readonly { state: string }[]): number {
   return stages.filter((stage) => stage.state === "completed").length;
+}
+
+/** The check is a three-step wizard: project data, plan file, review and check. */
+export type WizardStep = 1 | 2 | 3;
+
+export type StepStatus = "done" | "current" | "upcoming";
+
+/**
+ * How the step indicator draws a step. Steps before the current one are done (and lead back); the current step
+ * also shows as done once the check has finished, so the indicator ends with three checks.
+ */
+export function stepStatus(step: WizardStep, current: WizardStep, finished = false): StepStatus {
+  if (step < current) return "done";
+  if (step === current) return finished ? "done" : "current";
+  return "upcoming";
+}
+
+/**
+ * What a sample link (landing page, #/check?sample=id) fills in before the review: the samples are restaurant
+ * plans, so another activity switches to the restaurant (whose defaults include an area), and a blank area takes
+ * the restaurant default. Nothing when the project data already fits.
+ */
+export function sampleSetup(
+  activityId: ActivityId,
+  area: number,
+): { activityId: ActivityId } | { area: number } | undefined {
+  if (activityId !== "restaurant") return { activityId: "restaurant" };
+  if (!isAreaValid(area)) return { area: getDefaultFacility("restaurant").area };
+  return undefined;
 }
