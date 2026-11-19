@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, XCircle } from "lucide-react";
+import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, XCircle } from "../brand/icons";
 type Kind="architecture"|"mep"|"fire";
 export interface DemoFileElement {
  id:string;sceneId:string;label:string;type:string;floor:number;position:[number,number,number];description:string;system?:string;

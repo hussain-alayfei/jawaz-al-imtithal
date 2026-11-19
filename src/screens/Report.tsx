@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "../brand/icons";
 import { BrandMark, StatusGlyph, StatusMark, statusLabel } from "../brand/ui";
 import { copy } from "../content/copy";
 import type { Finding } from "../data";

@@ -160,9 +160,11 @@
   display: inline-flex;
   padding: 3px;
   gap: 2px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius-pill);
-  background: var(--paper);
+  background: rgb(232 232 237 / 0.86);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
   box-shadow: var(--vw-shadow);
 }
 
@@ -176,7 +178,7 @@
   color: var(--ink-2);
   font: inherit;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -186,13 +188,14 @@
 }
 
 .vw-seg:hover:not(:disabled):not([aria-pressed="true"]) {
-  background: var(--surface);
   color: var(--ink);
 }
 
 .vw-seg[aria-pressed="true"] {
-  background: var(--brand);
-  color: var(--brand-ink);
+  background: var(--seg-thumb);
+  color: var(--ink);
+  font-weight: 500;
+  box-shadow: var(--seg-thumb-shadow);
 }
 
 .vw-seg:disabled {
@@ -218,26 +221,21 @@
   gap: 8px;
 }
 
-/* Round icon buttons, white over the scene; pressed is green. */
+/* Round icon buttons over the scene: frosted grey discs with a dark glyph; a tool switched on is ink. */
 .vw__tools .icon-btn {
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow:
-    0 0 0 1px var(--line),
-    var(--vw-shadow);
+  background: rgb(232 232 237 / 0.86);
+  color: rgb(0 0 0 / 0.72);
 }
 
 .vw__tools .icon-btn:hover:not(:disabled) {
-  background: var(--surface);
+  background: rgb(222 222 227 / 0.94);
+  color: var(--ink);
 }
 
 .vw__tools .icon-btn[aria-pressed="true"],
 .vw__tools .icon-btn[aria-pressed="true"]:hover {
-  background: var(--brand);
-  color: var(--brand-ink);
-  box-shadow:
-    0 0 0 1px var(--brand),
-    var(--vw-shadow);
+  background: var(--ink);
+  color: #ffffff;
 }
 
 .vw__tools .icon-btn:disabled {

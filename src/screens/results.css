@@ -193,7 +193,7 @@
   gap: 2px;
   padding: 3px;
   border-radius: var(--radius-pill);
-  background: var(--surface);
+  background: var(--seg-track);
 }
 
 .rs-seg__item {
@@ -205,7 +205,7 @@
   color: var(--ink-2);
   font: inherit;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
@@ -216,13 +216,14 @@
 }
 
 .rs-seg__item:hover:not([aria-pressed="true"]) {
-  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .rs-seg__item[aria-pressed="true"] {
-  background: var(--brand);
-  color: var(--brand-ink);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background: var(--seg-thumb);
+  color: var(--ink);
+  font-weight: 500;
+  box-shadow: var(--seg-thumb-shadow);
 }
 
 .rs-seg__item:focus-visible {
@@ -534,8 +535,8 @@
 }
 
 .rs-guid .icon-btn:hover {
-  background: var(--brand-tint);
-  color: var(--brand);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .rs-guid .icon-btn.is-done {

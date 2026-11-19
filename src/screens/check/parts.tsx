@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from "react";
-import { Circle, CircleCheck, CircleDot, CircleX } from "lucide-react";
+import { Circle, CircleCheck, CircleDot, CircleX } from "../../brand/icons";
 import type { StageState } from "../../ifc/types";
 
 export const STROKE = 1.6;

@@ -1,6 +1,6 @@
 import {
   Building2, Check, Layers3, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, RotateCcw, X,
-} from "lucide-react";
+} from "../brand/icons";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Html, OrbitControls, useGLTF } from "@react-three/drei";
 import {
@@ -70,7 +70,7 @@ const TABS: { key: PanelTab; label: string }[] = [
   { key: "analysis", label: "التحليلات" },
 ];
 const VIEW_PRESETS: [Preset, string][] = [["iso", "منظور"], ["top", "علوي"], ["front", "واجهة"], ["inside", "داخلي"]];
-/** Line icons share one weight across the studio (lucide, strokeWidth 1.6). */
+/** Glyphs from src/brand/icons share one weight across the studio. */
 const ICON = { size: 18, strokeWidth: 1.6, "aria-hidden": true } as const;
 const ICON_SM = { size: 16, strokeWidth: 1.8, "aria-hidden": true } as const;
 /** Below this width the panel is a bottom sheet (the site header changes at the same width). */

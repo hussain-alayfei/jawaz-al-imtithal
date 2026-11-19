@@ -48,7 +48,7 @@
 }
 
 /* Plain line icons, one weight everywhere (including the file and analysis sections). */
-.twin-studio .lucide {
+.twin-studio .icon {
   flex: none;
   stroke-width: 1.6;
 }
@@ -60,8 +60,8 @@
 
 .twin-studio .icon-btn[aria-pressed="true"],
 .twin-studio .icon-btn[aria-pressed="true"]:hover {
-  background: var(--brand);
-  color: var(--brand-ink);
+  background: var(--ink);
+  color: #ffffff;
 }
 
 /* ---------------------------------------------------------------- Pill segmented control */
@@ -73,7 +73,7 @@
   gap: 2px;
   padding: 3px;
   border-radius: var(--radius-pill);
-  background: var(--surface);
+  background: var(--seg-track);
 }
 
 .tw-seg__item {
@@ -85,7 +85,7 @@
   background: transparent;
   color: var(--ink-2);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.2;
   white-space: nowrap;
   transition:
@@ -95,16 +95,15 @@
 }
 
 .tw-seg__item:hover:not([aria-pressed="true"], [aria-selected="true"]) {
-  background: var(--surface-2);
   color: var(--ink);
 }
 
 .tw-seg__item[aria-pressed="true"],
 .tw-seg__item[aria-selected="true"] {
-  background: var(--brand);
-  color: var(--brand-ink);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background: var(--seg-thumb);
+  color: var(--ink);
+  font-weight: 500;
+  box-shadow: var(--seg-thumb-shadow);
 }
 
 .tw-seg__item[aria-pressed="true"]:focus-visible,
@@ -318,7 +317,7 @@
   color: var(--brand);
 }
 
-.tw-reopen .lucide {
+.tw-reopen .icon {
   color: var(--brand);
 }
 
@@ -803,7 +802,7 @@
   font-weight: 600;
 }
 
-.bim-library__title .lucide {
+.bim-library__title .icon {
   color: var(--muted);
 }
 
@@ -821,7 +820,7 @@
   color: var(--muted);
 }
 
-.bim-library__demo .lucide {
+.bim-library__demo .icon {
   margin-block-start: 4px;
 }
 
@@ -837,17 +836,17 @@
   color: var(--ink-2);
 }
 
-.bim-library__loading .lucide,
-.bim-library__status .lucide {
+.bim-library__loading .icon,
+.bim-library__status .icon {
   margin-block-start: 3px;
 }
 
-.bim-library__status .lucide {
+.bim-library__status .icon {
   color: var(--brand);
 }
 
 .bim-library__status.is-error,
-.bim-library__status.is-error .lucide {
+.bim-library__status.is-error .icon {
   color: var(--fail);
 }
 
@@ -1052,7 +1051,7 @@
   background: var(--surface);
 }
 
-.bim-library__elements button .lucide {
+.bim-library__elements button .icon {
   margin-block-start: 4px;
   color: var(--muted);
 }
@@ -1118,7 +1117,7 @@
   padding-inline: 12px;
 }
 
-.venue-analysis__heading .lucide {
+.venue-analysis__heading .icon {
   margin-block-start: 3px;
   color: var(--muted);
 }
@@ -1239,7 +1238,7 @@
   color: var(--muted);
 }
 
-.venue-analysis__review .lucide {
+.venue-analysis__review .icon {
   margin-block-start: 4px;
 }
 

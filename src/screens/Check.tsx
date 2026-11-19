@@ -9,7 +9,7 @@ import {
   type FormEvent,
   type MouseEvent,
 } from "react";
-import { Check as CheckGlyph, ChevronDown, CircleAlert, Download, Info, Upload } from "lucide-react";
+import { Check as CheckGlyph, ChevronDown, CircleAlert, Download, Info, Upload } from "../brand/icons";
 import { activityExamples, getAnalysisStages, type ActivityId } from "../data";
 import { runIfcCompliance } from "../ifc/pipeline";
 import type { ComplianceRun, IfcUpload, PipelineEvent, StageId, StageState } from "../ifc/types";

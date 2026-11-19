@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, ShieldAlert, XCircle } from "lucide-react";
+import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, ShieldAlert, XCircle } from "../brand/icons";
 import { SERVICE_META, type ServiceKey } from "./EngineeringNetworks3D";
 import { getVenueEngineeringElements, getVenueMetrics, type VenueBimElement } from "./VenueEngineeringData";
 import type { VenueKind } from "./VenueScene3D";

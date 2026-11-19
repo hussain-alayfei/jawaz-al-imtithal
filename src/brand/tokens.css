@@ -172,7 +172,9 @@ img {
   padding-inline: var(--gutter);
 }
 
-/* Buttons: Apple-style pills. One green primary, an outlined secondary, text links for the rest. */
+/* Buttons: pills at system proportions. Regular weight, 17px, 44px tall; one filled green primary, an
+   outlined secondary of the same size, and text links with a thin chevron for everything else. No scaling,
+   glow or heavy shadow: colour alone says it is pressable. */
 .btn {
   --btn-bg: transparent;
   --btn-fg: var(--brand);
@@ -180,41 +182,36 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  padding-block: 8px;
-  padding-inline: 24px;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 22px;
   border: 1px solid var(--btn-border);
   border-radius: var(--radius-pill);
   background: var(--btn-bg);
   color: var(--btn-fg);
   font-family: var(--font);
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 200ms var(--ease),
-    border-color 200ms var(--ease),
-    color 200ms var(--ease),
-    transform 120ms var(--ease);
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    color 160ms var(--ease);
 }
 
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn svg {
+.btn .icon {
   flex: none;
+  width: 1.1em;
+  height: 1.1em;
 }
 
 .btn[disabled],
 .btn[aria-disabled="true"] {
-  opacity: 0.4;
+  opacity: 0.38;
   cursor: not-allowed;
-  transform: none;
 }
 
 .btn--primary,
@@ -226,6 +223,12 @@ img {
 
 .btn--primary:hover,
 .btn--accent:hover {
+  --btn-bg: #0c8a57;
+  --btn-border: #0c8a57;
+}
+
+.btn--primary:active,
+.btn--accent:active {
   --btn-bg: var(--brand-hover);
   --btn-border: var(--brand-hover);
 }
@@ -237,18 +240,20 @@ img {
 }
 
 .btn--secondary:hover {
-  --btn-bg: var(--brand-tint);
+  --btn-bg: var(--brand);
+  --btn-fg: var(--brand-ink);
 }
 
+/* Grey pill for quiet actions next to a primary (like a system "gray" button). */
 .btn--quiet {
-  --btn-bg: var(--surface);
+  --btn-bg: var(--surface-2);
   --btn-fg: var(--ink);
-  --btn-border: var(--surface);
+  --btn-border: var(--surface-2);
 }
 
 .btn--quiet:hover {
-  --btn-bg: var(--surface-2);
-  --btn-border: var(--surface-2);
+  --btn-bg: #dcdce1;
+  --btn-border: #dcdce1;
 }
 
 .btn--on-dark,
@@ -259,14 +264,14 @@ img {
 }
 
 .btn--large {
-  min-height: 54px;
-  padding-inline: 32px;
+  min-height: 50px;
+  padding: 12px 28px;
   font-size: 18px;
 }
 
 .btn--small {
-  min-height: 36px;
-  padding-inline: 16px;
+  min-height: 32px;
+  padding: 5px 15px;
   font-size: 14px;
 }
 
@@ -275,57 +280,85 @@ img {
   align-items: center;
 }
 
-/* Text link. Add .link--more for the chevron ("اعرف المزيد ‹"). */
+/* Text link. Add .link--more for the thin chevron («آلية الفحص ‹»). */
 .link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--brand);
   font: inherit;
-  font-weight: 500;
+  font-weight: 400;
   text-decoration: none;
   cursor: pointer;
 }
 
 .link:hover {
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-underline-offset: 3px;
 }
 
 .link--more::after {
   content: "";
-  width: 0.62em;
-  height: 0.62em;
-  margin-inline-start: 1px;
+  width: 0.7em;
+  height: 0.7em;
+  margin-inline-start: 2px;
   background: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 5 8l5 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 5 8l5 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.25 2.75 5 8l5.25 5.25' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.25 2.75 5 8l5.25 5.25' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
+/* Glyphs (src/brand/icons.tsx) sit on the text's centre line. */
+.icon {
+  flex: none;
+  display: inline-block;
+  vertical-align: -0.15em;
+}
+
+/* Round icon buttons: a translucent grey disc with a dark glyph; pressed (a tool switched on) is ink. */
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 0;
-  background: var(--surface);
-  color: var(--ink);
+  background: rgb(210 210 215 / 0.64);
+  color: rgb(0 0 0 / 0.66);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
   cursor: pointer;
-  transition: background-color 200ms var(--ease);
+  transition:
+    background-color 160ms var(--ease),
+    color 160ms var(--ease);
 }
 
 .icon-btn:hover {
-  background: var(--surface-2);
+  background: rgb(223 223 227 / 0.86);
+  color: rgb(0 0 0 / 0.8);
 }
 
 .icon-btn[aria-pressed="true"] {
   background: var(--ink);
   color: #ffffff;
+}
+
+@media (pointer: coarse) {
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Segmented control: a grey track and a raised white thumb for the chosen item. Screens build theirs from
+   these values (.rs-seg, .vw__views, .tw-seg). */
+:root {
+  --seg-track: #e8e8ed;
+  --seg-thumb: #ffffff;
+  --seg-thumb-shadow: 0 1px 2px rgb(0 0 0 / 0.1), 0 0 0 0.5px rgb(0 0 0 / 0.06);
 }
 
 /* Status marks: a round glyph plus the status word. */

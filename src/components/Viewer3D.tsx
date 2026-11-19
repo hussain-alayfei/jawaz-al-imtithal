@@ -23,7 +23,7 @@ import {
   Ruler,
   ScanLine,
   Tags,
-} from "lucide-react";
+} from "../brand/icons";
 import {
   type MouseEvent as ReactMouseEvent,
   createContext,

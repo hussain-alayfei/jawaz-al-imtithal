@@ -1,6 +1,6 @@
 import type React from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { Check, Minus, X } from "lucide-react";
+import { Check, Minus, X } from "./icons";
 import type { ResultStatus } from "../data";
 import { copy } from "../content/copy";
 

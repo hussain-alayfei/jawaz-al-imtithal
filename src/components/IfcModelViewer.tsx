@@ -1,7 +1,7 @@
 import { Html, Line, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
-import { Check, Crosshair, Layers, LayoutGrid, Minus, Scissors, X } from "lucide-react";
+import { Check, Crosshair, Layers, LayoutGrid, Minus, Scissors, X } from "../brand/icons";
 import { ToneMappingMode } from "postprocessing";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";

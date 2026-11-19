@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Box, Check, ChevronDown, Copy, Info, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Box, Check, ChevronDown, Copy, Info, PanelRightClose, PanelRightOpen } from "../brand/icons";
 import { IconButton, StatusGlyph, StatusMark } from "../brand/ui";
 import { copy } from "../content/copy";
 import type { Finding } from "../data";
