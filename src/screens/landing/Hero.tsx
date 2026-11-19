@@ -4,10 +4,11 @@ import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
 import { follow, goToSection } from "./follow";
 
-/** The opening photograph, edge to edge: the restaurant stands low in the frame and the evening sky above
-    it carries the headline, one sentence and two actions in white. The sky's own colour sits behind the
+/** The opening photograph, edge to edge: the whole building stands low in the frame and the evening sky
+    above it carries the headline, one line and two actions in white. The sky's own colour sits behind the
     photo (and continues it upward where the screen is narrower than the photo), so the words are readable
-    before the file arrives; the photo then fades in and settles, never over an empty frame. */
+    before the file arrives; the photo then fades in and settles. Scrolling out of the hero, the words lift
+    and fade, the photo drifts and grows a little, and the lower corners round off (--hp, 0 to 1). */
 export function Hero({ onStart }: { onStart: () => void }) {
   const { hero } = copy.web;
   const heroRef = useRef<HTMLElement>(null);
@@ -22,8 +23,40 @@ export function Hero({ onStart }: { onStart: () => void }) {
     return () => window.clearTimeout(timeout);
   }, []);
 
+  /* How far the page has scrolled past the hero, 0 to 1, for the stylesheet's exit motion. */
+  useEffect(() => {
+    const section = heroRef.current;
+    if (!section) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let last = "";
+    const update = () => {
+      frame = 0;
+      const height = section.offsetHeight || 1;
+      const progress = reduce.matches ? 0 : Math.min(1, Math.max(0, window.scrollY / height));
+      const value = progress.toFixed(4);
+      if (value !== last) {
+        last = value;
+        section.style.setProperty("--hp", value);
+      }
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    reduce.addEventListener?.("change", schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      reduce.removeEventListener?.("change", schedule);
+    };
+  }, []);
+
   /* Where the words end, for the stylesheet: the photo is set low enough that the palms start below the
-     actions, whatever the words' wrapping and the font do. Without it the photo keeps its default place. */
+     actions, whatever the words' wrapping and the font do (never so low that the steps are cut). */
   useLayoutEffect(() => {
     const section = heroRef.current;
     const head = headRef.current;
@@ -66,7 +99,7 @@ export function Hero({ onStart }: { onStart: () => void }) {
           </a>
           <a
             href="#/model"
-            className="link link--more hm-hero__link"
+            className="btn btn--large hm-hero__ghost"
             onClick={follow(() => goToSection("home-model", "#/model"))}
           >
             {hero.link}

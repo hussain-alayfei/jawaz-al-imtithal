@@ -61,26 +61,30 @@
   font-size: var(--t-body);
 }
 
-/* 1. Hero: one photograph, edge to edge, as tall as the screen under the header (560–900px; about 78% of
-   the screen on phones). The hero is a size container, so the photo is placed in proportion to it. */
+/* 1. Hero: one photograph, edge to edge, as tall as the screen under the header (520–1100px; about 80% of
+   the screen on phones). The hero is a size container, so the photo is placed in proportion to it.
+   The whole building shows, from the palm tops to the steps: the photo sits low, with calm sky above it
+   for a short headline, one line and two actions. Scrolling out, the words lift and fade, the photo
+   drifts and grows a little, and the hero's lower corners round off into the page (Hero.tsx sets --hp). */
 .hm-hero {
+  --hp: 0;
+  /* Photo height: its own 2:1 at full width, or 58% of the hero when that is taller (phones crop its sides).
+     Resolved where it is used, so cq units refer to the hero. */
+  --hm-photo-h: max(50cqw, 58cqh);
   position: relative;
   container: hm-hero / size;
-  height: max(560px, min(100vh - var(--header-h), 900px));
-  height: max(560px, min(100svh - var(--header-h), 900px));
+  height: max(520px, min(100vh - var(--header-h), 1100px));
+  height: max(520px, min(100svh - var(--header-h), 1100px));
   overflow: hidden;
   isolation: isolate;
   background: #3162a3;
   color: #ffffff;
+  clip-path: inset(0 round 0 0 calc(var(--hp) * 44px) calc(var(--hp) * 44px));
 }
 
-/* The sky behind the photo: the photo's own top-edge colours (lighter towards the afterglow on the left),
-   drawn as wide as the photo is drawn, so the photo's sky runs on into it without a seam. It shows where
-   the screen is narrower than the photo's 2:1 (phones, tablets, most laptops): the photo then sits low,
-   with the building in the lower half and calm sky above for the words. */
+/* The sky behind the photo: the photo's own top-edge colours, drawn as wide as the photo is drawn, so the
+   photo's sky runs on into it without a seam where the screen is narrower than the photo's 2:1. */
 .hm-hero__media {
-  /* Photo height: its own 2:1 at full width, or 60% of the hero when that is taller (phones crop its sides). */
-  --hm-photo-h: max(50cqw, 60cqh);
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -88,51 +92,46 @@
     linear-gradient(to right, #5179b9, #3f6bae 25%, #3162a3 50%, #305c9d 75%, #255693) 50% 0 /
       max(100cqw, 2 * var(--hm-photo-h)) 100% no-repeat,
     #3162a3;
+  transform-origin: 50% 100%;
+  transform: translateY(calc(var(--hp) * 14cqh)) scale(calc(1 + var(--hp) * 0.08));
+  will-change: transform;
 }
 
-/* Where the photo sits (the palms start 30% down it, the building 35%, the glass front ends at 80%): low
-   enough that the palms start 36px under the actions (--hm-head-end, measured by Hero.tsx), that the
-   building starts at 44% of the hero or lower, and that at least the near plaza (6%) is cut at the bottom;
-   but never so low that the glass front is cut. */
+/* Where the photo sits (palm tops at 29% of it, roof at 36%, glass front to 80%, steps to 86%): by default
+   with only the far plaza (6%) below the screen's edge; lower when the words need the room, so the palms
+   start 14px under the actions (--hm-head-end, measured by Hero.tsx); never so low that the steps are cut. */
 .hm-hero__img {
-  --hm-photo-top: max(
-    var(--hm-head-end, 0px) + 36px - 0.3 * var(--hm-photo-h),
-    44cqh - 0.35 * var(--hm-photo-h),
-    100cqh - 0.94 * var(--hm-photo-h)
+  --hm-photo-top: min(
+    max(100cqh - 0.94 * var(--hm-photo-h), var(--hm-head-end, 0px) + 14px - 0.29 * var(--hm-photo-h)),
+    100cqh - 0.88 * var(--hm-photo-h)
   );
   position: absolute;
   inset-inline: 0;
-  inset-block-start: min(var(--hm-photo-top), 100cqh - 0.8 * var(--hm-photo-h));
+  inset-block-start: var(--hm-photo-top);
   width: 100%;
   max-width: none;
   height: var(--hm-photo-h);
   object-fit: cover;
   object-position: 50% 50%;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%);
-  mask-image: linear-gradient(to bottom, transparent, #000 16%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%);
   transform-origin: 50% 70%;
 }
 
-/* Portrait tablets: a taller photo, so the building does not shrink under a wide empty sky. */
-@container hm-hero (0.75 <= aspect-ratio <= 1.5) {
-  .hm-hero__media {
-    --hm-photo-h: max(50cqw, 70cqh);
-  }
-}
-
-/* A soft dark scrim from the top, only as strong as the white words need for 4.5:1 over the sky (measured
-   at 375, 768, 1440 and 1920 px), gone before the building. */
+/* A soft dark scrim from the top for the white words (4.5:1 over the sky), deepening as the hero leaves. */
 .hm-hero__media::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.11) 0%,
-    rgb(0 0 0 / 0.08) 28%,
-    rgb(0 0 0 / 0.03) 42%,
-    rgb(0 0 0 / 0) 56%
-  );
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.12) 0%,
+      rgb(0 0 0 / 0.08) 26%,
+      rgb(0 0 0 / 0.02) 40%,
+      rgb(0 0 0 / 0) 52%
+    ),
+    rgb(0 0 0 / calc(var(--hp) * 0.28));
   pointer-events: none;
 }
 
@@ -142,27 +141,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  /* At least the sky above the photo's default place (down to 14px over the palm tops), with the words
+     centred in it; taller words grow the box, and Hero.tsx moves the photo down to match. */
+  min-height: calc(100cqh - 0.65 * var(--hm-photo-h) - 14px);
   max-width: calc(1240px + 2 * var(--gutter));
   margin-inline: auto;
-  padding: clamp(36px, 7cqh, 64px) var(--gutter) 0;
+  padding: clamp(20px, 3cqh, 32px) var(--gutter) 0;
   text-align: center;
+  opacity: calc(1 - var(--hp) * 1.8);
+  transform: translateY(calc(var(--hp) * -72px));
+  will-change: opacity, transform;
 }
 
 .hm-hero__title {
-  max-width: 1200px;
+  max-width: 1100px;
   color: #ffffff;
-  font-size: var(--t-hero);
+  font-size: clamp(34px, 5.2vw, 72px);
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.15;
   text-wrap: balance;
 }
 
 .hm-hero__sub {
-  max-width: 820px;
-  margin-block-start: 20px;
+  max-width: 640px;
+  margin-block-start: 14px;
   color: #ffffff;
-  font-size: clamp(17px, 1.65vw, 22px);
-  line-height: 1.6;
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.55;
   text-wrap: balance;
 }
 
@@ -171,11 +177,16 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px 28px;
-  margin-block-start: 28px;
+  gap: 12px;
+  margin-block-start: 26px;
 }
 
-/* The white pill: the hero's one primary action, on the photo. */
+/* Two pills of one size: white for the check, a white outline for how it works. */
+.hm-hero__cta,
+.hm-hero__ghost {
+  min-width: 148px;
+}
+
 .hm-hero__cta {
   --btn-bg: #ffffff;
   --btn-fg: var(--ink);
@@ -183,39 +194,43 @@
 }
 
 .hm-hero__cta:hover {
-  --btn-bg: rgb(255 255 255 / 0.86);
+  --btn-bg: rgb(255 255 255 / 0.88);
   --btn-border: transparent;
 }
 
-.hm-hero__link,
-.hm-hero__link:hover {
-  color: #ffffff;
-  font-size: 18px;
+.hm-hero__ghost {
+  --btn-bg: rgb(255 255 255 / 0.08);
+  --btn-fg: #ffffff;
+  --btn-border: rgb(255 255 255 / 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
-/* Short, wide heroes (most laptop windows): smaller words, so the building keeps its place below them. */
-@container hm-hero (height < 760px) and (aspect-ratio > 14 / 10) {
-  .hm-hero__head {
-    padding-block-start: clamp(32px, 6cqh, 44px);
-  }
+.hm-hero__ghost:hover {
+  --btn-bg: rgb(255 255 255 / 0.18);
+  --btn-border: #ffffff;
+}
 
+/* Short, wide heroes (most laptop windows): smaller words, so the whole building fits below them. */
+@container hm-hero (height < 700px) and (aspect-ratio > 14 / 10) {
   .hm-hero__title {
-    font-size: min(var(--t-hero), 64px);
+    font-size: min(clamp(34px, 5.2vw, 72px), 46px);
   }
 
   .hm-hero__sub {
-    margin-block-start: 16px;
-    font-size: min(clamp(17px, 1.65vw, 22px), 19px);
+    margin-block-start: 8px;
+    font-size: 17px;
   }
 
   .hm-hero__actions {
-    margin-block-start: 24px;
+    margin-block-start: 16px;
   }
 
-  .hm-hero__cta {
-    min-height: 48px;
-    padding-inline: 28px;
-    font-size: 17px;
+  .hm-hero__cta,
+  .hm-hero__ghost {
+    min-height: 44px;
+    padding-inline: 24px;
+    font-size: 16px;
   }
 }
 
@@ -456,20 +471,20 @@
   background: var(--line);
 }
 
-/* Phones: the hero is about 78% of the screen tall. */
+/* Phones: the hero is about 80% of the screen tall. */
 @media (max-width: 833px) {
   .hm-hero {
-    height: max(480px, 78vh);
-    height: max(480px, 78svh);
+    --hm-photo-h: max(50cqw, 64cqh);
+    height: max(500px, 80vh);
+    height: max(500px, 80svh);
   }
 
-  .hm-hero__actions {
-    gap: 12px 24px;
-  }
-
-  .hm-hero__link,
-  .hm-hero__link:hover {
-    font-size: 17px;
+  .hm-hero__cta,
+  .hm-hero__ghost {
+    min-width: 0;
+    min-height: 48px;
+    padding-inline: 24px;
+    font-size: 16px;
   }
 }
 
