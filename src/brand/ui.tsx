@@ -1,3 +1,4 @@
+import type React from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Check, Minus, X } from "lucide-react";
 import type { ResultStatus } from "../data";
@@ -161,28 +162,38 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
+/** Wordmark: «موائم» with an orange dimension line underneath (the product measures plans). */
 export function Wordmark({
   href = "#/",
   className,
   onClick,
+  size,
 }: {
   href?: string;
   className?: string;
   onClick?: () => void;
+  /** Font size of the word in px (default 22). */
+  size?: number;
 }) {
   return (
     <a
       href={href}
       className={["wordmark", className ?? ""].filter(Boolean).join(" ")}
       aria-label={copy.brand.homeLabel}
+      style={size ? ({ "--wm-size": `${size}px` } as React.CSSProperties) : undefined}
       onClick={(event) => {
         if (!onClick) return;
         event.preventDefault();
         onClick();
       }}
     >
-      <BrandMark />
-      <span>{copy.brand.name}</span>
+      <span className="wordmark__text" aria-hidden="true">
+        {copy.brand.name}
+      </span>
+      <svg className="wordmark__line" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M1 4H99" stroke="#F26A1B" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+        <path d="M1 0.5V7.5M99 0.5V7.5" stroke="#F26A1B" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      </svg>
     </a>
   );
 }

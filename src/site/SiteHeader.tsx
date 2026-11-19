@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
-import { BrandMark } from "../brand/ui";
+import { Wordmark } from "../brand/ui";
 import { copy } from "../content/copy";
 import "./site.css";
 
@@ -12,27 +11,26 @@ export interface SiteHeaderProps {
   onNavigate: (target: NavTarget) => void;
 }
 
-const LINKS: { target: NavTarget; label: string }[] = [
-  { target: "how", label: copy.site.nav.how },
-  { target: "clauses", label: copy.site.nav.clauses },
-  { target: "model", label: copy.site.nav.model },
-  { target: "twin", label: copy.site.nav.twin },
+const LINKS: { target: NavTarget; label: string; href: string }[] = [
+  { target: "check", label: copy.web.nav.check, href: "#/check" },
+  { target: "model", label: copy.web.nav.model, href: "#/model" },
+  { target: "clauses", label: copy.web.nav.rules, href: "#/clauses" },
+  { target: "twin", label: copy.web.nav.twin, href: "#/twin" },
 ];
 
-const HREF: Record<NavTarget, string> = {
-  home: "#/",
-  how: "#/how",
-  clauses: "#/clauses",
-  model: "#/model",
-  twin: "#/twin",
-  check: "#/check",
-};
-
-/** Light, compact site header: wordmark, four text links and one action. */
+/** Slim translucent global navigation (Apple-style): wordmark, four links, one small action. */
 export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
-  const menuId = useId();
+  const [scrolled, setScrolled] = useState(false);
+  const sheetId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -42,8 +40,13 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
         toggleRef.current?.focus();
       }
     };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const go = (target: NavTarget) => (event: React.MouseEvent) => {
@@ -53,20 +56,17 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   };
 
   return (
-    <header className="site-header">
-      <div className="page site-header__inner">
-        <a href="#/" className="site-brand" aria-label={copy.brand.homeLabel} onClick={go("home")}>
-          <BrandMark className="site-brand__mark" />
-          <span className="site-brand__name">{copy.brand.name}</span>
-        </a>
+    <header className={`gn${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`}>
+      <div className="gn__inner">
+        <Wordmark className="gn__brand" onClick={() => { setOpen(false); onNavigate("home"); }} />
 
-        <nav className="site-nav" aria-label={copy.site.nav.label}>
-          <ul id={menuId} className={`site-nav__list${open ? " is-open" : ""}`}>
+        <nav className="gn__nav" aria-label={copy.web.nav.label}>
+          <ul>
             {LINKS.map((link) => (
               <li key={link.target}>
                 <a
-                  href={HREF[link.target]}
-                  className="site-nav__link"
+                  href={link.href}
+                  className="gn__link"
                   aria-current={current === link.target ? "page" : undefined}
                   onClick={go(link.target)}
                 >
@@ -74,30 +74,40 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
                 </a>
               </li>
             ))}
-            <li className="site-nav__cta-mobile">
-              <a href="#/check" className="btn btn--primary" onClick={go("check")}>
-                {copy.site.nav.cta}
-              </a>
-            </li>
           </ul>
         </nav>
 
-        <div className="site-header__actions">
-          <a href="#/check" className="btn btn--primary site-header__cta" onClick={go("check")}>
-            {copy.site.nav.cta}
-          </a>
-          <button
-            ref={toggleRef}
-            type="button"
-            className="icon-btn site-header__toggle"
-            aria-expanded={open}
-            aria-controls={menuId}
-            aria-label={open ? copy.site.nav.close : copy.site.nav.open}
-            onClick={() => setOpen((value) => !value)}
-          >
-            {open ? <X size={20} strokeWidth={1.8} /> : <Menu size={20} strokeWidth={1.8} />}
-          </button>
-        </div>
+        <a href="#/check" className="btn btn--primary btn--small gn__cta" onClick={go("check")}>
+          {copy.web.nav.cta}
+        </a>
+
+        <button
+          ref={toggleRef}
+          type="button"
+          className="gn__menu"
+          aria-expanded={open}
+          aria-controls={sheetId}
+          aria-label={open ? copy.web.nav.close : copy.web.nav.open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+        </button>
+      </div>
+
+      <div id={sheetId} className="gn__sheet" hidden={!open}>
+        <ul>
+          {LINKS.map((link) => (
+            <li key={link.target}>
+              <a href={link.href} className="gn__sheet-link" onClick={go(link.target)}>
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a href="#/check" className="btn btn--primary btn--large gn__sheet-cta" onClick={go("check")}>
+          {copy.web.nav.cta}
+        </a>
       </div>
     </header>
   );

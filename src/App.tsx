@@ -193,7 +193,7 @@ export default function App() {
 
   return (
     <div className="app" dir="rtl" lang="ar">
-      {route !== "twin" && <SiteHeader onNavigate={navigate} />}
+      {route !== "twin" && <SiteHeader current={route === "check" ? "check" : undefined} onNavigate={navigate} />}
 
       {route === "landing" && <Landing onStart={startCheck} onSample={startSample} onTwin={() => go("twin")} />}
 

@@ -5,6 +5,7 @@ import "@fontsource/noto-sans-arabic/arabic-400.css";
 import "@fontsource/noto-sans-arabic/arabic-500.css";
 import "@fontsource/noto-sans-arabic/arabic-600.css";
 import "@fontsource/noto-sans-arabic/arabic-700.css";
+import "@fontsource/noto-sans-arabic/arabic-800.css";
 import "@fontsource/noto-sans/latin-400.css";
 import "@fontsource/noto-sans/latin-600.css";
 import "@fontsource/noto-sans/latin-700.css";

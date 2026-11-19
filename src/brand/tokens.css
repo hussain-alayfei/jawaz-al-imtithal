@@ -1,51 +1,64 @@
-/* موائم: formal identity (v2). One brand colour, neutral greys, Almarai throughout.
-   Screens own their layout CSS; colours, type, buttons and status marks live here.
-   No gradients, no shadows for depth (hairline borders instead), one simple fade for motion. */
+/* موائم v4: white mode. Green brand, orange accent, near-black ink, white and Apple-grey surfaces.
+   Big type, generous space, pill buttons, quiet chrome. Screens own their layout CSS. */
 
 :root {
-  /* Palette from the ui-ux-pro-max design system for Mowaem: "Trust & Authority", Swiss minimal.
-     Navy for structure and primary actions, amber only for the one main action, slate neutrals. */
   --paper: #ffffff;
-  --surface: #f8fafc;
-  --surface-2: #e9eef5;
-  --ink: #0f172a;
-  --ink-2: #1e293b;
-  --muted: #475569;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
+  --surface: #f5f5f7;
+  --surface-2: #e8e8ed;
+  --ink: #1d1d1f;
+  --ink-2: #424245;
+  --muted: #6e6e73;
+  --line: #d2d2d7;
+  --line-strong: #b0b0b6;
 
-  --brand: #1e3a8a;
-  --brand-hover: #1e40af;
+  /* Brand: green for actions and links, orange only as an accent (logo line, highlights). */
+  --brand: #0a7a4d;
+  --brand-hover: #08663f;
   --brand-ink: #ffffff;
-  --brand-tint: #e8eefb;
+  --brand-tint: #e7f3ed;
+  --accent: #f26a1b;
+  --accent-text: #b5480c;
+  --accent-tint: #fdf0e7;
 
-  --accent: #b45309;
-  --accent-hover: #92400e;
-  --accent-ink: #ffffff;
-
-  /* Status colours: used only for results */
-  --pass: #15803d;
-  --pass-tint: #e8f5ec;
-  --fail: #dc2626;
-  --fail-tint: #fdecec;
-  --unknown: #475569;
-  --unknown-tint: #eef2f6;
+  /* Results only. Orange is never a status. */
+  --pass: #0a7a4d;
+  --pass-tint: #e7f3ed;
+  --fail: #c9182b;
+  --fail-tint: #fcebec;
+  --unknown: #6e6e73;
+  --unknown-tint: #f0f0f3;
 
   --font: "Noto Sans Arabic", "Noto Sans", system-ui, "Segoe UI", Tahoma, sans-serif;
 
-  --radius: 8px;
-  --radius-lg: 12px;
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --header-h: 68px;
-  --page-max: 1200px;
-  --gutter: clamp(16px, 4vw, 40px);
+  /* Type scale */
+  --t-hero: clamp(40px, 6.2vw, 80px);
+  --t-h2: clamp(32px, 4.6vw, 56px);
+  --t-h3: clamp(22px, 2.4vw, 30px);
+  --t-lead: clamp(19px, 1.9vw, 24px);
+  --t-body: 17px;
+  --t-small: 14px;
+  --t-fine: 12px;
 
-  /* Legacy names kept so older components keep compiling while screens move to v2. */
+  /* Space */
+  --section-y: clamp(88px, 12vw, 168px);
+  --gutter: clamp(20px, 5vw, 48px);
+  --page-max: 1120px;
+  --text-max: 680px;
+
+  --radius: 12px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+  --radius-pill: 980px;
+  --header-h: 52px;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Legacy names kept so older components keep compiling. */
   --stone: var(--surface-2);
   --stone-soft: var(--surface);
   --palm: var(--brand);
   --palm-hover: var(--brand-hover);
-  --palm-deep: #0a2b21;
+  --palm-deep: #06522f;
   --gold: var(--line-strong);
   --gold-text: var(--muted);
   --gold-on-palm: #ffffff;
@@ -59,9 +72,10 @@
   --line-soft: var(--line);
   --font-display: var(--font);
   --font-ui: var(--font);
-  --radius-pill: var(--radius);
   --radius-field: var(--radius);
   --radius-panel: var(--radius-lg);
+  --accent-hover: var(--brand-hover);
+  --accent-ink: #ffffff;
 
   color-scheme: light;
 }
@@ -75,7 +89,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scroll-padding-top: calc(var(--header-h) + 16px);
+  scroll-padding-top: calc(var(--header-h) + 24px);
 }
 
 body {
@@ -83,9 +97,9 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font);
-  font-size: 16px;
+  font-size: var(--t-body);
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -96,9 +110,10 @@ h3,
 h4 {
   font-family: var(--font);
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.25;
   color: var(--ink);
   margin: 0;
+  text-wrap: balance;
 }
 
 p {
@@ -124,7 +139,6 @@ img {
   outline-offset: 3px;
 }
 
-/* On brand-coloured surfaces the ring turns white so it stays visible. */
 .on-dark :focus-visible {
   outline-color: #ffffff;
 }
@@ -145,7 +159,6 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
-/* Page container */
 .page {
   width: 100%;
   max-width: calc(var(--page-max) + 2 * var(--gutter));
@@ -153,7 +166,7 @@ img {
   padding-inline: var(--gutter);
 }
 
-/* Buttons: soft-cornered, solid or outlined, text first. */
+/* Buttons: Apple-style pills. One green primary, an outlined secondary, text links for the rest. */
 .btn {
   --btn-bg: transparent;
   --btn-fg: var(--brand);
@@ -162,24 +175,29 @@ img {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  padding-block: 10px;
-  padding-inline: 22px;
+  min-height: 46px;
+  padding-block: 8px;
+  padding-inline: 24px;
   border: 1px solid var(--btn-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   background: var(--btn-bg);
   color: var(--btn-fg);
   font-family: var(--font);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 500;
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 160ms var(--ease),
-    border-color 160ms var(--ease),
-    color 160ms var(--ease);
+    background-color 200ms var(--ease),
+    border-color 200ms var(--ease),
+    color 200ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn svg {
@@ -188,116 +206,119 @@ img {
 
 .btn[disabled],
 .btn[aria-disabled="true"] {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
-.btn--primary {
+.btn--primary,
+.btn--accent {
   --btn-bg: var(--brand);
   --btn-fg: var(--brand-ink);
   --btn-border: var(--brand);
 }
 
-.btn--primary:hover {
+.btn--primary:hover,
+.btn--accent:hover {
   --btn-bg: var(--brand-hover);
   --btn-border: var(--brand-hover);
 }
 
-/* The one main action on a page (upload a file, start the check). */
-.btn--accent {
-  --btn-bg: var(--accent);
-  --btn-fg: var(--accent-ink);
-  --btn-border: var(--accent);
-}
-
-.btn--accent:hover {
-  --btn-bg: var(--accent-hover);
-  --btn-border: var(--accent-hover);
-}
-
-.btn--large {
-  min-height: 56px;
-  padding-inline: 28px;
-  font-size: 17px;
-}
-
 .btn--secondary {
-  --btn-bg: var(--paper);
-  --btn-fg: var(--ink);
-  --btn-border: var(--line-strong);
+  --btn-bg: transparent;
+  --btn-fg: var(--brand);
+  --btn-border: var(--brand);
 }
 
 .btn--secondary:hover {
-  --btn-border: var(--ink);
+  --btn-bg: var(--brand-tint);
+}
+
+.btn--quiet {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  --btn-border: var(--surface);
+}
+
+.btn--quiet:hover {
+  --btn-bg: var(--surface-2);
+  --btn-border: var(--surface-2);
 }
 
 .btn--on-dark,
 .btn--gold {
   --btn-bg: #ffffff;
-  --btn-fg: var(--brand);
+  --btn-fg: var(--ink);
   --btn-border: #ffffff;
 }
 
-.btn--on-dark:hover,
-.btn--gold:hover {
-  --btn-bg: var(--brand-tint);
-  --btn-border: var(--brand-tint);
+.btn--large {
+  min-height: 54px;
+  padding-inline: 32px;
+  font-size: 18px;
 }
 
 .btn--small {
-  min-height: 44px;
+  min-height: 36px;
   padding-inline: 16px;
-  font-size: 15px;
+  font-size: 14px;
 }
 
-/* Legacy icon disc: shown as a plain inline icon now. */
 .btn__disc {
   display: inline-flex;
   align-items: center;
 }
 
+/* Text link. Add .link--more for the chevron ("اعرف المزيد ‹"). */
 .link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--brand);
   font: inherit;
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
+  font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .link:hover {
-  text-decoration-thickness: 2px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
-/* Icon-only button (zoom, close, copy). */
+.link--more::after {
+  content: "";
+  width: 0.62em;
+  height: 0.62em;
+  margin-inline-start: 1px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 5 8l5 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3 5 8l5 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 .icon-btn {
   display: inline-grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line-strong);
-  background: var(--paper);
+  border-radius: 50%;
+  border: 0;
+  background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  transition: border-color 160ms var(--ease), background-color 160ms var(--ease);
+  transition: background-color 200ms var(--ease);
 }
 
 .icon-btn:hover {
-  border-color: var(--ink);
+  background: var(--surface-2);
 }
 
 .icon-btn[aria-pressed="true"] {
-  background: var(--brand);
-  border-color: var(--brand);
+  background: var(--ink);
   color: #ffffff;
 }
 
@@ -306,8 +327,8 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -349,7 +370,7 @@ img {
 }
 
 .status--lg {
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .status--lg .status__glyph {
@@ -358,13 +379,13 @@ img {
 }
 
 .count {
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 15px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-/* Legacy seal (no longer used by v2 screens). */
+/* Legacy seal styles (unused by current screens). */
 .seal {
   position: relative;
   display: inline-block;
@@ -390,7 +411,8 @@ img {
   line-height: 1.25;
 }
 
-.seal__top {
+.seal__top,
+.seal__bottom {
   font-size: 0.1em;
   font-weight: 700;
   color: var(--muted);
@@ -403,29 +425,28 @@ img {
   white-space: nowrap;
 }
 
-.seal__bottom {
-  font-weight: 700;
-  font-size: 0.09em;
-  color: var(--brand);
-}
-
-/* Wordmark */
+/* Wordmark: «موائم» in green with an orange dimension line underneath (measurement is the product). */
 .wordmark {
   display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: inherit;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  color: var(--brand);
   text-decoration: none;
-  font-family: var(--font);
-  font-weight: 800;
-  font-size: 24px;
   line-height: 1;
 }
 
-.wordmark svg {
-  width: 30px;
-  height: 30px;
-  flex: none;
+.wordmark__text {
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: var(--wm-size, 22px);
+  line-height: 1.1;
+}
+
+.wordmark__line {
+  display: block;
+  width: 100%;
+  height: calc(var(--wm-size, 22px) * 0.26);
 }
 
 .gold-rule {
@@ -434,14 +455,11 @@ img {
   background: var(--line);
 }
 
-/* Motion: one simple fade. Elements with .fade-in fade up once when they enter the viewport
-   (see src/site/useFadeIn.ts, which marks them with data-shown). Without JS or with reduced
-   motion they are simply visible. */
+/* Motion: content is always visible; screens add their own scroll-linked effects inside
+   @supports (animation-timeline: view()) and outside prefers-reduced-motion. */
 .fade-in {
   opacity: 1;
 }
-
-/* Scroll fades were removed (they left content half-faded); .fade-in is kept as a no-op hook. */
 
 /* Shell */
 .app {
@@ -460,9 +478,9 @@ img {
   inset-block-end: 24px;
   inset-inline-start: 50%;
   transform: translateX(50%);
-  z-index: 50;
-  padding: 12px 20px;
-  border-radius: var(--radius);
+  z-index: 80;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
   background: var(--ink);
   color: #ffffff;
   font-size: 15px;
@@ -476,10 +494,5 @@ img {
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .js-fade .fade-in:not([data-shown]) {
-    opacity: 1;
-    transform: none;
   }
 }
