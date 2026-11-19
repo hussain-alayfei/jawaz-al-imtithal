@@ -1,13 +1,16 @@
-/* Digital twin studio (v4 palette): a full-screen tool on the site's tokens (src/brand/tokens.css).
-   White rails and panels with --line hairlines and --radius corners, Noto Sans Arabic through --font,
-   ink and grey text, and green (--brand) for every pressed or chosen state; orange is never used here.
-   The six network colours appear only as small keys, because they are what tells the networks apart in
-   the scene. Floating panels over the canvas are the only elements with a (soft) shadow. */
+/* Digital twin studio (v5): the site's identity on a full-screen tool. A white 64 px bar like the site
+   header (wordmark, title and note, a pill switch for the scenes, «العودة»), the 3D scene as the stage, ONE
+   white panel over the scene's inline-start side (a bottom sheet with a handle on phones) and one small
+   floating view switcher. Tokens from src/brand/tokens.css: IBM Plex Sans Arabic through --font, green
+   (--brand) for chosen states and actions, orange only in the wordmark, pills and --radius / --radius-lg,
+   no gradients. The six network colours appear only as small dots, because they are what tells the
+   networks apart in the scene. Prefix: tw- (the root keeps .twin-studio). */
 
 .twin-studio {
-  --tw-rail: 264px;
-  --tw-inspector: 320px;
-  --tw-float: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --tw-gap: 16px;
+  --tw-panel-w: 380px;
+  --tw-float: 0 8px 28px rgba(0, 0, 0, 0.14);
+  --tw-sky: #e7edf1;
   position: fixed;
   z-index: 9000;
   inset: 0;
@@ -22,8 +25,7 @@
   isolation: isolate;
 }
 
-/* What the twin used to get from the deleted global stylesheet. Zero specificity, so the shared
-   .btn / .icon-btn / .link primitives still win. */
+/* Zero specificity, so the shared .btn / .icon-btn / .link primitives still win. */
 :where(.twin-studio) :where(button, input, select, textarea) {
   font: inherit;
   color: inherit;
@@ -45,7 +47,7 @@
   letter-spacing: 0;
 }
 
-/* Plain line icons, one weight everywhere (including the BIM panels). */
+/* Plain line icons, one weight everywhere (including the file and analysis sections). */
 .twin-studio .lucide {
   flex: none;
   stroke-width: 1.6;
@@ -56,907 +58,741 @@
   outline-offset: 2px;
 }
 
-/* Pressed round tools (wall transparency, exploded floors, full screen) are green, like every pressed
-   state in the studio. */
 .twin-studio .icon-btn[aria-pressed="true"],
 .twin-studio .icon-btn[aria-pressed="true"]:hover {
   background: var(--brand);
   color: var(--brand-ink);
 }
 
-/* ---------------------------------------------------------------- Header strip */
+/* ---------------------------------------------------------------- Pill segmented control */
 
-.twin-studio__top {
+.tw-seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.tw-seg__item {
+  min-width: 0;
+  min-height: 38px;
+  padding-inline: 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color 240ms var(--ease-out),
+    color 240ms var(--ease-out),
+    box-shadow 240ms var(--ease-out);
+}
+
+.tw-seg__item:hover:not([aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.tw-seg__item[aria-pressed="true"],
+.tw-seg__item[aria-selected="true"] {
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tw-seg__item[aria-pressed="true"]:focus-visible,
+.tw-seg__item[aria-selected="true"]:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- Top bar (like the site header) */
+
+.tw-bar {
   flex: none;
+  position: relative;
+  z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas: "title switch actions";
+  grid-template-areas: "start scenes end";
   align-items: center;
-  gap: 12px 24px;
-  min-height: var(--header-h);
-  padding-block: 10px;
+  column-gap: 24px;
+  height: 64px;
   padding-inline: 24px;
   background: var(--paper);
-  border-block-end: 1px solid var(--line);
+  border-block-end: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.twin-studio__heading {
-  grid-area: title;
+.tw-bar__start {
+  grid-area: start;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
 }
 
-.twin-studio__mark {
-  width: 32px;
-  height: 32px;
+.tw-bar__brand {
+  --wm-size: 27px;
   flex: none;
-  color: var(--brand);
 }
 
-.twin-studio__titles {
+.tw-bar__rule {
+  flex: none;
+  width: 1px;
+  height: 28px;
+  background: var(--line);
+}
+
+.tw-bar__titles {
+  display: grid;
   min-width: 0;
 }
 
-.twin-studio__titles h1 {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.3;
+.tw-bar__titles h1 {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.twin-studio__titles h1:focus {
+.tw-bar__titles h1:focus {
   outline: none;
 }
 
-.twin-studio__note {
-  margin-block-start: 2px;
-  font-size: 13px;
+.tw-bar__note {
+  overflow: hidden;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.twin-studio__scene-switcher {
-  grid-area: switch;
-  display: inline-flex;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--paper);
+.tw-bar__note--row {
+  display: none;
 }
 
-.twin-studio__scene-switcher button {
-  min-width: 104px;
-  min-height: 44px;
-  padding-inline: 20px;
-  border: 0;
-  border-inline-start: 1px solid var(--line-strong);
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 15px;
-  font-weight: 600;
-  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+.tw-bar__scenes {
+  grid-area: scenes;
 }
 
-.twin-studio__scene-switcher button:first-child {
-  border-inline-start: 0;
+.tw-bar__scenes .tw-seg__item {
+  min-width: 92px;
 }
 
-.twin-studio__scene-switcher button:hover {
-  background: var(--surface);
-}
-
-.twin-studio__scene-switcher button.is-active {
-  background: var(--brand);
-  color: var(--brand-ink);
-}
-
-.twin-studio__scene-switcher button:focus-visible {
-  outline-offset: -4px;
-}
-
-.twin-studio__scene-switcher button.is-active:focus-visible {
-  outline-color: var(--brand-ink);
-}
-
-.twin-studio__top-actions {
-  grid-area: actions;
+.tw-bar__end {
+  grid-area: end;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-}
-
-.twin-studio__reset {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding-inline: 12px;
-  border: 0;
-  border-radius: var(--radius);
-  background: none;
-  color: var(--ink-2);
-  font-size: 15px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.twin-studio__reset:hover {
-  background: var(--surface);
-  color: var(--brand);
-}
-
-.twin-studio__close {
-  min-width: 96px;
-}
-
-/* ---------------------------------------------------------------- Layout and rails */
-
-.twin-studio__layout {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: var(--tw-rail) minmax(0, 1fr) var(--tw-inspector);
-}
-
-.twin-studio__systems,
-.twin-studio__inspector {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background: var(--paper);
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-}
-
-.twin-studio__systems {
-  border-inline-end: 1px solid var(--line);
-}
-
-.twin-studio__inspector {
-  padding: 20px;
-  border-inline-start: 1px solid var(--line);
-}
-
-/* Section tabs: underlined, like the site navigation. */
-.twin-studio__side-nav {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding-inline: 8px;
-  background: var(--paper);
-  border-block-end: 1px solid var(--line);
-}
-
-.twin-studio__side-nav button {
-  min-height: 48px;
-  margin-block-end: -1px;
-  padding-inline: 4px;
-  border: 0;
-  border-block-end: 2px solid transparent;
-  background: none;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 160ms var(--ease), border-color 160ms var(--ease);
-}
-
-.twin-studio__side-nav button:hover {
-  color: var(--ink);
-}
-
-.twin-studio__side-nav button[aria-selected="true"] {
-  color: var(--brand);
-  border-block-end-color: var(--brand);
-}
-
-.twin-studio__side-nav button:focus-visible {
-  outline-offset: -3px;
-}
-
-.twin-studio__side-panel {
-  padding: 20px 16px 28px;
-}
-
-.twin-studio__section-heading {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0 0 10px;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.4;
-  color: var(--ink);
-}
-
-.twin-studio__section-heading small {
-  margin-inline-start: auto;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.twin-studio__section-note,
-.twin-studio__systems-intro {
-  margin: 0 0 12px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-
-.twin-studio__systems-intro {
-  display: grid;
-  gap: 2px;
-}
-
-.twin-studio__systems-intro strong {
-  font-size: 14px;
-  color: var(--ink);
-}
-
-/* Lists in the rails: rows divided by hairlines, the chosen row tinted. */
-.twin-studio__system-list,
-.twin-studio__floor-list,
-.twin-studio__room-filter,
-.twin-studio__switches {
-  display: grid;
-  border-block-start: 1px solid var(--line);
-}
-
-.twin-studio__system,
-.twin-studio__floor-list button,
-.twin-studio__room-filter button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 8px 10px;
-  border: 0;
-  border-block-end: 1px solid var(--line);
-  background: none;
-  color: var(--ink-2);
-  font-size: 14px;
-  line-height: 1.5;
-  text-align: start;
-  transition: background-color 160ms var(--ease), color 160ms var(--ease);
-}
-
-.twin-studio__system:hover,
-.twin-studio__floor-list button:hover,
-.twin-studio__room-filter button:hover {
-  background: var(--surface);
-}
-
-.twin-studio__system.is-active,
-.twin-studio__floor-list button.is-active,
-.twin-studio__room-filter button.is-active {
-  background: var(--brand-tint);
-  color: var(--brand);
-  font-weight: 600;
-}
-
-.twin-studio__system:first-child {
-  font-weight: 700;
-}
-
-.twin-studio__system-bullet {
-  width: 10px;
-  height: 10px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--system-color);
-}
-
-/* A hidden network keeps its colour as an outline only. */
-.twin-studio__system[data-network-visible="false"] .twin-studio__system-bullet {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--system-color);
-}
-
-.twin-studio__system-name {
-  flex: 1;
-  min-width: 0;
-}
-
-.twin-studio__system > .lucide {
-  color: var(--brand);
-}
-
-.twin-studio__floor-list button {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: 0;
-}
-
-.twin-studio__floor-list button span {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.twin-studio__floor-list button.is-active span {
-  color: var(--brand);
-}
-
-.twin-studio__floor-list button em {
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.twin-studio__field {
-  display: grid;
-  gap: 6px;
-  margin-block-end: 16px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
-}
-
-.twin-studio__field select,
-.twin-studio__mobile-floors select,
-.bim-library__content select {
-  width: 100%;
-  min-height: 44px;
-  padding-inline: 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.twin-studio__switch {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  min-height: 48px;
-  padding: 8px 4px;
-  border-block-end: 1px solid var(--line);
-  color: var(--ink-2);
-  font-size: 14px;
-  cursor: pointer;
 }
 
-.twin-studio__switch > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+.tw-bar__back {
+  min-width: 88px;
 }
 
-.twin-studio__switch > span .lucide {
-  color: var(--muted);
-}
+/* ---------------------------------------------------------------- Stage */
 
-.twin-studio__switch input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  flex: none;
-  accent-color: var(--brand);
-  cursor: pointer;
-}
-
-/* ---------------------------------------------------------------- 3D viewport */
-
-.twin-studio__viewport {
+.tw-body {
   position: relative;
-  min-width: 0;
+  flex: 1;
   min-height: 0;
-  overflow: hidden;
-  background: var(--surface-2);
 }
 
-/* The canvas keeps left-to-right coordinates; the panels over it follow the page direction.
-   z-index makes it a stacking context, so the labels drei places in the scene (with very large
-   z-index values) stay under the panels and the details sheet. */
-.twin-studio__canvas {
+.tw-stage {
+  position: absolute;
+  inset: 0;
+  /* Its own stacking context: the labels drei places in the scene stay under the panel. */
+  isolation: isolate;
+  background: var(--tw-sky);
+}
+
+/* The canvas keeps left-to-right coordinates; everything over it follows the page direction. */
+.tw-canvas {
   position: absolute;
   z-index: 0;
   inset: 0;
   direction: ltr;
 }
 
-.twin-studio__canvas canvas {
+.tw-canvas canvas {
   display: block;
   touch-action: none;
 }
 
-.twin-studio__overlay-title,
-.twin-studio__network-legend,
-.twin-studio__view-controls,
-.twin-studio__mobile-selection,
-.twin-studio__mobile-bim {
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--tw-float);
-}
-
-.twin-studio__hud {
+/* The part of the stage the panel leaves free. Only the view switcher floats in it. */
+.tw-free {
   position: absolute;
   z-index: 2;
-  inset-block-start: 16px;
-  inset-inline: 16px;
+  inset-block: 0;
+  inset-inline-start: calc(var(--tw-panel-w) + 2 * var(--tw-gap));
+  inset-inline-end: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: flex-end;
+  justify-content: center;
+  padding-block-end: 24px;
   pointer-events: none;
+  transition: inset-inline-start 360ms var(--ease-out);
 }
 
-.twin-studio__overlay-title {
-  display: grid;
+.tw-body.is-collapsed .tw-free {
+  inset-inline-start: 0;
+}
+
+.tw-views {
+  display: flex;
+  align-items: center;
   gap: 2px;
-  min-width: 180px;
-  max-width: 300px;
-  padding: 10px 14px;
-  pointer-events: none;
-}
-
-.twin-studio__overlay-title small {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted);
-}
-
-.twin-studio__overlay-title strong {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.twin-studio__overlay-title span {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink-2);
-}
-
-.twin-studio__hud-end {
-  display: grid;
-  justify-items: end;
-  gap: 8px;
-  min-width: 0;
-}
-
-.twin-studio__hud-end > * {
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: var(--tw-float);
   pointer-events: auto;
 }
 
-.twin-studio__network-legend {
-  max-width: 340px;
-  padding: 10px 12px;
+.tw-views .tw-seg__item {
+  min-height: 36px;
+  padding-inline: 16px;
+  font-size: 14px;
 }
 
-.twin-studio__network-legend > strong {
-  display: flex;
-  gap: 6px;
-  margin-block-end: 6px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.twin-studio__network-legend > strong .num {
-  color: var(--muted);
-}
-
-.twin-studio__network-legend > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-}
-
-.twin-studio__network-legend button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding-inline: 8px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink-2);
-  font-size: 13px;
-  transition: border-color 160ms var(--ease), background-color 160ms var(--ease);
-}
-
-.twin-studio__network-legend button:hover {
-  border-color: var(--line-strong);
-  background: var(--surface);
-}
-
-.twin-studio__network-legend button span {
-  width: 10px;
-  height: 10px;
-  flex: none;
+.tw-views__reset {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
   border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  transition: background-color 200ms var(--ease), color 200ms var(--ease);
 }
 
-.twin-studio__mobile-bim {
-  display: none;
+.tw-views__reset:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.tw-views__rule {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin-inline: 2px 4px;
+  background: var(--line);
+}
+
+/* The folded panel's pill (desktop). */
+.tw-reopen {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: var(--tw-gap);
+  inset-inline-start: var(--tw-gap);
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding-inline: 14px;
-  color: var(--brand);
-  font-size: 14px;
+  padding-inline: 16px 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
+  box-shadow: var(--tw-float);
+  transition: color 200ms var(--ease);
 }
 
-.twin-studio__mobile-bim:hover {
-  border-color: var(--line-strong);
+.tw-reopen:hover {
+  color: var(--brand);
 }
 
-.twin-studio__mobile-floors {
-  display: none;
+.tw-reopen .lucide {
+  color: var(--brand);
 }
 
-.twin-studio__view-controls {
+/* ---------------------------------------------------------------- The panel */
+
+.tw-panel {
   position: absolute;
-  z-index: 2;
-  inset-block-end: 20px;
-  inset-inline-start: 50%;
-  transform: translateX(50%);
+  z-index: 3;
+  inset-block: var(--tw-gap);
+  inset-inline-start: var(--tw-gap);
   display: flex;
-  gap: 2px;
-  padding: 4px;
+  flex-direction: column;
+  width: var(--tw-panel-w);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
-.twin-studio__view-controls button {
-  min-width: 72px;
-  min-height: 44px;
-  padding-inline: 14px;
-  border: 0;
-  border-radius: calc(var(--radius) - 4px);
-  background: none;
-  color: var(--ink-2);
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 160ms var(--ease), color 160ms var(--ease);
-}
-
-.twin-studio__view-controls button:hover {
-  background: var(--surface);
-}
-
-.twin-studio__view-controls button.is-active {
-  background: var(--brand);
-  color: var(--brand-ink);
-}
-
-.twin-studio__view-controls button.is-active:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--brand-ink);
-}
-
-.twin-studio__mobile-selection {
+.tw-panel[hidden] {
   display: none;
 }
 
-/* ---------------------------------------------------------------- Inspector */
-
-.twin-studio__mobile-inspector-close {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  margin-block-end: 16px;
-  padding-inline: 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--paper);
-  font-size: 14px;
-  font-weight: 600;
+.tw-panel__peek {
+  flex: none;
+  padding: 20px 20px 14px;
 }
 
-.twin-studio__inspector-hero {
-  padding-block-end: 14px;
+.tw-panel__handle {
+  display: none;
 }
 
-.twin-studio__inspector-hero > span {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.twin-studio__inspector-hero h2 {
-  margin-block: 2px 4px;
-  font-size: 18px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.twin-studio__inspector-hero p {
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
-.twin-studio__mini-stats {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  justify-content: start;
-  margin: 0;
-  padding-block: 12px;
-  border-block: 1px solid var(--line);
-}
-
-.twin-studio__mini-stats > div {
+.tw-panel__head {
   display: flex;
-  flex-direction: column-reverse;
-  justify-content: flex-end;
-  gap: 2px;
-  padding-inline: 16px;
-  border-inline-start: 1px solid var(--line);
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.twin-studio__mini-stats > div:first-child {
-  padding-inline-start: 0;
-  border-inline-start: 0;
+.tw-panel__heading {
+  flex: 1;
+  min-width: 0;
 }
 
-.twin-studio__mini-stats dd {
-  margin: 0;
-  font-size: 20px;
+.tw-panel__kicker {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.tw-panel__heading h2 {
+  margin-block: 2px 4px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-}
-
-.twin-studio__mini-stats dt {
-  white-space: nowrap;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted);
-}
-
-.twin-studio__inspector-tabs {
-  display: flex;
-  gap: 24px;
-  margin-block: 4px 20px;
-  border-block-end: 1px solid var(--line);
-}
-
-.twin-studio__inspector-tabs button {
-  min-height: 48px;
-  margin-block-end: -1px;
-  padding: 0;
-  border: 0;
-  border-block-end: 2px solid transparent;
-  background: none;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 160ms var(--ease), border-color 160ms var(--ease);
-}
-
-.twin-studio__inspector-tabs button:hover {
-  color: var(--ink);
-}
-
-.twin-studio__inspector-tabs button[aria-pressed="true"] {
-  color: var(--brand);
-  border-block-end-color: var(--brand);
-}
-
-.twin-studio__inspector .twin-studio__section-heading {
-  margin-block-start: 4px;
-}
-
-.twin-studio__selection {
-  margin-block-end: 24px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.twin-studio__selection-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
-}
-
-.twin-studio__selection-tag > span {
-  width: 10px;
-  height: 10px;
-  flex: none;
-  border-radius: 50%;
-}
-
-.twin-studio__selection h4 {
-  margin-block: 6px 2px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.twin-studio__selection code {
-  display: inline-block;
-  max-width: 100%;
-  font-size: 12px;
-  color: var(--muted);
   overflow-wrap: anywhere;
 }
 
-.twin-studio__selection p {
-  margin-block: 8px 4px;
+.tw-panel__line {
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.6;
   color: var(--ink-2);
 }
 
-.twin-studio__text-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--brand);
-  font-size: 14px;
-  font-weight: 600;
+.tw-panel__hide {
+  flex: none;
+  margin-block-start: -2px;
+  margin-inline-end: -6px;
 }
 
-.twin-studio__text-button:hover {
-  text-decoration: underline;
-  text-underline-offset: 5px;
-}
-
-.twin-studio__guidance {
-  margin-block-end: 24px;
-  font-size: 14px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
-.twin-studio__guidance strong {
-  display: block;
-  color: var(--ink);
-}
-
-.twin-studio__venue-spot-list,
-.twin-studio__inventory {
+.tw-panel__tabs {
   display: grid;
-  margin-block-end: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  margin-block-start: 18px;
 }
 
-.twin-studio__inventory {
-  max-height: 264px;
+.tw-panel__tabs .tw-seg__item {
+  min-height: 36px;
+  padding-inline: 6px;
+  font-size: 14px;
+}
+
+.tw-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  border-block: 1px solid var(--line);
+  overscroll-behavior: contain;
+  padding: 10px 20px 28px;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
 
-.twin-studio__venue-spot-list .twin-studio__section-heading {
-  margin-block-end: 6px;
+.tw-panel__body:focus-visible {
+  outline-offset: -3px;
 }
 
-.twin-studio__venue-spot-list button,
-.twin-studio__inventory button {
+/* Groups inside a section */
+.tw-group + .tw-group,
+.tw-group + .bim-library,
+.venue-analysis + .tw-group {
+  margin-block-start: 28px;
+}
+
+.tw-group__title {
+  display: block;
+  margin-block-end: 8px;
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.tw-group__note {
+  margin-block: -2px 10px;
+  padding-inline: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.tw-list {
   display: grid;
   gap: 2px;
+}
+
+.tw-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   min-height: 44px;
-  padding: 10px;
+  padding: 8px 12px;
   border: 0;
-  border-block-end: 1px solid var(--line);
-  background: none;
+  border-radius: var(--radius);
+  background: transparent;
   color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
   text-align: start;
   transition: background-color 160ms var(--ease);
 }
 
-.twin-studio__venue-spot-list .twin-studio__section-heading + button {
-  border-block-start: 1px solid var(--line);
-}
-
-.twin-studio__inventory button:last-child {
-  border-block-end: 0;
-}
-
-.twin-studio__venue-spot-list button:hover,
-.twin-studio__inventory button:hover {
+.tw-row:hover {
   background: var(--surface);
 }
 
-.twin-studio__venue-spot-list button.is-active,
-.twin-studio__inventory button.is-active {
+.tw-row.is-active {
   background: var(--brand-tint);
 }
 
-.twin-studio__venue-spot-list button strong,
-.twin-studio__inventory button span {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.5;
+.tw-row.is-active .tw-row__title {
+  color: var(--brand);
+  font-weight: 600;
 }
 
-.twin-studio__venue-spot-list button.is-active strong,
-.twin-studio__inventory button.is-active span {
+.tw-row__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tw-row__detail {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.tw-row__check {
   color: var(--brand);
 }
 
-.twin-studio__venue-spot-list button span,
-.twin-studio__inventory button small {
-  font-size: 13px;
-  line-height: 1.6;
+.tw-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+/* A hidden network keeps its colour as an outline only. */
+.tw-dot.is-off {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dot);
+}
+
+.tw-system__icon {
+  margin-inline: -3px;
   color: var(--muted);
 }
 
-.twin-studio__venue-quick-links {
+.tw-row.is-active .tw-system__icon {
+  color: var(--brand);
+}
+
+/* On/off settings drawn as switches (mirrored for right to left, as on iOS). */
+.tw-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 160ms var(--ease);
+}
+
+.tw-switch:hover {
+  background: var(--surface);
+}
+
+.tw-switch__label {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.tw-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tw-switch__track {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: #8e8e93;
+  transition: background-color 240ms var(--ease-out);
+}
+
+.tw-switch__track::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transition: transform 240ms var(--ease-out);
+}
+
+.tw-switch input:checked + .tw-switch__track {
+  background: var(--brand);
+}
+
+.tw-switch input:checked + .tw-switch__track::after {
+  transform: translateX(-18px);
+}
+
+.tw-switch input:focus-visible + .tw-switch__track {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Room filter: small pills. */
+.tw-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 20px;
-  margin-block: -12px 16px;
+  gap: 8px;
+  padding-inline: 12px;
 }
 
-.twin-studio__venue-quick-links .link {
+.tw-chip {
+  min-height: 36px;
+  padding-inline: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  color: var(--ink-2);
   font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 160ms var(--ease), background-color 160ms var(--ease), color 160ms var(--ease);
 }
 
-.twin-studio__evidence {
-  margin: 0 0 16px;
+.tw-chip:hover {
+  border-color: var(--line-strong);
+}
+
+.tw-chip[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.tw-field {
+  display: grid;
+  gap: 0;
+}
+
+.tw-field select,
+.bim-library__content select {
+  width: 100%;
+  min-height: 44px;
+  padding-inline: 16px 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat left 16px center / 14px;
+  color: var(--ink);
+  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.tw-field select {
+  margin-inline: 0;
+}
+
+.tw-hint {
+  margin-block-start: 24px;
+  padding-inline: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.tw-facts {
+  margin: 0 0 12px;
+  padding-inline: 12px;
+}
+
+.tw-facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+  border-block-end: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tw-facts > div:first-child {
   border-block-start: 1px solid var(--line);
 }
 
-.twin-studio__evidence > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  padding-block: 8px;
-  border-block-end: 1px solid var(--line);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.twin-studio__evidence dt {
+.tw-facts dt {
   color: var(--muted);
 }
 
-.twin-studio__evidence dd {
+.tw-facts dd {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   text-align: end;
 }
 
-.twin-studio__disclaimer {
+/* The chosen element: at the foot of the panel on desktop, in the peeking sheet on phones. */
+.tw-selection {
+  flex: none;
+  padding: 16px 20px 20px;
+  border-block-start: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.tw-selection__top {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tw-selection__system {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
   font-size: 13px;
-  line-height: 1.75;
+  font-weight: 600;
   color: var(--muted);
 }
 
-.twin-studio__disclaimer .lucide {
-  margin-block-start: 4px;
+.tw-selection__clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-inline-end: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: background-color 200ms var(--ease);
 }
 
-/* ---------------------------------------------------------------- BIM files (DemoBimPanel, VenueBimPanel) */
+.tw-selection__clear:hover {
+  background: var(--surface-2);
+}
+
+.tw-selection h3 {
+  margin-block: 4px 4px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tw-selection__text {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.tw-selection__id {
+  display: inline-block;
+  max-width: 100%;
+  margin-block-start: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (pointer: coarse) {
+  .tw-chip {
+    min-height: 44px;
+  }
+
+  .tw-selection__clear {
+    width: 44px;
+    height: 44px;
+    margin-block: -6px;
+  }
+}
+
+/* Motion: the panel settles in from its edge, the pill appears in its place. */
+@media (prefers-reduced-motion: no-preference) {
+  .tw-panel:not([hidden]) {
+    animation: tw-panel-in 480ms var(--ease-out) both;
+  }
+
+  .tw-reopen {
+    animation: tw-pill-in 360ms var(--ease-out) both;
+  }
+
+  @keyframes tw-panel-in {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+
+  @keyframes tw-pill-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- Files (DemoBimPanel, VenueBimPanel) */
 
 .bim-library {
   display: grid;
-  gap: 12px;
-  margin-block-end: 24px;
+  gap: 16px;
 }
 
 .bim-library__intro {
-  padding-block-end: 12px;
-  border-block-end: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  padding-inline: 12px;
 }
 
 .bim-library__title {
@@ -964,7 +800,7 @@
   align-items: center;
   gap: 8px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bim-library__title .lucide {
@@ -972,9 +808,8 @@
 }
 
 .bim-library__intro p {
-  margin-block: 6px;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.65;
   color: var(--ink-2);
 }
 
@@ -987,7 +822,7 @@
 }
 
 .bim-library__demo .lucide {
-  margin-block-start: 3px;
+  margin-block-start: 4px;
 }
 
 .bim-library__loading,
@@ -996,6 +831,7 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0;
+  padding-inline: 12px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink-2);
@@ -1006,21 +842,28 @@
   margin-block-start: 3px;
 }
 
-.bim-library__status.is-error {
+.bim-library__status .lucide {
+  color: var(--brand);
+}
+
+.bim-library__status.is-error,
+.bim-library__status.is-error .lucide {
   color: var(--fail);
 }
 
 .bim-library__files {
   display: grid;
+  gap: 2px;
 }
 
 .bim-library__file {
-  padding: 12px 10px;
-  border-block-end: 1px solid var(--line);
+  padding: 12px;
+  border-radius: var(--radius);
+  transition: background-color 200ms var(--ease);
 }
 
-.bim-library__files .bim-library__file:first-child {
-  border-block-start: 1px solid var(--line);
+.bim-library__file:hover {
+  background: var(--surface);
 }
 
 .bim-library__file.is-loaded {
@@ -1040,6 +883,10 @@
   color: var(--muted);
 }
 
+.bim-library__file.is-loaded .bim-library__file-icon {
+  color: var(--brand);
+}
+
 .bim-library__file-head > span:nth-child(2) {
   flex: 1;
   min-width: 0;
@@ -1049,8 +896,8 @@
 .bim-library__file-head strong {
   display: inline-block;
   max-width: 100%;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
@@ -1063,15 +910,16 @@
 
 .bim-library__file-head b {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 .bim-library__file p {
-  margin-block: 6px 8px;
+  margin-block: 6px 10px;
+  padding-inline-start: 28px;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--ink-2);
 }
 
@@ -1079,30 +927,38 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 16px;
+  gap: 4px 20px;
+  padding-inline-start: 28px;
 }
 
 .bim-library__file-actions > button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
-  padding-inline: 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  min-height: 36px;
+  padding-inline: 14px 16px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-pill);
   background: var(--paper);
-  color: var(--ink);
+  color: var(--brand);
   font-size: 14px;
-  font-weight: 600;
-  transition: border-color 160ms var(--ease);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 200ms var(--ease);
 }
 
 .bim-library__file-actions > button:hover {
-  border-color: var(--ink);
+  background: var(--brand-tint);
+}
+
+.bim-library__file.is-loaded .bim-library__file-actions > button {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
 }
 
 .bim-library__file-actions > button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: progress;
 }
 
@@ -1110,31 +966,37 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 36px;
   color: var(--brand);
   font-size: 14px;
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 5px;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .bim-library__file-actions > a:hover {
-  text-decoration-thickness: 2px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (pointer: coarse) {
+  .bim-library__file-actions > button,
+  .bim-library__file-actions > a {
+    min-height: 44px;
+  }
 }
 
 .bim-library__content {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
   overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
 }
 
 .bim-library__content > header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-block-end: 1px solid var(--line);
   background: var(--surface);
   font-size: 14px;
@@ -1145,12 +1007,13 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font-weight: 700;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 .bim-library__content > header > b {
   font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -1158,14 +1021,14 @@
 .bim-library__content > label {
   display: grid;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 12px 16px;
   font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .bim-library__elements {
-  max-height: 280px;
+  max-height: 300px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
@@ -1174,14 +1037,15 @@
 .bim-library__elements button {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: 10px 16px;
   border: 0;
   border-block-start: 1px solid var(--line);
   background: none;
   text-align: start;
+  transition: background-color 160ms var(--ease);
 }
 
 .bim-library__elements button:hover {
@@ -1189,7 +1053,7 @@
 }
 
 .bim-library__elements button .lucide {
-  margin-block-start: 3px;
+  margin-block-start: 4px;
   color: var(--muted);
 }
 
@@ -1200,7 +1064,7 @@
 .bim-library__elements button strong {
   display: block;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -1215,7 +1079,7 @@
 
 .bim-library__footnote {
   display: block;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-block-start: 1px solid var(--line);
   font-size: 12px;
   line-height: 1.7;
@@ -1226,33 +1090,32 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
+  padding-inline: 12px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
 }
 
 .venue-bim__metric strong {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 600;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------------------------------------------------------------- Venue analysis */
+/* ---------------------------------------------------------------- Analysis (VenueAnalysisPanel) */
 
 .venue-analysis {
   display: grid;
-  gap: 14px;
-  margin-block-end: 24px;
+  gap: 16px;
   font-size: 14px;
 }
 
 .venue-analysis__heading {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding-block-end: 12px;
-  border-block-end: 1px solid var(--line);
+  gap: 10px;
+  padding-inline: 12px;
 }
 
 .venue-analysis__heading .lucide {
@@ -1263,21 +1126,23 @@
 .venue-analysis__heading strong {
   display: block;
   font-size: 15px;
+  font-weight: 600;
 }
 
 .venue-analysis__heading span {
   display: block;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--muted);
 }
 
 .venue-analysis__stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
-  padding-block-end: 12px;
-  border-block-end: 1px solid var(--line);
+  gap: 14px 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .venue-analysis__stats > div {
@@ -1285,9 +1150,9 @@
 }
 
 .venue-analysis__stats strong {
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1297,18 +1162,22 @@
 }
 
 .venue-analysis h3 {
-  margin: 4px 0 0;
-  font-size: 15px;
+  margin: 8px 0 0;
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .venue-analysis__systems {
   display: grid;
-  border-block-start: 1px solid var(--line);
+  gap: 2px;
 }
 
 .venue-analysis__systems article {
-  padding: 4px 10px 12px;
-  border-block-end: 1px solid var(--line);
+  padding: 2px 12px 12px;
+  border-radius: var(--radius);
+  transition: background-color 200ms var(--ease);
 }
 
 .venue-analysis__systems article.is-active {
@@ -1318,7 +1187,7 @@
 .venue-analysis__systems article > button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   min-height: 44px;
   padding: 0;
@@ -1329,28 +1198,34 @@
 
 .venue-analysis__systems article > button strong {
   flex: 1;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.5;
+}
+
+.venue-analysis__systems article > button:hover strong {
+  color: var(--brand);
 }
 
 .venue-analysis__systems article > button b {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
 }
 
 .venue-analysis__systems p {
   margin: 0 0 6px;
+  padding-inline-start: 20px;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--ink-2);
 }
 
 .venue-analysis__color {
+  flex: none;
   width: 10px;
   height: 10px;
-  flex: none;
   border-radius: 50%;
 }
 
@@ -1358,8 +1233,9 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
+  padding-inline-start: 20px;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--muted);
 }
 
@@ -1368,91 +1244,95 @@
 }
 
 .venue-analysis__points {
-  display: grid;
-  gap: 4px;
-  padding-block-start: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block-start: 10px;
+  padding-inline-start: 20px;
 }
 
 .venue-analysis__points button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
-  padding-inline: 10px;
+  min-height: 36px;
+  padding-inline: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   background: var(--paper);
   font-size: 13px;
   text-align: start;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease);
 }
 
 .venue-analysis__points button:hover {
-  border-color: var(--line-strong);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+@media (pointer: coarse) {
+  .venue-analysis__points button {
+    min-height: 44px;
+  }
 }
 
 .venue-analysis__limit {
+  padding-inline: 12px;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.7;
   color: var(--muted);
 }
 
 .venue-analysis__limit strong {
-  font-size: 14px;
-  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
 
 .venue-analysis__limit p {
   margin-block-start: 4px;
 }
 
-/* ---------------------------------------------------------------- Labels placed in the 3D scene */
+/* ---------------------------------------------------------------- Labels placed in the 3D scene
+   Small name pills only: the description of whatever is chosen lives in the panel. */
 
 .twin-floor-number {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 112px;
-  padding: 4px 10px;
-  border: 1px solid var(--line);
-  border-inline-start: 3px solid var(--brand);
-  border-radius: 4px;
-  background: var(--paper);
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--ink);
-  font-family: var(--font);
-  font-size: 12px;
-  line-height: 1.5;
+  font: 500 12px/1.45 var(--font);
   white-space: nowrap;
   direction: rtl;
-  box-shadow: var(--tw-float);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .twin-floor-number strong {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--brand);
   font-variant-numeric: tabular-nums;
 }
 
-.twin-floor-number span {
-  font-weight: 700;
-}
-
 .twin-room-label {
   display: block;
-  padding: 4px 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  background: var(--paper);
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
-  font: 700 12px/1.4 var(--font);
+  font: 600 12px/1.4 var(--font);
   white-space: nowrap;
   cursor: pointer;
   pointer-events: auto;
-  box-shadow: var(--tw-float);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
 }
 
 .twin-room-label:hover,
 .twin-room-label.is-selected {
-  border-color: var(--brand);
   background: var(--brand);
   color: var(--brand-ink);
 }
@@ -1460,45 +1340,33 @@
 .twin-world-label,
 .venue-world-inspector,
 .model-tooltip {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 170px;
-  max-width: 260px;
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  display: block;
+  max-width: 220px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font);
-  line-height: 1.55;
-  text-align: start;
+  font: 600 12px/1.45 var(--font);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   direction: rtl;
-  box-shadow: var(--tw-float);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16), 0 0 0 1.5px var(--brand);
   pointer-events: none;
 }
 
 .twin-world-label strong,
 .venue-world-inspector strong,
 .model-tooltip strong {
-  font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .twin-world-label small,
 .venue-world-inspector small,
 .model-tooltip small,
 .model-tooltip span {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.model-tooltip span {
-  color: var(--ink-2);
-}
-
-.model-tooltip--selected {
-  border-color: var(--brand);
+  display: none;
 }
 
 /* The storefront sign sits on the facade in the scene. */
@@ -1525,7 +1393,7 @@
 
 .venue-sign span {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   direction: ltr;
 }
@@ -1542,306 +1410,222 @@
 
 /* ---------------------------------------------------------------- Responsive */
 
-@media (max-width: 1340px) {
-  .twin-studio {
-    --tw-rail: 240px;
-    --tw-inspector: 296px;
+/* Below 1080 px the bar no longer has room to centre the scene switch exactly. */
+@media (max-width: 1079px) {
+  .tw-bar {
+    grid-template-columns: auto auto auto;
+    justify-content: space-between;
+    column-gap: 16px;
+    padding-inline: 20px;
   }
 
+  .tw-bar__start {
+    gap: 12px;
+  }
+
+  .tw-bar__brand {
+    --wm-size: 24px;
+  }
+
+  .tw-bar__scenes .tw-seg__item {
+    min-width: 76px;
+    padding-inline: 14px;
+  }
 }
 
-@media (max-width: 1100px) {
-  .twin-studio__top {
+@media (max-width: 1023px) {
+  .twin-studio {
+    --tw-panel-w: 340px;
+  }
+}
+
+/* Phones and small tablets: the bar takes two rows and the panel becomes a bottom sheet. */
+@media (max-width: 833px) {
+  .tw-bar {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "title actions"
-      "switch switch";
+      "start end"
+      "scenes scenes"
+      "note note";
+    justify-content: stretch;
+    height: auto;
+    padding: 0 16px 10px;
   }
 
-  .twin-studio__scene-switcher {
-    justify-self: center;
-  }
-}
-
-@media (max-width: 1000px) {
-  .twin-studio__layout {
-    grid-template-columns: var(--tw-rail) minmax(0, 1fr);
+  .tw-bar__start {
+    height: var(--header-h);
   }
 
-  .twin-studio__inspector {
-    display: none;
+  .tw-bar__rule {
+    height: 22px;
   }
 
-  .twin-studio__inspector.is-mobile-open {
-    position: absolute;
-    z-index: 5;
-    inset-block: 0;
-    inset-inline-end: 0;
-    display: block;
-    width: min(380px, 100%);
-    box-shadow: var(--tw-float);
-  }
-
-  .twin-studio__mobile-bim {
-    display: inline-flex;
-  }
-
-  .twin-studio__mobile-selection {
-    position: absolute;
-    z-index: 3;
-    inset-block-end: 84px;
-    inset-inline: 16px;
-    display: grid;
-    gap: 2px;
-    max-width: 420px;
-    margin-inline: auto;
-    padding-block: 10px 12px;
-    padding-inline: 14px 48px;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .twin-studio__mobile-selection > button {
-    position: absolute;
-    inset-block-start: 2px;
-    inset-inline-end: 2px;
-    display: inline-grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border: 0;
-    background: none;
-    color: var(--ink-2);
-  }
-
-  .twin-studio__mobile-selection strong {
-    font-size: 14px;
-  }
-
-  .twin-studio__mobile-selection span {
-    color: var(--muted);
-  }
-}
-
-@media (pointer: coarse) {
-  .twin-studio__network-legend button {
-    min-height: 44px;
-  }
-}
-
-/* Phones: the controls become one scrolling row of chips above the scene. */
-@media (max-width: 660px) {
-  .twin-studio__top {
-    gap: 8px 12px;
-    padding-block: 8px 10px;
-    padding-inline: 16px;
-  }
-
-  .twin-studio__mark {
-    width: 28px;
-    height: 28px;
-  }
-
-  .twin-studio__heading {
-    gap: 10px;
-  }
-
-  .twin-studio__titles h1 {
-    font-size: 18px;
-  }
-
-  .twin-studio__fullscreen {
-    display: none;
-  }
-
-  .twin-studio__reset {
-    width: 44px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .twin-studio__reset span {
-    display: none;
-  }
-
-  .twin-studio__close {
-    min-width: 0;
-  }
-
-  .twin-studio__scene-switcher {
-    justify-self: stretch;
-  }
-
-  .twin-studio__scene-switcher button {
-    flex: 1;
-    min-width: 0;
-    padding-inline: 8px;
-  }
-
-  .twin-studio__layout {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .twin-studio__systems {
-    flex: none;
-    overflow: visible;
-    border-inline-end: 0;
-    border-block-end: 1px solid var(--line);
-  }
-
-  .twin-studio__side-nav {
-    position: static;
-    padding-inline: 8px;
-  }
-
-  .twin-studio__side-nav button {
-    min-height: 44px;
-  }
-
-  .twin-studio__side-panel {
-    display: flex;
-    gap: 6px;
-    padding: 8px 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .twin-studio__side-panel::-webkit-scrollbar {
-    display: none;
-  }
-
-  .twin-studio__side-panel .twin-studio__section-heading,
-  .twin-studio__section-note,
-  .twin-studio__systems-intro {
-    display: none;
-  }
-
-  .twin-studio__system-list,
-  .twin-studio__floor-list,
-  .twin-studio__room-filter,
-  .twin-studio__switches {
-    display: flex;
-    gap: 6px;
-    border: 0;
-  }
-
-  .twin-studio__system,
-  .twin-studio__floor-list button,
-  .twin-studio__room-filter button,
-  .twin-studio__switch {
-    flex: none;
-    flex-direction: row;
-    align-items: center;
-    width: auto;
-    min-height: 44px;
-    padding-block: 0;
-    padding-inline: 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius);
-    white-space: nowrap;
-    font-size: 14px;
-  }
-
-  .twin-studio__system.is-active,
-  .twin-studio__floor-list button.is-active,
-  .twin-studio__room-filter button.is-active {
-    border-color: var(--brand);
-  }
-
-  .twin-studio__system > .lucide,
-  .twin-studio__floor-list button em,
-  .twin-studio__switch > span .lucide {
-    display: none;
-  }
-
-  .twin-studio__switch {
-    gap: 8px;
-  }
-
-  .twin-studio__field {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    white-space: nowrap;
-  }
-
-  .twin-studio__field select {
-    width: auto;
-  }
-
-  .twin-studio__viewport {
-    flex: 1;
-  }
-
-  .twin-studio__hud {
-    inset-block-start: 8px;
-    inset-inline: 8px;
-    gap: 6px;
-  }
-
-  .twin-studio__overlay-title {
-    min-width: 0;
-    max-width: 58%;
-    padding: 6px 10px;
-  }
-
-  .twin-studio__overlay-title strong {
+  .tw-bar__titles h1 {
     font-size: 15px;
   }
 
-  .twin-studio__overlay-title small {
+  .tw-bar__titles .tw-bar__note {
     display: none;
   }
 
-  .twin-studio__network-legend {
-    display: none;
+  .tw-bar__note--row {
+    display: block;
+    grid-area: note;
+    margin-block-start: 8px;
+    text-align: center;
+    white-space: normal;
   }
 
-  .twin-studio__mobile-bim {
-    padding-inline: 12px;
-    font-size: 13px;
+  .tw-bar__scenes {
+    justify-self: stretch;
   }
 
-  .twin-studio__mobile-floors {
-    display: flex;
-    flex-basis: 100%;
-    align-items: center;
-    gap: 6px;
-    pointer-events: auto;
-  }
-
-  .twin-studio__mobile-floors select {
-    flex: 1;
+  .tw-bar__scenes .tw-seg__item {
     min-width: 0;
-    box-shadow: var(--tw-float);
+    min-height: 40px;
   }
 
-  .twin-studio__mobile-floors .icon-btn {
-    flex: none;
-    box-shadow: var(--tw-float);
+  .tw-bar__fullscreen {
+    display: none;
   }
 
-  .twin-studio__view-controls {
-    inset-block-end: 10px;
+  .tw-bar__back {
+    min-width: 0;
   }
 
-  .twin-studio__view-controls button {
-    min-width: 64px;
-    padding-inline: 10px;
+  .tw-free,
+  .tw-body.is-collapsed .tw-free {
+    inset-inline-start: 0;
+    padding-block-end: calc(var(--tw-peek, 0px) + 12px);
+    transition: none;
   }
 
-  .twin-studio__mobile-selection {
-    inset-block-end: 74px;
-    inset-inline: 8px;
+  .twin-studio.has-sheet-open .tw-free {
+    visibility: hidden;
   }
 
-  .twin-studio__inspector.is-mobile-open {
-    inset: 0;
-    width: 100%;
-    padding: 16px;
-    box-shadow: none;
+  .tw-views .tw-seg__item {
+    min-height: 40px;
+    padding-inline: 14px;
+  }
+
+  .tw-views__reset {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* The sheet: always full height, slid down so only its top part peeks. */
+  .tw-panel {
+    inset-block: auto 0;
+    inset-inline: 0;
+    width: auto;
+    height: min(80%, 680px);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.12);
+    transform: translateY(calc(100% - var(--tw-peek, 0px)));
+    transition: transform 380ms var(--ease-out);
+  }
+
+  .tw-panel.is-sheet-open {
+    transform: none;
+  }
+
+  .tw-panel__peek {
+    padding: 0 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tw-panel.is-sheet-open .tw-panel__peek {
+    padding-block-end: 12px;
+  }
+
+  .tw-panel__handle {
+    display: grid;
+    place-items: center;
+    width: calc(100% + 32px);
+    height: 28px;
+    margin-inline: -16px;
+    border: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) var(--radius) var(--radius);
+    background: transparent;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .tw-panel__handle span {
+    width: 40px;
+    height: 5px;
+    border-radius: var(--radius-pill);
+    background: var(--line-strong);
+  }
+
+  .tw-panel__handle:focus-visible {
+    outline-offset: -4px;
+  }
+
+  /* The scene switch above already names the scene; the heading shows once the sheet is open. */
+  .tw-panel__head,
+  .tw-panel.has-selection .tw-panel__head {
+    display: none;
+  }
+
+  .tw-panel.is-sheet-open:not(.has-selection) .tw-panel__head {
+    display: flex;
+    margin-block-end: 4px;
+  }
+
+  .tw-panel__heading h2 {
+    font-size: 19px;
+  }
+
+  .tw-panel__tabs {
+    margin-block-start: 6px;
+  }
+
+  .tw-panel__tabs .tw-seg__item {
+    min-height: 40px;
+  }
+
+  .tw-panel__body {
+    padding: 4px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tw-selection {
+    padding: 2px 4px 6px;
+    border: 0;
+  }
+
+  .tw-selection h3 {
+    margin-block: 0;
+    font-size: 16px;
+  }
+
+  .tw-panel:not(.is-sheet-open) .tw-selection__text,
+  .tw-panel:not(.is-sheet-open) .tw-selection__id {
+    display: none;
+  }
+
+  .tw-selection__text {
+    margin-block-start: 4px;
+    -webkit-line-clamp: 3;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tw-panel:not([hidden]) {
+      animation: none;
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .tw-bar__rule {
+    display: none;
+  }
+
+  .tw-bar__start {
+    gap: 10px;
+  }
+
+  .tw-views .tw-seg__item {
+    padding-inline: 11px;
   }
 }

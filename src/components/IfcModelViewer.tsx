@@ -33,13 +33,14 @@ import {
 import { elementIndex, partsOfChunk, type PartSpec } from "./ifcViewer/parts";
 import { elementAtFace } from "./ifcViewer/picking";
 import { FrameGovernor, pinnedTier, type Tier } from "./ifcViewer/quality";
-import { siteLayout, type Rect, type SiteLayout } from "./ifcViewer/site";
+import { siteLayout } from "./ifcViewer/site";
 import { daylight, HERO_TIME, RIYADH, solarPosition, sunVector, VIEW_TIME } from "./ifcViewer/sun";
-import { finishTextures, releaseTextures, siteTextures } from "./ifcViewer/textures";
+import { finishTextures, releaseTextures } from "./ifcViewer/textures";
 import {
   buildingBoxOf,
   centerOf,
   facadePose,
+  facadeSide,
   focusPose,
   frontSide,
   networksPose,
@@ -47,19 +48,23 @@ import {
   planPose,
   radiusOf,
   sectionPose,
+  SIDE_NORMAL,
+  streetPose,
   type Lens,
   type Pose,
   type Side,
   type ViewId,
 } from "./ifcViewer/views";
 import "./ifcViewer/viewer.css";
+import { SaudiStreet, type StreetDetail } from "./scene/SaudiStreet";
 
 /*
  * Draws the uploaded IFC file itself: every triangle comes from web-ifc's reading of the same
  * bytes the rules checked, and the building-services networks come from the file's own systems.
  * The look follows the user's 3d-studio skill (RasQ, SPARK): physical sky and sun for Riyadh, a
  * balanced image light, real shadows, ambient occlusion, PBR finishes at real scale, and a
- * dollhouse cut with dark caps. Only the sky, the sand, the paving and the street are context.
+ * dollhouse cut with dark caps. Only the sky and the Riyadh street around the building (SaudiStreet:
+ * paving, roads, neighbours, palms, cars) are context, drawn paler than the building.
  */
 
 export interface IfcViewerMarker {
@@ -95,7 +100,7 @@ const PIN_ICON: Record<ResultStatus, typeof Check> = { pass: Check, fail: X, unk
 
 /* Local strings. */
 const SOURCE_NOTE = "مبني من هندسة الملف نفسه";
-const CONTEXT_NOTE = "السماء والأرض والرصيف والشارع للسياق فقط، شمس الرياض 10:30";
+const CONTEXT_NOTE = "الشارع والمباني المجاورة والسماء للسياق فقط، شمس الرياض 10:30";
 const TOOLS_LABEL = "أدوات العارض";
 const VIEWS_LABEL = "طريقة العرض";
 const VIEW_LABEL: Record<ViewId, string> = {
@@ -123,9 +128,20 @@ const SEARCH = typeof window !== "undefined" ? window.location.search : "";
 const CAPTURE_PARAM = new URLSearchParams(SEARCH).get("capture");
 /** `?capture` (any value): continuous frames, snapped cameras, DPR 1. */
 const CAPTURE = CAPTURE_PARAM !== null;
-/** `?capture=hero|networks`: a clean full-screen shot of one view, no interface. */
-const SHOT: "hero" | "networks" | undefined =
-  CAPTURE_PARAM === "hero" || CAPTURE_PARAM === "networks" ? CAPTURE_PARAM : undefined;
+/**
+ * `?capture=<shot>`: a clean full-screen render of one view, no interface (scripts/capture-model.mjs):
+ * hero (eye-level street view), street (the same street from a first-floor height), section (dollhouse
+ * cut), violation (the selected finding close up, with its highlight and measurement), networks.
+ */
+type Shot = "hero" | "street" | "section" | "violation" | "networks";
+const SHOTS: readonly Shot[] = ["hero", "street", "section", "violation", "networks"];
+const SHOT: Shot | undefined = SHOTS.find((shot) => shot === CAPTURE_PARAM);
+/** Street shots are lit for a warm afternoon; the others keep the viewer's 10:30 sun. */
+const STREET_SHOT = SHOT === "hero" || SHOT === "street";
+/** Street shots use a longer lens, so the camera stands back across the street and verticals stay calm. */
+const FOV = SHOT === "hero" ? 30 : SHOT === "street" ? 32 : 36;
+/** Shots render large (2400 px wide); measurement lines and callouts grow with them so they read at page size. */
+const SHOT_SCALE = SHOT && typeof window !== "undefined" ? Math.max(1, window.innerWidth / 1280) : 1;
 const PINNED: Tier | undefined = pinnedTier(SEARCH) ?? (CAPTURE ? "high" : undefined);
 const COARSE = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
 
@@ -279,12 +295,16 @@ function partMaterial(part: PartSpec, plane: THREE.Plane): THREE.Material {
   );
 }
 
-/** Services in their system's fixed colour (the legend's colour), never cut. */
+/** Services in their system's fixed colour (the legend's colour), never cut; a little self-light keeps the
+    colour clear on the shaded side of a run, so each network reads at a glance. */
 function systemMaterial(layer: LayerKind): THREE.MeshStandardMaterial {
+  const color = new THREE.Color(LAYER_COLORS[layer]);
   return new THREE.MeshStandardMaterial({
-    color: LAYER_COLORS[layer],
-    roughness: layer === "unassigned" ? 0.4 : 0.48,
-    metalness: layer === "unassigned" ? 0.6 : 0.12,
+    color,
+    emissive: color,
+    emissiveIntensity: layer === "unassigned" ? 0.05 : 0.22,
+    roughness: layer === "unassigned" ? 0.4 : 0.42,
+    metalness: layer === "unassigned" ? 0.6 : 0.08,
   });
 }
 
@@ -341,12 +361,26 @@ function visibleRaycast(this: THREE.Mesh, raycaster: THREE.Raycaster, hits: THRE
 
 /* ---------------- light, sky, site ---------------- */
 
-function SkyAndLight({ bbox, time, shadowSize }: { bbox: Box3; time: Date; shadowSize: number }) {
+function SkyAndLight({
+  bbox,
+  time,
+  shadowSize,
+  warmth,
+  extent,
+}: {
+  bbox: Box3;
+  time: Date;
+  shadowSize: number;
+  /** 0-1: warmer colours for the street shots (see `daylight`). */
+  warmth: number;
+  /** Half-size of the shadow frustum (metres), so the street's palms, cars and neighbours cast shadows too. */
+  extent: number;
+}) {
   const { gl, scene, invalidate } = useThree();
   const sun = useMemo(() => {
     const { elevation, azimuth } = solarPosition(RIYADH.lat, RIYADH.lon, time);
-    return { dir: new THREE.Vector3(...sunVector(elevation, azimuth)), elevation, light: daylight(elevation) };
-  }, [time]);
+    return { dir: new THREE.Vector3(...sunVector(elevation, azimuth)), elevation, light: daylight(elevation, warmth) };
+  }, [time, warmth]);
   const center = useMemo(() => v3(centerOf(bbox)), [bbox]);
   const radius = Math.max(8, radiusOf(bbox));
   const light = useRef<THREE.DirectionalLight>(null);
@@ -394,7 +428,8 @@ function SkyAndLight({ bbox, time, shadowSize }: { bbox: Box3; time: Date; shado
     const rt = pmrem.fromScene(envScene, 0.04, 0.1, 1000);
     scene.environment = rt.texture;
     scene.environmentIntensity = envIntensity;
-    scene.fog = new THREE.Fog(fog, radius * 6, radius * 40);
+    // Haze from beyond the street block to the horizon: the city fades into a warm light haze.
+    scene.fog = new THREE.Fog(fog, Math.max(radius * 6, 70), Math.max(radius * 40, 520));
     gl.toneMappingExposure = exposure;
     invalidate();
     return () => {
@@ -407,24 +442,25 @@ function SkyAndLight({ bbox, time, shadowSize }: { bbox: Box3; time: Date; shado
     };
   }, [gl, scene, sun, radius, invalidate]);
 
+  const ext = Math.max(radius * 1.25, extent);
+  const lightDistance = ext * 1.6 + 10;
   useEffect(() => {
     const l = light.current;
     if (!l) return;
-    const ext = radius * 1.25;
     const cam = l.shadow.camera;
     cam.left = -ext;
     cam.right = ext;
     cam.top = ext;
     cam.bottom = -ext;
     cam.near = 1;
-    cam.far = radius * 8;
+    cam.far = lightDistance + ext * 1.4 + 20;
     cam.updateProjectionMatrix();
     l.target.position.copy(center);
     l.target.updateMatrixWorld();
     gl.shadowMap.needsUpdate = true;
-  }, [center, radius, gl, sun]);
+  }, [center, ext, lightDistance, gl, sun]);
 
-  const lightPos = center.clone().addScaledVector(sun.dir, radius * 4);
+  const lightPos = center.clone().addScaledVector(sun.dir, lightDistance);
   const { sun: key, hemisphere } = sun.light;
   return (
     <>
@@ -476,122 +512,6 @@ function InteriorReflections({ materials }: { materials: THREE.MeshStandardMater
     };
   }, [gl, materials, invalidate]);
   return null;
-}
-
-/** World-space macro variation so large paved and sand areas do not show their tile. */
-function antiTile(material: THREE.MeshStandardMaterial, scale: number, amount: number, twoSamples: boolean, key: string) {
-  material.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vWorldPos;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\nvWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;");
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        `#include <common>
-varying vec3 vWorldPos;
-float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float noise2(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), u.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0)), u.x), u.y);
-}`,
-      )
-      .replace(
-        "#include <map_fragment>",
-        twoSamples
-          ? `vec2 uvA = vMapUv;
-vec2 uvB = mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.61;
-float macro = noise2(vWorldPos.xz / ${(scale * 4.6).toFixed(1)}) * 0.65 + noise2(vWorldPos.xz / ${(scale * 1.1).toFixed(1)}) * 0.35;
-vec4 texelColor = mix(texture2D(map, uvA), texture2D(map, uvB), smoothstep(0.3, 0.7, macro));
-texelColor.rgb *= ${(1 - amount / 2).toFixed(3)} + ${amount.toFixed(3)} * noise2(vWorldPos.xz / ${(scale * 7.6).toFixed(1)});
-diffuseColor *= texelColor;`
-          : `vec4 texelColor = texture2D(map, vMapUv);
-texelColor.rgb *= ${(1 - amount / 2).toFixed(3)} + ${amount.toFixed(3)} * (noise2(vWorldPos.xz / ${scale.toFixed(1)}) * 0.7 + noise2(vWorldPos.xz / ${(scale * 0.27).toFixed(2)}) * 0.3);
-diffuseColor *= texelColor;`,
-      );
-  };
-  material.customProgramCacheKey = () => key;
-}
-
-function siteMaterial(surface: "pavers" | "asphalt" | "kerb" | "sand", roughness: number): THREE.MeshStandardMaterial {
-  const set = siteTextures(surface);
-  const scale = set.normalScale ?? 1;
-  const m = new THREE.MeshStandardMaterial({
-    map: set.map,
-    normalMap: set.normalMap ?? null,
-    normalScale: new THREE.Vector2(scale, scale),
-    roughnessMap: set.roughnessMap ?? null,
-    roughness,
-    metalness: 0,
-  });
-  if (surface === "sand") antiTile(m, 8, 0.18, true, "sand-v2");
-  else if (surface === "pavers") antiTile(m, 9, 0.12, false, "pavers-v1");
-  else if (surface === "asphalt") antiTile(m, 14, 0.16, false, "asphalt-v1");
-  return m;
-}
-
-/** A box from y0 to y1 over a plan rectangle, with UVs in metres (box projection, like the reader). */
-function slabGeometry(r: Rect, y0: number, y1: number): THREE.BufferGeometry {
-  const g = new THREE.BoxGeometry(r.x1 - r.x0, y1 - y0, r.z1 - r.z0);
-  g.translate((r.x0 + r.x1) / 2, (y0 + y1) / 2, (r.z0 + r.z1) / 2);
-  const p = g.getAttribute("position");
-  const n = g.getAttribute("normal");
-  const uv = g.getAttribute("uv");
-  for (let i = 0; i < p.count; i++) {
-    const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i));
-    if (ay > 0.5) uv.setXY(i, p.getX(i), p.getZ(i));
-    else if (ax > 0.5) uv.setXY(i, p.getZ(i), p.getY(i));
-    else uv.setXY(i, p.getX(i), p.getY(i));
-  }
-  return g;
-}
-
-function Site({ layout }: { layout: SiteLayout }) {
-  const built = useMemo(() => {
-    const pavers = siteMaterial("pavers", 1);
-    const kerb = siteMaterial("kerb", 0.9);
-    const asphalt = siteMaterial("asphalt", 0.92);
-    const sand = siteMaterial("sand", 1);
-    sand.color.set("#efe7d8");
-    const paint = new THREE.MeshStandardMaterial({ color: "#e9e6dc", roughness: 0.7 });
-    const plaza = slabGeometry(layout.plaza, layout.streetY - 0.25, layout.plazaY);
-    const kerbs = layout.kerbs.map((r) => slabGeometry(r, layout.plazaY - 0.02, layout.plazaY + 0.006));
-    const street = slabGeometry(layout.street, layout.streetY - 0.2, layout.streetY + 0.002);
-    const lines = layout.markings.map((r) => slabGeometry(r, layout.streetY, layout.streetY + 0.005));
-    const ground = new THREE.CircleGeometry(900, 96);
-    ground.rotateX(-Math.PI / 2);
-    // Sand UVs in metres.
-    const p = ground.getAttribute("position");
-    const uv = ground.getAttribute("uv");
-    for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i), p.getZ(i));
-    ground.translate(0, layout.streetY - 0.004, 0);
-    return { pavers, kerb, asphalt, sand, paint, plaza, kerbs, street, lines, ground };
-  }, [layout]);
-  useEffect(
-    () => () => {
-      for (const m of [built.pavers, built.kerb, built.asphalt, built.sand, built.paint]) m.dispose();
-      for (const g of [built.plaza, built.street, built.ground, ...built.kerbs, ...built.lines]) g.dispose();
-    },
-    [built],
-  );
-  // BoxGeometry groups: +x, -x, +y, -y, +z, -z.
-  const plazaMaterials = useMemo(
-    () => [built.kerb, built.kerb, built.pavers, built.kerb, built.kerb, built.kerb],
-    [built],
-  );
-  return (
-    <group name="site-context">
-      <mesh geometry={built.ground} material={built.sand} receiveShadow />
-      <mesh geometry={built.plaza} material={plazaMaterials} receiveShadow castShadow />
-      {built.kerbs.map((g, i) => (
-        <mesh key={i} geometry={g} material={built.kerb} receiveShadow />
-      ))}
-      <mesh geometry={built.street} material={built.asphalt} receiveShadow />
-      {built.lines.map((g, i) => (
-        <mesh key={`m${i}`} geometry={g} material={built.paint} receiveShadow />
-      ))}
-    </group>
-  );
 }
 
 /* ---------------- model ---------------- */
@@ -709,6 +629,48 @@ function ShellEdges({ parts, plane }: { parts: BuiltPart[]; plane: THREE.Plane }
   );
 }
 
+/** Crisp outlines of walls, openings and furniture in the cut views, so the section reads like a drawing. */
+function SectionEdges({ parts, plane }: { parts: BuiltPart[]; plane: THREE.Plane }) {
+  const edges = useMemo(() => {
+    const strong = new THREE.LineBasicMaterial({
+      color: "#1f2426",
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      clippingPlanes: [plane],
+    });
+    const soft = new THREE.LineBasicMaterial({
+      color: "#2b3033",
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false,
+      clippingPlanes: [plane],
+    });
+    const lines = parts
+      .filter((b) => b.part.finish !== "service" && b.part.pane !== "glass" && !["space", "roof", "floor"].includes(b.part.category))
+      .map((b) => ({
+        geometry: new THREE.EdgesGeometry(b.geometry, 32),
+        material: ["wall", "door", "window", "column"].includes(b.part.category) ? strong : soft,
+      }));
+    return { strong, soft, lines };
+  }, [parts, plane]);
+  useEffect(
+    () => () => {
+      edges.strong.dispose();
+      edges.soft.dispose();
+      for (const l of edges.lines) l.geometry.dispose();
+    },
+    [edges],
+  );
+  return (
+    <>
+      {edges.lines.map((l, i) => (
+        <lineSegments key={i} geometry={l.geometry} material={l.material} renderOrder={2} />
+      ))}
+    </>
+  );
+}
+
 /** How services show: as built (exterior), in system colours (services view, layers panel) or not at all. */
 type ServiceStyle = "real" | "system" | "off";
 
@@ -812,7 +774,7 @@ function Highlight({
       <meshBasicMaterial
         color={color}
         transparent
-        opacity={subset.isSpace ? 0.28 : status ? 0.62 : 0.38}
+        opacity={subset.isSpace ? 0.28 : status ? 0.7 : 0.38}
         depthWrite={false}
         polygonOffset
         polygonOffsetFactor={-2}
@@ -870,12 +832,12 @@ function DimensionLine({
     const limitPoint = limit !== undefined ? foot.clone().setY(floorY + limit) : undefined;
     return (
       <group renderOrder={5}>
-        <Line points={[foot, head]} color={color} lineWidth={3} depthTest={false} />
-        <Line points={[head.clone().sub(tick), head.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
-        <Line points={[foot.clone().sub(tick), foot.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
+        <Line points={[foot, head]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
+        <Line points={[head.clone().sub(tick), head.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
+        <Line points={[foot.clone().sub(tick), foot.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
         {limitPoint && (
           <Line points={[limitPoint.clone().sub(tick.clone().multiplyScalar(2)), limitPoint.clone().add(tick.clone().multiplyScalar(2))]}
-            color="#161616" lineWidth={2} dashed dashSize={0.06} gapSize={0.05} depthTest={false} />
+            color="#161616" lineWidth={2 * SHOT_SCALE} dashed dashSize={0.06} gapSize={0.05} depthTest={false} />
         )}
         <Html position={head.clone().add(new THREE.Vector3(0, 0.18, 0))} center zIndexRange={[20, 10]}>
           {label}
@@ -898,9 +860,9 @@ function DimensionLine({
   const mid = a.clone().add(b).multiplyScalar(0.5);
   return (
     <group renderOrder={5}>
-      <Line points={[a, b]} color={color} lineWidth={3} depthTest={false} />
-      <Line points={[a.clone().sub(tick), a.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
-      <Line points={[b.clone().sub(tick), b.clone().add(tick)]} color={color} lineWidth={3} depthTest={false} />
+      <Line points={[a, b]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
+      <Line points={[a.clone().sub(tick), a.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
+      <Line points={[b.clone().sub(tick), b.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
       <Html position={mid} center zIndexRange={[20, 10]}>
         {label}
       </Html>
@@ -1183,13 +1145,25 @@ export default function IfcModelViewer({
   }, [facts, geometry]);
   const front: Side = useMemo(() => frontSide(building, openingsOf(facts.products)), [facts, building]);
   const site = useMemo(() => siteLayout(building, floorTop, front), [building, floorTop, front]);
-  const time = SHOT === "hero" ? HERO_TIME : VIEW_TIME;
+  const time = STREET_SHOT ? HERO_TIME : VIEW_TIME;
   const sunFlat = useMemo((): [number, number] => {
     const { elevation, azimuth } = solarPosition(RIYADH.lat, RIYADH.lon, time);
     const [x, , z] = sunVector(elevation, azimuth);
     const l = Math.hypot(x, z) || 1;
     return [x / l, z / l];
   }, [time]);
+  // The side face that joins the front in the street view (front in sun, this face in shade). The street
+  // context opens a cross street on that side, so the street, section and services views all look in
+  // across open ground instead of over a neighbour.
+  const cornerSide = useMemo(() => facadeSide(front, sunFlat, "contrast"), [front, sunFlat]);
+  const corner = useMemo(() => {
+    const [fx, fz] = SIDE_NORMAL[front];
+    return cornerSide[0] * fz - cornerSide[1] * fx > 0 ? "right" : "left";
+  }, [front, cornerSide]);
+  const footprint = useMemo(
+    () => ({ minX: building.min[0], minZ: building.min[2], maxX: building.max[0], maxZ: building.max[2] }),
+    [building],
+  );
 
   // Storeys and the floor level of each, from the elements the file places in them.
   const { levels, storeyOf } = useMemo(() => {
@@ -1218,7 +1192,7 @@ export default function IfcModelViewer({
   }, [facts, products]);
 
   /* ---- view state ---- */
-  const initialView: ViewId = SHOT === "hero" ? "facade" : SHOT === "networks" ? "networks" : "section";
+  const initialView: ViewId = STREET_SHOT ? "facade" : SHOT === "networks" ? "networks" : "section";
   const [view, setView] = useState<ViewId>(initialView);
   const [cut, setCut] = useState(initialView === "section");
   const [camera, setCamera] = useState<CameraRequest>({ kind: "view", nonce: 0 });
@@ -1235,10 +1209,12 @@ export default function IfcModelViewer({
 
   useEffect(() => () => releaseTextures(), []);
 
-  const selected = SHOT ? undefined : selectedStepId !== undefined ? products.get(selectedStepId) : undefined;
+  // Shots show no selection, except the violation shot, which is about the selected finding.
+  const selecting = !SHOT || SHOT === "violation";
+  const selected = !selecting ? undefined : selectedStepId !== undefined ? products.get(selectedStepId) : undefined;
   const focusBox = selected?.bbox;
   // A finding about a network (drainage, water...) is read in the services view on its layer.
-  const topic = SHOT ? undefined : serviceTopic(selectedRuleId);
+  const topic = !selecting ? undefined : serviceTopic(selectedRuleId);
   const topicLayer = topic && layers.some((l) => l.kind === topic) ? topic : undefined;
   const selectedIsService = isServiceElement(selected, mepIds, kinds) || topicLayer !== undefined;
   const selectedSystems = useMemo(
@@ -1270,7 +1246,7 @@ export default function IfcModelViewer({
      a pick in the scene keeps the view the visitor chose. */
   const picked = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (SHOT || selectedStepId === undefined || !focusBox) return;
+    if (!selecting || selectedStepId === undefined || !focusBox) return;
     if (picked.current !== undefined && picked.current === selectedStepId) {
       picked.current = undefined;
       return;
@@ -1313,18 +1289,19 @@ export default function IfcModelViewer({
       }
       switch (view) {
         case "facade":
-          return SHOT === "hero"
-            ? facadePose(building, front, sunFlat, site.plazaY, lens, "shade", 0.86)
-            : facadePose(building, front, sunFlat, site.plazaY, lens);
+          if (SHOT === "street") return streetPose(building, front, cornerSide, site.plazaY, lens);
+          // The hero stands back at the street corner (a longer lens), turned further towards the open side.
+          if (SHOT === "hero") return facadePose(building, front, sunFlat, site.plazaY, lens, "contrast", 0.8, 46);
+          return facadePose(building, front, sunFlat, site.plazaY, lens);
         case "plan":
           return planPose(building, front, levelY, lens);
         case "networks":
-          return networksPose(building, front, levelY, lens);
+          return networksPose(building, front, levelY, lens, cornerSide);
         default:
-          return sectionPose(building, front, levelY, lens);
+          return sectionPose(building, front, levelY, lens, cornerSide);
       }
     },
-    [camera.kind, focusBox, building, selectedIsService, measurement, levelY, room, view, front, sunFlat, site],
+    [camera.kind, focusBox, building, selectedIsService, measurement, levelY, room, view, front, sunFlat, site, cornerSide],
   );
 
   const toggleLayer = useCallback((kind: LayerKind, on: boolean) => {
@@ -1342,6 +1319,8 @@ export default function IfcModelViewer({
       cut,
       tier,
       shot: SHOT ?? null,
+      front,
+      corner,
       layers: layers.map((l) => ({ kind: l.kind, count: l.count, visible: !hidden.has(l.kind) })),
       systems: (facts.systems ?? []).length,
       parts: model.parts.length,
@@ -1353,7 +1332,7 @@ export default function IfcModelViewer({
       },
       setLayer: (kind: LayerKind, on: boolean) => toggleLayer(kind, on),
     }),
-    [view, cut, tier, layers, hidden, facts, model, focus, goto, toggleLayer],
+    [view, cut, tier, layers, hidden, facts, model, focus, goto, toggleLayer, front, corner],
   );
 
   const services = view === "networks";
@@ -1367,12 +1346,18 @@ export default function IfcModelViewer({
   const dpr = CAPTURE ? 1 : tier === "low" ? 1 : Math.min(1.5, window.devicePixelRatio || 1);
   const shadowSize = COARSE ? 2048 : 4096;
   const ui = !SHOT;
+  // The selected element's highlight and measurement: in the viewer, and in the violation shot.
+  const marks = ui || SHOT === "violation";
+  // Context: livelier in the street view, fainter round the cut, quiet behind the coloured networks.
+  const contextIntensity = services ? 0.36 : view === "facade" ? 0.8 : 0.55;
+  const contextDetail: StreetDetail = COARSE || tier === "low" ? "medium" : "high";
 
   const scene = (
     <div
       className={`vw${SHOT ? " vw--shot" : ""}${services ? " vw--services" : ""}${layers.length > 0 && layersOpen ? " vw--layers" : ""}`}
       data-testid="ifc-model-viewer"
       data-view={view}
+      style={SHOT ? ({ "--vw-shot-scale": SHOT_SCALE } as React.CSSProperties) : undefined}
     >
       <div className="vw__canvas" aria-label={`عارض ثلاثي الأبعاد لهندسة الملف ${fileName}`}>
         <Canvas
@@ -1380,7 +1365,7 @@ export default function IfcModelViewer({
           dpr={dpr}
           frameloop={CAPTURE ? "always" : "demand"}
           gl={{ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: CAPTURE }}
-          camera={{ position: [20, 18, 24], fov: 36, near: 0.1, far: 4000 }}
+          camera={{ position: [20, 18, 24], fov: FOV, near: 0.1, far: 4000 }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.NeutralToneMapping;
             gl.toneMappingExposure = 0.95;
@@ -1391,16 +1376,25 @@ export default function IfcModelViewer({
           }}
           onPointerMissed={() => onPick(undefined)}
         >
-          <SkyAndLight bbox={building} time={time} shadowSize={shadowSize} />
-          <Site layout={site} />
+          <SkyAndLight bbox={building} time={time} shadowSize={shadowSize} warmth={STREET_SHOT ? 1 : 0.35} extent={44} />
+          <SaudiStreet
+            footprint={footprint}
+            groundY={site.plazaY}
+            front={front}
+            corner={corner}
+            detail={contextDetail}
+            intensity={contextIntensity}
+            sky={false}
+          />
           <InteriorReflections materials={model.interior} />
           <Model model={model} mode={services ? "services" : "building"} services={serviceStyle} showSpaces={showSpaces}
             hidden={hidden} onPick={onPick} />
           {services && <ShellEdges parts={model.parts} plane={plane} />}
-          {ui && (
-            <Highlight stepId={selectedStepId} status={selectedStatus} model={model} plane={plane} service={selectedIsService} />
+          {cut && !services && <SectionEdges parts={model.parts} plane={plane} />}
+          {marks && (
+            <Highlight stepId={selected ? selectedStepId : undefined} status={selectedStatus} model={model} plane={plane} service={selectedIsService} />
           )}
-          {ui && cut && measurement && focusBox && (
+          {marks && cut && measurement && focusBox && (
             <DimensionLine
               box={focusBox}
               value={measurement.value}

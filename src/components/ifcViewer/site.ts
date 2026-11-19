@@ -2,9 +2,10 @@ import type { Box3 } from "../../ifc/standard/model";
 import { SIDE_NORMAL, type Side } from "./views";
 
 /*
- * Context only, not from the file: a paved plot raised one kerb above the street, an asphalt
- * street along the building's front, and desert sand beyond. Sizes follow common Riyadh
- * practice (15 cm kerbs, 7.5 m two-lane local street); the plot margin grows with the building.
+ * Context only, not from the file: the levels of a paved plot raised one kerb above the street
+ * along the building's front. The viewer takes its ground levels from here (the street itself is
+ * drawn by components/scene/SaudiStreet). Sizes follow common Riyadh practice (15 cm kerbs, 7.5 m
+ * two-lane local street); the plot margin grows with the building.
  */
 
 export interface Rect {
@@ -17,7 +18,7 @@ export interface Rect {
 export interface SiteLayout {
   /** Top of the paving: the storey's floor level (a hair below, so the floor finish wins). */
   plazaY: number;
-  /** Street and sand level, one kerb below the paving. */
+  /** Street level, one kerb below the paving. */
   streetY: number;
   plaza: Rect;
   /** Kerb stones along the plot edge, on the paving. */

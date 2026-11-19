@@ -140,10 +140,12 @@ export function facadePose(
   prefer: FacadeLight = "contrast",
   /** Below 1 moves the camera closer (the hero image frames the building tighter). */
   zoom = 1,
+  /** How far the camera turns from the front towards the side face, degrees. */
+  turnDeg = 34,
 ): Pose {
   const [fx, fz] = SIDE_NORMAL[front];
   const side = facadeSide(front, sun, prefer);
-  const turn = (34 * Math.PI) / 180;
+  const turn = (turnDeg * Math.PI) / 180;
   const [dx, dz] = norm2(fx * Math.cos(turn) + side[0] * Math.sin(turn), fz * Math.cos(turn) + side[1] * Math.sin(turn));
   const c = centerOf(building);
   const height = building.max[1] - groundY;
@@ -168,10 +170,34 @@ export function facadePose(
   return { position: [c[0] + dx * distance, eye, c[2] + dz * distance], target };
 }
 
-/** Dollhouse: a high three-quarter view from the front corner into the cut plan. */
-export function sectionPose(building: Box3, front: Side, floorY: number, lens: Lens): Pose {
+/**
+ * Street view from a little above eye level, as from a first-floor window on the far corner of the cross
+ * street: the building in three-quarters on its corner plot, with its forecourt and the main street running
+ * away beside it, so its setting reads. `side` is the side face that joins the front (`facadeSide`).
+ */
+export function streetPose(building: Box3, front: Side, side: [number, number], groundY: number, lens: Lens): Pose {
   const [fx, fz] = SIDE_NORMAL[front];
-  const side: [number, number] = [-fz, fx];
+  const turn = (50 * Math.PI) / 180;
+  const [dx, dz] = norm2(fx * Math.cos(turn) + side[0] * Math.sin(turn), fz * Math.cos(turn) + side[1] * Math.sin(turn));
+  const c = centerOf(building);
+  const height = building.max[1] - groundY;
+  const { v, h } = halfFields(lens);
+  const width = Math.max(building.max[0] - building.min[0], building.max[2] - building.min[2]);
+  const fit = Math.max((width * 0.75) / Math.tan(h), (height * 2.3) / Math.tan(v));
+  const distance = fit * (lens.aspect < 1 ? 1.3 : 1);
+  const eye = groundY + 6.5;
+  // Aim a little past the building's centre, towards the street it fronts, and below its roof.
+  const target: Vec3 = [c[0] + fx * 2, groundY + height * 0.3, c[2] + fz * 2];
+  return { position: [c[0] + dx * distance, eye, c[2] + dz * distance], target };
+}
+
+/**
+ * Dollhouse: a high three-quarter view from the front corner into the cut plan. `side` is the outward
+ * normal of the side face the camera turns towards (default: the front's left, seen from outside).
+ */
+export function sectionPose(building: Box3, front: Side, floorY: number, lens: Lens, side?: [number, number]): Pose {
+  const [fx, fz] = SIDE_NORMAL[front];
+  side ??= [-fz, fx];
   const [dx, dz] = norm2(fx + side[0] * 0.62, fz + side[1] * 0.62);
   const c = centerOf(building);
   const target: Vec3 = [c[0], floorY + 0.8, c[2]];
@@ -199,10 +225,13 @@ export function planPose(building: Box3, front: Side, floorY: number, lens: Lens
   };
 }
 
-/** Services: a higher three-quarter view than the dollhouse, from the opposite corner, whole building in frame. */
-export function networksPose(building: Box3, front: Side, floorY: number, lens: Lens): Pose {
+/**
+ * Services: a higher three-quarter view than the dollhouse, whole building in frame; by default from the
+ * other front corner (`side` as in `sectionPose`).
+ */
+export function networksPose(building: Box3, front: Side, floorY: number, lens: Lens, side?: [number, number]): Pose {
   const [fx, fz] = SIDE_NORMAL[front];
-  const side: [number, number] = [fz, -fx];
+  side ??= [fz, -fx];
   const [dx, dz] = norm2(fx + side[0] * 0.75, fz + side[1] * 0.75);
   const c = centerOf(building);
   const target: Vec3 = [c[0], (floorY + building.max[1]) / 2, c[2]];

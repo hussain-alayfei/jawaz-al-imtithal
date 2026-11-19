@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { VenueServiceNetwork3D } from "./VenueServiceNetwork3D";
 import { getVenueElement } from "./VenueEngineeringData";
+import { SaudiStreet, type StreetDetail } from "./scene/SaudiStreet";
+import { useMediaQuery } from "../screens/landing/useMediaQuery";
 
 import type { ServiceVisibility } from "./EngineeringNetworks3D";
 
@@ -48,15 +50,6 @@ function B({p,s,c,metal=0,opacity=1}: {p:Vec3;s:Vec3;c:string;metal?:number;opac
 function Cylinder({p,h,r,c}: {p:Vec3;h:number;r:number;c:string}){
  return <mesh position={p} castShadow><cylinderGeometry args={[r,r*.9,h,14]}/><meshStandardMaterial color={c} roughness={.67}/></mesh>;
 }
-function Tree({x,z,s=1}: {x:number;z:number;s?:number}) {
- return <group position={[x,0,z]} scale={s}>
-   <Cylinder p={[0,.95,0]} h={1.9} r={.13} c="#776c58"/>
-   {[[0,2.12,0],[.47,1.94,.13],[-.38,1.92,-.14],[0,2.55,.2]].map(([x,y,z],i)=><mesh key={i} position={[x,y,z]} castShadow>
-     <icosahedronGeometry args={[.8,i%2?1:2]}/><meshStandardMaterial color={["#4c795f","#598b66","#668f6a","#46715a"][i]} roughness={.87}/>
-   </mesh>)}
-   <Cylinder p={[0,.12,0]} h={.24} r={.71} c="#d4c5ae"/>
- </group>;
-}
 function PatioSet({x,z,color}: {x:number;z:number;color:string}){
  return <group position={[x,0,z]}>
    <Cylinder p={[0,.74,0]} h={.065} r={.56} c="#c3a88b"/>
@@ -68,54 +61,97 @@ function PatioSet({x,z,color}: {x:number;z:number;color:string}){
    </group>)}
  </group>;
 }
-function Car({x,z,c,rotate=0}: {x:number;z:number;c:string;rotate?:number}){
- return <group position={[x,.21,z]} rotation={[0,rotate,0]}>
-   <B p={[0,.38,0]} s={[1.92,.61,3.48]} c={c} metal={.4}/>
-   <B p={[0,.87,-.16]} s={[1.64,.5,1.72]} c={c} metal={.35}/>
-   <B p={[0,.9,.69]} s={[1.45,.34,.045]} c="#526e73" metal={.22} opacity={.93}/>
-   <B p={[0,.88,-1.02]} s={[1.43,.35,.045]} c="#536e73" metal={.22}/>
-   {[-.83,.83].flatMap(dx=>[-1.1,1.1].map(dz=><mesh key={dx+":"+dz} position={[dx,.21,dz]} rotation={[0,0,Math.PI/2]}>
-    <cylinderGeometry args={[.32,.32,.15,12]}/><meshStandardMaterial color="#343b3c"/>
-   </mesh>))}
-   <B p={[0,.4,1.77]} s={[1.2,.14,.06]} c="#b5b7ae"/>
+/** The plan box of the cafe and the restaurant (the twin's five-storey building shares it). */
+export const TWIN_FOOTPRINT = { minX: -8, minZ: -6, maxX: 8, maxZ: 6 };
+/** The haze matches the shared street's sky, so the far city fades into its horizon. */
+const HAZE = "#ebe4d7";
+
+/** Background and haze for the twin's scenes; `haze` scales its distance (phones stand further back). */
+export function TwinHaze({haze=1}:{haze?:number}){
+ return <>
+   <color attach="background" args={[HAZE]}/>
+   <fog attach="fog" args={[HAZE,90*haze,560*haze]}/>
+ </>;
+}
+
+/** The strip in front of the plot that the twin's cameras look across (forecourt and near sidewalk). */
+const SIGHTLINE={x0:-13,x1:15,z0:6.5,z1:19};
+
+/**
+ * The shared street frames a frontage with palms in its forecourt and on the near sidewalk; in the twin
+ * those stand on the default line of sight and hide the model. Fold those palms (and their planters)
+ * away; every other palm on the street stays.
+ */
+function clearSightline(root:THREE.Object3D){
+ const m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();
+ const zero=new THREE.Matrix4().makeScale(0,0,0);
+ const inside=(v:THREE.Vector3)=>v.x>SIGHTLINE.x0&&v.x<SIGHTLINE.x1&&v.z>SIGHTLINE.z0&&v.z<SIGHTLINE.z1;
+ const cleared:THREE.Vector3[]=[];
+ const fold=(mesh:THREE.InstancedMesh,test:(i:number)=>boolean)=>{
+  let changed=false;
+  for(let i=0;i<mesh.count;i++){
+   mesh.getMatrixAt(i,m);m.decompose(p,q,s);
+   if(test(i)){mesh.setMatrixAt(i,zero);changed=true;}
+  }
+  if(changed){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();}
+ };
+ root.traverse(o=>{
+  if(!(o instanceof THREE.InstancedMesh)||!/palm/.test(o.name))return;
+  fold(o,()=>{
+   if(!inside(p))return false;
+   if(/trunk/.test(o.name))cleared.push(p.clone());
+   return true;
+  });
+ });
+ if(!cleared.length)return;
+ root.traverse(o=>{
+  if(!(o instanceof THREE.InstancedMesh)||o.name!=="details")return;
+  fold(o,()=>s.y<.6&&cleared.some(c=>Math.abs(c.x-p.x)<.05&&Math.abs(c.z-p.z)<.05));
+ });
+}
+
+/** The Riyadh street around a twin scene (shared with the results viewer): fewer details on touch screens. */
+export function TwinStreet(){
+ const coarse=useMediaQuery("(pointer: coarse)");
+ const detail:StreetDetail=coarse?"medium":"high";
+ const wrap=useRef<THREE.Group>(null);
+ const done=useRef<THREE.Object3D|null>(null);
+ useFrame(()=>{
+  const street=wrap.current?.children[0];
+  if(!street||street===done.current)return;
+  done.current=street;
+  clearSightline(street);
+ });
+ return <group ref={wrap} name="twin-street">
+   <SaudiStreet footprint={TWIN_FOOTPRINT} groundY={0} front="south" corner="right" detail={detail} intensity={.62}/>
  </group>;
 }
-function Lamp({x,z}: {x:number;z:number}){
+
+function Parasol({x,z,color}:{x:number;z:number;color:string}){
  return <group position={[x,0,z]}>
-   <Cylinder p={[0,2.28,0]} h={4.56} r={.066} c="#505b57"/>
-   <B p={[.38,4.49,0]} s={[.8,.075,.09]} c="#505b57"/>
-   <B p={[.76,4.37,0]} s={[.65,.16,.5]} c="#f9e6b7"/>
+   <Cylinder p={[0,1.25,0]} h={2.5} r={.04} c="#d9d6cf"/>
+   <mesh position={[0,2.5,0]} castShadow>
+     <coneGeometry args={[1.35,.46,10]}/><meshStandardMaterial color={color} roughness={.8}/>
+   </mesh>
  </group>;
 }
+
+/** The venue's terrace in its forecourt (beside the entrance), inside the shared street. */
 function Outdoor({kind}:{kind:VenueKind}) {
  const cafe=kind==="cafe";
- return <group name="outdoor-surroundings">
-   <B p={[0,-.32,0]} s={[68,.5,60]} c="#b4c1ac"/>
-   <B p={[0,-.08,15.7]} s={[68,.08,11.2]} c="#646d71"/>
-   <B p={[0,-.035,9.65]} s={[68,.18,1.85]} c="#d3d1c7"/>
-   <B p={[0,-.023,8.63]} s={[68,.085,.24]} c="#959c91"/>
-   {[-19,-9,1,11,21].map(x=><B key={x} p={[x,-.023,16.0]} s={[3.1,.012,.17]} c="#eae5d5"/>)}
-   {[-13.6,-3.8,6.0,15.8].map((x,i)=><B key={i} p={[x,-.026,11.55]} s={[.09,.025,4.2]} c="#e1e2dd"/>)}
-   <B p={[0,-.07,-13.25]} s={[36,.12,4.2]} c="#a5b1a3"/>
-   <B p={[-16.5,1.15,-8.5]} s={[.28,2.3,15.5]} c="#e2e2d5"/>
-   <B p={[16.5,1.15,-8.5]} s={[.28,2.3,15.5]} c="#e2e2d5"/>
-   <B p={[0,1.15,-15.5]} s={[33,2.3,.25]} c="#c9d1c6"/>
-   {[-13.2,13.2].flatMap(x=>[-10.8,7.4].map(z=><Tree key={x+":"+z} x={x} z={z} s={.84}/>))}
-   <Tree x={-22} z={7.2} s={1.1}/><Tree x={22} z={7.2} s={1.12}/>
-   <Lamp x={-14.4} z={9.7}/><Lamp x={14.4} z={9.7}/>
-   <Car x={-10.2} z={14.2} c="#657f85" rotate={Math.PI*.02}/>
-   <Car x={9.4} z={14.1} c="#d0d6d2" rotate={-.07}/>
+ return <group name="outdoor-seating">
+   <TwinStreet/>
    {cafe&&<>
-     <B p={[-12.0,0,4.0]} s={[5.4,.16,6.9]} c="#bcae9d"/>
-     <PatioSet x={-12.3} z={2.5} color="#63786d"/>
-     <PatioSet x={-12.3} z={5.3} color="#63786d"/>
-     <Cylinder p={[-12.3,1.65,4.0]} h={3.3} r={.11} c="#81705c"/>
-     <mesh position={[-12.3,3.26,4.0]} rotation={[0,Math.PI/2,0]}>
-       <coneGeometry args={[3.18,.8,6]}/><meshStandardMaterial color="#d3bb98" side={THREE.DoubleSide}/>
-     </mesh>
+     <B p={[-6.0,.03,9.7]} s={[5.4,.06,5.0]} c="#cdbda5"/>
+     <PatioSet x={-6.0} z={8.5} color="#63786d"/>
+     <PatioSet x={-6.0} z={11.0} color="#63786d"/>
+     <Parasol x={-6.0} z={8.5} color="#ece5d6"/>
+     <Parasol x={-6.0} z={11.0} color="#e1d5bf"/>
    </>}
-   {!cafe&&<><B p={[-11.8,0,3.7]} s={[4.8,.15,6.2]} c="#cfc0aa"/>
-    <PatioSet x={-11.8} z={3.7} color="#a78c75"/>
+   {!cafe&&<>
+     <B p={[-6.0,.03,9.7]} s={[4.8,.06,4.4]} c="#d3c6b2"/>
+     <PatioSet x={-6.0} z={9.7} color="#a78c75"/>
+     <Parasol x={-6.0} z={9.7} color="#e7e1d6"/>
    </>}
  </group>;
 }
@@ -279,20 +315,23 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
 function VenueNetworks({kind,visible,onSelect,selected}: {kind:VenueKind;visible:ServiceVisibility;onSelect:(id:string)=>void;selected:string|null}){
  return <VenueServiceNetwork3D kind={kind} visible={visible} selected={selected} onSelect={onSelect}/>;
 }
-export function VenueCameraRig({kind,preset,nonce,selected}:{
+export function VenueCameraRig({kind,preset,nonce,selected,freeWidth}:{
  kind:VenueKind;preset:VenueCameraPreset;nonce:number;selected:Vec3|null;
+ /** Width of the canvas the studio's panel leaves free (the whole canvas when omitted). */
+ freeWidth?:number;
 }){
  const {camera,size}=useThree();
+ const free=Math.min(size.width,freeWidth||size.width);
  const controls=useRef<any>(null);
  const desired=useRef(new THREE.Vector3(21,14,24));
  const target=useRef(new THREE.Vector3(0,2,0));
  const moving=useRef(true);
  useEffect(()=>{
   if(camera instanceof THREE.PerspectiveCamera){
-    camera.fov=size.width<661?51:size.width<1000?47:39;
+    camera.fov=free<661?51:free<1000?47:44;
     camera.updateProjectionMatrix();
   }
- },[camera,size.width]);
+ },[camera,free]);
  useEffect(()=>{
   const v=({
     iso:[[21,13.7,24],[0,1.9,0]],
@@ -311,34 +350,34 @@ export function VenueCameraRig({kind,preset,nonce,selected}:{
   if(camera.position.distanceTo(desired.current)<.05&&controls.current.target.distanceTo(target.current)<.05)moving.current=false;
  });
  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={.085} minDistance={3}
-  maxDistance={64} maxPolarAngle={Math.PI*.82} onStart={()=>moving.current=false}/>;
+  maxDistance={64} maxPolarAngle={Math.PI*.47} onStart={()=>moving.current=false}/>;
 }
-export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,preset,nonce}:{
+export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,preset,nonce,freeWidth}:{
  kind:VenueKind;visible:ServiceVisibility;ghost:boolean;furniture:boolean;
  selected:string|null;onSelect:(id:string)=>void;preset:VenueCameraPreset;nonce:number;
+ /** Width of the canvas the studio's panel leaves free. */
+ freeWidth?:number;
 }){
+ const size=useThree(state=>state.size);
  const spot=getVenueSpot(selected);
  const selectedPoint=spot?.position ?? getVenueElement(kind,selected)?.position ?? null;
  const isCafe=kind==="cafe";
  return <>
-    <color attach="background" args={["#c7d8d8"]}/>
-    <fog attach="fog" args={["#c7d8d8",42,92]}/>
+    <TwinHaze haze={size.width<661?1.3:1}/>
     <group name={"standalone-"+kind}>
     <ambientLight intensity={.8}/>
-    <hemisphereLight args={["#f4faf1","#687e71",1.1]}/>
-    <directionalLight castShadow position={[13,21,16]} intensity={2.6}
+    <hemisphereLight args={["#f3f7fb","#8c877e",1.05]}/>
+    <directionalLight castShadow position={[13,21,16]} intensity={2.6} color="#fff7ec"
        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
-       shadow-camera-left={-27} shadow-camera-right={27}
-       shadow-camera-top={27} shadow-camera-bottom={-27}/>
-    <directionalLight position={[-12,8,-8]} intensity={.54}/>
+       shadow-camera-left={-30} shadow-camera-right={30}
+       shadow-camera-top={30} shadow-camera-bottom={-30} shadow-camera-far={80}/>
+    <directionalLight position={[-12,8,-8]} intensity={.54} color="#d6e3ec"/>
     <Outdoor kind={kind}/>
     <RoomShell kind={kind} ghost={ghost}/>
     {furniture&&<VenueFurniture kind={kind} onSelect={onSelect}/>}
 
     {furniture&&<group>
-       <B p={[0,.12,8.1]} s={[7.8,.05,1.85]} c={isCafe?"#ccb99e":"#cfc1ae"}/>
-       <Tree x={-6.6} z={-8.5} s={.68}/>
-       <Tree x={6.4} z={-8.6} s={.7}/>
+       <B p={[0,.02,7.5]} s={[4.4,.03,2.4]} c={isCafe?"#d2c8b7":"#cdc8bf"}/>
        <B p={[-6.6,1.1,-3.8]} s={[1,.08,.63]} c={isCafe?"#877058":"#97999a"}/>
     </group>}
     {VENUE_SPOTS[kind].map(s=><group key={s.id}>
@@ -352,8 +391,8 @@ export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,pre
        </Html>}
     </group>)}
     <VenueNetworks kind={kind} visible={visible} selected={selected} onSelect={onSelect}/>
-    <ContactShadows opacity={.26} scale={38} far={20} blur={2.6} position={[0,-.15,0]} frames={1}/>
-    <VenueCameraRig kind={kind} preset={preset} selected={selectedPoint} nonce={nonce}/>
+    <ContactShadows opacity={.3} scale={30} far={20} blur={2.6} position={[0,.012,0]} frames={1}/>
+    <VenueCameraRig kind={kind} preset={preset} selected={selectedPoint} nonce={nonce} freeWidth={freeWidth}/>
     </group>
  </>;
 }

@@ -1,22 +1,30 @@
 #!/usr/bin/env node
 /*
  * Renders the landing-page images of the 3D model from the app itself (the sample IFC file run
- * through the real pipeline, drawn by the real viewer):
+ * through the real pipeline, drawn by the real viewer in its Riyadh street context), no interface:
  *
- *   src/assets/model-hero.webp      /?capture=hero#/check?sample=tiles       golden-hour facade, no interface
- *   src/assets/model-networks.webp  /?capture=networks#/check?sample=tiles   building-services view, no interface
+ *   hero       src/assets/model-hero.webp        eye-level street view, warm afternoon
+ *   street     src/assets/site/story-1.webp      the street from a first-floor height, warm afternoon
+ *   section    src/assets/site/story-2.webp      dollhouse cut: rooms and furniture, the street faint around
+ *   violation  src/assets/site/story-3.webp      the failing kitchen wall tiles close up: red highlight and
+ *                                                the measured / required callout (the finding the results
+ *                                                page selects first)
+ *   networks   src/assets/site/story-4.webp      building-services networks in their system colours
+ *              src/assets/model-networks.webp    (the same render)
+ *
+ * Each is /?capture=<shot>#/check?sample=tiles.
  *
  * Usage (from the project folder):
  *   npm run build && node scripts/capture-model.mjs          serves dist/client with `vite preview`
  *   node scripts/capture-model.mjs http://127.0.0.1:5401      uses a server that is already running (dev or preview)
  *
  * Options:
- *   --shots hero,networks   which images (default both)
+ *   --shots hero,street     which images (default all five)
  *   --sample tiles          sample id from src/content/samples.ts
  *   --size 2400x1350        viewport in CSS pixels (device scale 1)
- *   --quality 0.9           WebP quality
+ *   --quality 0.86          WebP quality
  *   --png                   also write PNG copies next to the WebP files
- *   --out src/assets        output folder
+ *   --out src/assets        output folder (the files above are relative to it)
  *   --browser <path|chrome|msedge>   browser to drive (default: the installed Chrome)
  *   --software              force SwiftShader (machines without a GPU; frame times are then not representative)
  *   --timeout 300000        per-shot timeout in ms
@@ -41,8 +49,17 @@ const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 const CHECK_START = "بدء الفحص";
 const CHECK_RESULTS = "عرض النتائج";
 
+/** Output files of each shot, relative to --out. */
+const OUTPUTS = {
+  hero: ["model-hero.webp"],
+  street: ["site/story-1.webp"],
+  section: ["site/story-2.webp"],
+  violation: ["site/story-3.webp"],
+  networks: ["site/story-4.webp", "model-networks.webp"],
+};
+
 function parse(argv) {
-  const o = { shots: "hero,networks", sample: "tiles", size: "2400x1350", quality: 0.9, out: "src/assets", timeout: 300000 };
+  const o = { shots: Object.keys(OUTPUTS).join(","), sample: "tiles", size: "2400x1350", quality: 0.86, out: "src/assets", timeout: 600000 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => {
@@ -152,14 +169,14 @@ async function main() {
   }
   if (o.help) {
     console.log(
-      "usage: node scripts/capture-model.mjs [url] [--shots hero,networks] [--sample tiles] [--size 2400x1350] [--quality 0.9] [--png] [--out src/assets] [--browser chrome|msedge|path] [--software] [--timeout ms]",
+      "usage: node scripts/capture-model.mjs [url] [--shots hero,street,section,violation,networks] [--sample tiles] [--size 2400x1350] [--quality 0.86] [--png] [--out src/assets] [--browser chrome|msedge|path] [--software] [--timeout ms]",
     );
     return;
   }
   const size = o.size.match(/^(\d+)x(\d+)$/);
   const shots = o.shots.split(",").map((s) => s.trim()).filter(Boolean);
-  if (!size || !shots.every((s) => s === "hero" || s === "networks")) {
-    console.error("bad --size or --shots (use e.g. --size 2400x1350 --shots hero,networks)");
+  if (!size || !shots.length || !shots.every((s) => s in OUTPUTS)) {
+    console.error(`bad --size or --shots (use e.g. --size 2400x1350 --shots ${Object.keys(OUTPUTS).join(",")})`);
     process.exit(2);
   }
   const viewport = { width: Number(size[1]), height: Number(size[2]) };
@@ -218,6 +235,10 @@ async function main() {
         timeout: o.timeout,
       });
       await page.evaluate(() => document.fonts.ready);
+      if (shot === "violation") {
+        // The finding's measurement callout is an HTML label over the scene: wait until it is laid out.
+        await page.locator('[data-testid="ifc-dimension"]').first().waitFor({ state: "visible", timeout: o.timeout });
+      }
       const app = await page.evaluate(() => ({
         gpu: window.__APP__.gpu,
         view: window.__APP__.view,
@@ -256,13 +277,16 @@ async function main() {
         },
         { data: png.toString("base64"), quality: o.quality },
       );
-      const file = path.join(outDir, `model-${shot}.webp`);
-      writeFileSync(file, Buffer.from(webp, "base64"));
-      summary.files.push(path.relative(projectDir, file));
-      if (o.png) {
-        const pngFile = path.join(outDir, `model-${shot}.png`);
-        writeFileSync(pngFile, png);
-        summary.files.push(path.relative(projectDir, pngFile));
+      for (const name of OUTPUTS[shot]) {
+        const file = path.join(outDir, name);
+        mkdirSync(path.dirname(file), { recursive: true });
+        writeFileSync(file, Buffer.from(webp, "base64"));
+        summary.files.push(path.relative(projectDir, file));
+        if (o.png) {
+          const pngFile = file.replace(/\.webp$/, ".png");
+          writeFileSync(pngFile, png);
+          summary.files.push(path.relative(projectDir, pngFile));
+        }
       }
       summary.frames[shot] = {
         readyMs,

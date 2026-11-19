@@ -538,27 +538,7 @@ function kerb(): TextureSet {
   return { map: texture(rgba, size, 1, true), normalMap: texture(normalFromHeight(n, size, 1.5), size, 1, false), normalScale: 0.4 };
 }
 
-/** Desert sand with faint wind ripples, 8 m tile. */
-function sand(): TextureSet {
-  const size = 1024;
-  const n = fbm(size, 7, 6, 4);
-  const random = rng(5);
-  const rgba = new Uint8Array(size * size * 4);
-  const height = new Float32Array(size * size);
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const i = y * size + x;
-      const ripple = Math.sin((y / size) * Math.PI * 2 * 22 + n[i] * 14) * 0.5 + 0.5;
-      const grain = (random() - 0.5) * 16;
-      const v = (n[i] - 0.5) * 34 + ripple * 9 + grain;
-      height[i] = ripple * 0.5 + n[i] * 0.5;
-      rgba.set([clamp255(222 + v), clamp255(207 + v), clamp255(180 + v * 0.9), 255], i * 4);
-    }
-  }
-  return { map: texture(rgba, size, 8, true), normalMap: texture(normalFromHeight(height, size, 1.2), size, 8, false), normalScale: 0.5 };
-}
-
-const siteBuilders = { pavers, asphalt, kerb, sand };
+const siteBuilders = { pavers, asphalt, kerb };
 export type SiteSurface = keyof typeof siteBuilders;
 
 export function siteTextures(surface: SiteSurface): TextureSet {

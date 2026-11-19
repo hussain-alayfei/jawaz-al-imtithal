@@ -25,7 +25,7 @@
   container-name: vw;
 }
 
-/* Capture shots (?capture=hero|networks): the scene alone, filling the window. */
+/* Capture shots (?capture=<shot>): the scene alone, filling the window. */
 .vw--shot {
   --vw-safe-start: 0px;
   --vw-safe-top: 0px;
@@ -33,6 +33,11 @@
   inset: 0;
   z-index: 2147483000;
   min-height: 0;
+}
+
+/* Shots render at 2400 px and are shown at about half that: the callout grows to stay legible. */
+.vw--shot .vw-dim {
+  transform: scale(var(--vw-shot-scale, 1));
 }
 
 .vw__canvas {

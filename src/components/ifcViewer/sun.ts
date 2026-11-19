@@ -57,8 +57,12 @@ export function sunVector(elevationDeg: number, azimuthDeg: number): [number, nu
 export const RIYADH = { lat: 24.7136, lon: 46.6753 };
 export const VIEW_TIME = new Date(Date.UTC(2026, 2, 20, 7, 30));
 
-/** Golden hour for the landing-page hero: 16:10 local on 18 November, sun low in the west-south-west. */
-export const HERO_TIME = new Date(Date.UTC(2026, 10, 18, 13, 10));
+/**
+ * Afternoon for the street views (landing-page hero and story): 14:20 local on 18 November, the sun about
+ * 31 degrees up in the south-west: high enough that the neighbours leave the street in sun, low enough for
+ * warm light and shadows that read.
+ */
+export const HERO_TIME = new Date(Date.UTC(2026, 10, 18, 11, 20));
 
 export interface Daylight {
   /** Direct sun colour (sRGB hex) and intensity for a DirectionalLight. */
@@ -90,10 +94,13 @@ const hex = (rgb: readonly number[]) =>
  * captures for a sun-to-shade ratio of about 5:1 on sunlit ground at midday (about 2:1 at golden
  * hour, when the sky's share of the light is larger).
  */
-export function daylight(elevationDeg: number): Daylight {
+export function daylight(elevationDeg: number, warmth = 0): Daylight {
   // 0 at the horizon, 1 from about 35 degrees up.
   const t = Math.min(1, Math.max(0, (elevationDeg - 2) / 33));
   const e = t * t * (3 - 2 * t);
+  // `warmth` (0-1) lends the colours some of a lower sun's (a warm, inviting afternoon in a light haze)
+  // while the intensities follow the real elevation, so the sun-to-shade ratio and the shadows hold.
+  const c = e * (1 - 0.6 * Math.min(1, Math.max(0, warmth)));
   // Low sun: warm but not orange (a clear desert evening, not a dusty sunset).
   const sunLow = [1.0, 0.84, 0.66];
   const sunHigh = [1.0, 0.957, 0.902];
@@ -101,20 +108,20 @@ export function daylight(elevationDeg: number): Daylight {
     // three.js lights are physical (since r155): a diffuse surface gets intensity x N.L / pi from
     // the sun but the full image light, so the sun needs about pi times the old value for a
     // sun-to-shade ratio near 5:1 (3d-studio skill); exposure comes down to match.
-    sun: { color: hex(mix3(sunLow, sunHigh, e)), intensity: mix(7.6, 9.4, e) },
+    sun: { color: hex(mix3(sunLow, sunHigh, c)), intensity: mix(7.6, 9.4, e) },
     hemisphere: {
-      sky: hex(mix3([0.8, 0.82, 0.86], [0.874, 0.906, 0.933], e)),
-      ground: hex(mix3([0.58, 0.5, 0.4], [0.604, 0.518, 0.4], e)),
+      sky: hex(mix3([0.8, 0.82, 0.86], [0.874, 0.906, 0.933], c)),
+      ground: hex(mix3([0.58, 0.5, 0.4], [0.604, 0.518, 0.4], c)),
       intensity: mix(0.22, 0.3, e),
     },
     dome: {
       zenith: mix3([0.42, 0.48, 0.58], [0.5, 0.6, 0.74], e),
-      horizon: mix3([0.88, 0.8, 0.7], [0.86, 0.84, 0.8], e),
-      ground: mix3([0.4, 0.34, 0.27], [0.42, 0.37, 0.3], e),
-      sunGlow: mix(0.9, 0.6, e),
+      horizon: mix3([0.88, 0.8, 0.7], [0.86, 0.84, 0.8], c),
+      ground: mix3([0.4, 0.34, 0.27], [0.42, 0.37, 0.3], c),
+      sunGlow: mix(0.9, 0.6, c),
     },
-    sky: { turbidity: mix(4.5, 6.5, e), rayleigh: mix(2.0, 1.5, e), mie: mix(0.004, 0.006, e), mieG: mix(0.86, 0.82, e) },
-    fog: hex(mix3([0.85, 0.8, 0.74], [0.867, 0.839, 0.788], e)),
+    sky: { turbidity: mix(4.5, 6.5, e) + 3 * Math.min(1, Math.max(0, warmth)), rayleigh: mix(2.0, 1.5, c), mie: mix(0.004, 0.006, e), mieG: mix(0.86, 0.82, c) },
+    fog: hex(mix3([0.85, 0.8, 0.74], [0.867, 0.839, 0.788], c)),
     exposure: mix(0.78, 0.62, e),
     envIntensity: mix(0.62, 0.72, e),
   };
