@@ -189,10 +189,11 @@ try {
   if ((await page.locator("footer").count()) !== 1) throw new Error("Site footer is missing.");
   await shot(page, "01-landing");
 
-  // 2. The landing's sample link (the tiles sample) opens the review step; start, then the results with the
-  //    real model.
-  await page.locator('main a[href="#/check?sample=tiles"]').first().click();
+  // 2. The hero's «بدء الفحص» opens the wizard; a sample link (the tiles sample) opens its review step;
+  //    start, then the results with the real model.
+  await page.locator('main a[href="#/check"]').first().click();
   await page.waitForURL(/#\/check/);
+  await page.goto(`${baseUrl}/#/check?sample=tiles`, { waitUntil: "domcontentloaded" });
   await expectReview(page, "Landing sample link");
   await shot(page, "02-check-review");
   await startAndOpenResults(page, "Tiles sample");

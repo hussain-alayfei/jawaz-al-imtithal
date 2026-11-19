@@ -6,15 +6,16 @@ import { Twin } from "./landing/Twin";
 import type { LandingProps } from "./types";
 import "./landing.css";
 
-/* Home page (v4): white, big type, big pictures, few words. Hero, how it works, the model story (the one
-   interactive moment), the clauses, the digital twin. The shell renders the header and footer. */
-export default function Landing({ onStart, onSample, onTwin }: LandingProps) {
-  const openSample = () => onSample("tiles");
+/* Home page (v5): a full-bleed opening photograph, then white space, big type and big pictures. Hero, the
+   three stages of a check, how the check works (the model story, the one interactive moment), the
+   reference clauses, the digital twin. The shell renders the header and footer. Both calls to action start
+   a new check; the hero's second link scrolls to the model story. */
+export default function Landing({ onStart, onTwin }: LandingProps) {
   return (
     <main className="hm">
-      <Hero onStart={onStart} onSample={openSample} />
+      <Hero onStart={onStart} />
       <HowRows />
-      <ModelStory onSample={openSample} />
+      <ModelStory onStart={onStart} />
       <Rules />
       <Twin onTwin={onTwin} />
     </main>

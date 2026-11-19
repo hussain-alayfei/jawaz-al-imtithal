@@ -1,56 +1,49 @@
-import { useEffect, useRef, useState } from "react";
-import modelHeroUrl from "../../assets/model-hero.webp";
-import modelNetworksUrl from "../../assets/model-networks.webp";
-import modelSectionUrl from "../../assets/site/model-section.webp";
-import modelViolationUrl from "../../assets/site/model-violation.webp";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import story1Url from "../../assets/site/story-1.webp";
+import story2Url from "../../assets/site/story-2.webp";
+import story3Url from "../../assets/site/story-3.webp";
+import story4Url from "../../assets/site/story-4.webp";
 import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
 import { follow } from "./follow";
 import { HOME } from "./strings";
 import { useMediaQuery } from "./useMediaQuery";
 
-interface Shot {
-  src: string;
-  width: number;
-  height: number;
-  /** The section render ends in a thin black band; the frame crops it off. */
-  trim?: boolean;
-}
-
-/* Real renders of the 3D model built from the sample file, one per step. */
-const SHOTS: readonly Shot[] = [
-  { src: modelHeroUrl, width: 2400, height: 1350 },
-  { src: modelSectionUrl, width: 1920, height: 1080 },
-  { src: modelViolationUrl, width: 1920, height: 1080 },
-  { src: modelNetworksUrl, width: 2400, height: 1350 },
-];
+/* Real renders of the 3D model built from the sample file, one per step. They are 16:9 (1920×1080 or
+   larger) and are re-rendered in place, so the frames crop them with object-fit and assume nothing else. */
+const SHOTS: readonly string[] = [story1Url, story2Url, story3Url, story4Url];
+const SHOT_WIDTH = 1920;
+const SHOT_HEIGHT = 1080;
 
 /** From this width the story runs beside one pinned frame; below it each step shows its own picture. */
 const WIDE = "(min-width: 1024px)";
 
 function ShotImage({ index, active }: { index: number; active?: boolean }) {
-  const shot = SHOTS[index];
   return (
     <img
-      className={`hm-shot${shot.trim ? " hm-shot--trim" : ""}`}
+      className="hm-shot"
       data-active={active || undefined}
       aria-hidden={active === false ? true : undefined}
-      src={shot.src}
+      src={SHOTS[index]}
       alt={HOME.modelAlts[index]}
-      width={shot.width}
-      height={shot.height}
+      width={SHOT_WIDTH}
+      height={SHOT_HEIGHT}
       loading="lazy"
       decoding="async"
     />
   );
 }
 
-/** The result on your plan: four steps through the model, told with scroll. */
-export function ModelStory({ onSample }: { onSample: () => void }) {
+/** How the check works, in four steps through the model, told with scroll: on wide screens a large pinned
+    frame cross-fades between the renders while the steps pass beside it, and a thin rail under the frame
+    names the four steps and fills as the reading moves on. On smaller screens each step shows its own
+    picture, edge to edge, above its words. */
+export function ModelStory({ onStart }: { onStart: () => void }) {
   const { model } = copy.web;
   const wide = useMediaQuery(WIDE);
   const [active, setActive] = useState(0);
   const steps = useRef<(HTMLLIElement | null)[]>([]);
+  const rail = useRef<HTMLDivElement>(null);
   /* While a chosen step scrolls into view, the steps it passes do not take over. */
   const settling = useRef(false);
   const stopSettling = useRef<() => void>(() => {});
@@ -77,6 +70,37 @@ export function ModelStory({ onSample }: { onSample: () => void }) {
     );
     for (const step of steps.current) if (step) observer.observe(step);
     return () => observer.disconnect();
+  }, [wide]);
+
+  /* The rail follows the reading: a step's segment fills while that step crosses the middle of the
+     viewport, the band where it is the active one. One custom property on the rail drives all four. */
+  useEffect(() => {
+    const node = rail.current;
+    if (!wide || !node) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const middle = window.innerHeight / 2;
+      let progress = 0;
+      steps.current.forEach((step, index) => {
+        const box = step?.getBoundingClientRect();
+        if (!box || box.height === 0) return;
+        if (middle >= box.bottom) progress = index + 1;
+        else if (middle >= box.top) progress = index + (middle - box.top) / box.height;
+      });
+      node.style.setProperty("--hm-progress", progress.toFixed(3));
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [wide]);
 
   useEffect(() => () => stopSettling.current(), []);
@@ -157,13 +181,28 @@ export function ModelStory({ onSample }: { onSample: () => void }) {
           <div className="hm-story__media">
             <div className="hm-story__pin">
               <div className="hm-story__frame">
-                {SHOTS.map((shot, index) => (
-                  <ShotImage key={shot.src} index={index} active={index === active} />
+                {SHOTS.map((_, index) => (
+                  <ShotImage key={index} index={index} active={index === active} />
                 ))}
               </div>
-              <div className="hm-story__dots" aria-hidden="true">
-                {SHOTS.map((shot, index) => (
-                  <span key={shot.src} className="hm-story__dot" data-active={index === active || undefined} />
+              {/* The step titles above are the accessible controls; the rail repeats them for the eye and
+                  the pointer only. */}
+              <div ref={rail} className="hm-rail" aria-hidden="true">
+                {model.steps.map((step, index) => (
+                  <button
+                    key={step.title}
+                    type="button"
+                    tabIndex={-1}
+                    className="hm-rail__item"
+                    data-active={index === active || undefined}
+                    style={{ "--hm-i": index } as CSSProperties}
+                    onClick={() => choose(index)}
+                  >
+                    <span className="hm-rail__track">
+                      <span className="hm-rail__fill" />
+                    </span>
+                    <span className="hm-rail__label">{step.title}</span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -173,7 +212,7 @@ export function ModelStory({ onSample }: { onSample: () => void }) {
 
       <div className="page hm-model__foot">
         <p className="hm-caption">{HOME.modelCaption}</p>
-        <a href="#/check?sample=tiles" className="btn btn--primary" onClick={follow(onSample)}>
+        <a href="#/check" className="btn btn--primary btn--large" onClick={follow(onStart)}>
           {model.cta}
         </a>
       </div>
