@@ -100,7 +100,7 @@ export function daylight(elevationDeg: number, warmth = 0): Daylight {
   const e = t * t * (3 - 2 * t);
   // `warmth` (0-1) lends the colours some of a lower sun's (a warm, inviting afternoon in a light haze)
   // while the intensities follow the real elevation, so the sun-to-shade ratio and the shadows hold.
-  const c = e * (1 - 0.6 * Math.min(1, Math.max(0, warmth)));
+  const c = e * (1 - 0.7 * Math.min(1, Math.max(0, warmth)));
   // Low sun: warm but not orange (a clear desert evening, not a dusty sunset).
   const sunLow = [1.0, 0.84, 0.66];
   const sunHigh = [1.0, 0.957, 0.902];

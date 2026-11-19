@@ -245,7 +245,7 @@ function slabTextures(): Pick<Textures, "slabs" | "slabsNormal"> {
         continue;
       }
       const tone = tones[Math.floor(y / slab) * 4 + Math.floor(x / slab)] + (random() - 0.5) * 12 + (random() > 0.992 ? -18 : 0);
-      rgba.set([214 + tone, 208 + tone, 197 + tone * 0.9], i * 4);
+      rgba.set([203 + tone, 196 + tone, 184 + tone * 0.9], i * 4);
       rgba[i * 4 + 3] = 255;
       height[i] = 0.4 + 0.6 * Math.min(1, (edge - 1.2) / 2.5);
     }
@@ -279,7 +279,7 @@ function frondTexture(): THREE.CanvasTexture {
       const len = reach * (0.78 + random() * 0.22);
       const rise = len * (0.62 + random() * 0.16);
       const tone = 104 + random() * 42;
-      g.strokeStyle = `rgb(${Math.round(tone - 4)}, ${Math.round(tone + 14)}, ${Math.round(tone - 30)})`;
+      g.strokeStyle = `rgb(${Math.round(tone - 10)}, ${Math.round(tone + 8)}, ${Math.round(tone - 16)})`;
       g.lineWidth = 1.9;
       g.beginPath();
       g.moveTo(w / 2 + side * 1.5, y + (side > 0 ? 1.2 : 0));
@@ -443,7 +443,7 @@ float ctxNoise(vec2 p) {
       fragment = fragment.replace(
         "#include <map_fragment>",
         `#include <map_fragment>
-  diffuseColor.rgb *= 0.92 + 0.16 * (ctxNoise(vCtxWorld.xz / 11.0) * 0.65 + ctxNoise(vCtxWorld.xz / 2.7) * 0.35);`,
+  diffuseColor.rgb *= 0.88 + 0.22 * (ctxNoise(vCtxWorld.xz / 11.0) * 0.6 + ctxNoise(vCtxWorld.xz / 2.7) * 0.25 + ctxNoise(vCtxWorld.xz / 0.7) * 0.15);`,
       );
     } else if (projection === "stone") {
       fragment = fragment.replace(
@@ -923,7 +923,8 @@ function fillRow(out: Batches, random: () => number, a: number, b: number, zLine
 }
 
 const STONES = ["#e9dfcd", "#e4d8c2", "#efe8dc", "#dccdb4", "#e8e2d6", "#d9cbb3", "#f0ebe2"];
-const PAINTS = ["#ecebe7", "#ecebe7", "#e9e9e6", "#b0b3b6", "#26282b", "#d2c3a5", "#5b6066", "#ecebe7", "#7d2e2e", "#2b3a52"];
+/** Car paints: mostly white and silver, as on Riyadh streets, with some pearl, beige, grey and black. */
+const PAINTS = ["#f1f0ec", "#f1f0ec", "#eceae4", "#f3f2ee", "#c4c7ca", "#a9adb1", "#e3dccd", "#d5c6a8", "#6b7077", "#2a2c2f", "#f1f0ec", "#3e4752"];
 
 /* ---------------- the street ---------------- */
 
@@ -975,7 +976,7 @@ function buildStreet(o: Options, tone: Tone): Built {
   const kerbSet = siteTextures("kerb");
   const stoneSet = finishTextures("stone");
   const m = {
-    pavers: mat(contextual(new THREE.MeshStandardMaterial({ map: pavers.map, normalMap: pavers.normalMap ?? null, roughnessMap: pavers.roughnessMap ?? null, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 1 }), tone, "ground")),
+    pavers: mat(contextual(new THREE.MeshStandardMaterial({ map: pavers.map, normalMap: pavers.normalMap ?? null, roughnessMap: pavers.roughnessMap ?? null, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 1, color: "#ece4d6" }), tone, "ground")),
     slabs: mat(contextual(new THREE.MeshStandardMaterial({ map: tex.slabs, normalMap: tex.slabsNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 0.9 }), tone, "ground")),
     asphalt: mat(contextual(new THREE.MeshStandardMaterial({ map: asphaltSet.map, normalMap: asphaltSet.normalMap ?? null, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 0.93, color: "#8a8784" }), tone, "ground")),
     kerb: mat(contextual(new THREE.MeshStandardMaterial({ map: kerbSet.map, normalMap: kerbSet.normalMap ?? null, roughness: 0.85, color: "#dedbd4" }), tone)),
@@ -1202,14 +1203,11 @@ function buildStreet(o: Options, tone: Tone): Built {
     else palmsX(front1, range, zK - 1.4, 9, true);
     if (cross && s < 0) palmsX(cross.a - 2.5, -range, zK - 1.4, 9, true);
     else palmsX(front0, -range, zK - 1.4, 9, true);
-    // Forecourt corners: a pair of palms on the building line's corners.
     // One palm on the forecourt corner away from the corner, framing the frontage in the street views.
     const fx = s > 0 ? front0 - 1.2 : front1 + 1.2;
     palm(b, random, [fx, gy + 0.48, plot.z1 - 2], high);
     b.plain.add([fx, gy + 0.24, plot.z1 - 2], [1.5, 0.48, 1.5], 0, "#ddd3c1");
     b.plain.add([fx, gy + 0.47, plot.z1 - 2], [1.26, 0.03, 1.26], 0, "#5e5141");
-    // Steel bollards along the kerb in front of the plot (no parking on the forecourt).
-    for (let x = plot.x0 + 0.8; x <= plot.x1 - 0.8; x += 1.6) b.cylinder.add([x, gy + 0.45, zK - 0.75], [0.08, 0.9, 0.08], 0, "#4a4c4f");
     // Low planters of shrubs along the forecourt's sides.
     for (const side of [-1, 1]) {
       const x = side * (frame.across + 1.6);
@@ -1236,10 +1234,10 @@ function buildStreet(o: Options, tone: Tone): Built {
       if (!(cross && x > cross.a - 2 && x < cross.b + 2)) b.lamp.add([x, gy, zFar + 0.55], [1, 1, 1], Math.PI / 2);
     }
     if (cross) {
-      // Along the cross street.
+      // Along the cross street, beside the buildings (the corner itself stays open).
       const xa = cross.a - 1.3;
       const xb = cross.b + 1.3;
-      for (let z = zRear + 4; z < zK - 3; z += 9) {
+      for (let z = zRear + 4; z < zFront - 1.5; z += 9) {
         palm(b, random, [xa, gy, z], high);
         palm(b, random, [xb, gy, z], high);
       }
@@ -1247,9 +1245,15 @@ function buildStreet(o: Options, tone: Tone): Built {
     // Parked cars along both parking lanes and the cross street; a few on the move.
     const park = (x: number, z: number, rot: number) => car(b, random, [x, road, z], rot);
     for (let x = -range; x < range; x += 6.2) {
-      const clear = (x > front0 - 3 && x < front1 + 3) || (cross && x > cross.a - 6 && x < cross.b + 5);
+      // Customers park along the frontage too; the corner by the cross street stays clear.
+      const clear = cross && (s > 0 ? x > cross.a - 13 && x < cross.b + 5 : x > cross.a - 5 && x < cross.b + 13);
       if (!clear && random() < 0.62) park(x + random() * 0.6, zK + PARK / 2 + 0.05, random() > 0.5 ? 0 : Math.PI);
       if (!(cross && x > cross.a - 6 && x < cross.b + 5) && random() < 0.55) park(x + random() * 0.6, zFar - PARK / 2 - 0.05, random() > 0.5 ? 0 : Math.PI);
+    }
+    // The rear lane: cars parked along the far side, nose to tail.
+    for (let x = -range; x < range; x += 6.0) {
+      if (cross && x > cross.a - 6 && x < cross.b + 4) continue;
+      if (random() < 0.45) park(x + random() * 0.5, zRearFar + 1.25, random() > 0.5 ? 0 : Math.PI);
     }
     if (cross) {
       for (let z = zRear - 2; z > zRearLine - 40; z -= 6.2) if (random() < 0.5) park(cross.a + 1.2, z, Math.PI / 2);

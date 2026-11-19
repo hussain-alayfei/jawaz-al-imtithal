@@ -155,6 +155,14 @@ declare global {
 
 const v3 = (p: readonly number[]) => new THREE.Vector3(p[0], p[1], p[2]);
 
+/** The sun's horizontal direction over Riyadh at `time` (unit x, z). */
+function sunFlatAt(time: Date): [number, number] {
+  const { elevation, azimuth } = solarPosition(RIYADH.lat, RIYADH.lon, time);
+  const [x, , z] = sunVector(elevation, azimuth);
+  const l = Math.hypot(x, z) || 1;
+  return [x / l, z / l];
+}
+
 /* ---------------- materials ---------------- */
 
 interface Look {
@@ -742,12 +750,15 @@ function Highlight({
   model,
   plane,
   service,
+  shortfall,
 }: {
   stepId?: number;
   status?: ResultStatus;
   model: BuiltModel;
   plane: THREE.Plane;
   service: boolean;
+  /** A height finding that falls short: from the measured top to the required height (world y). */
+  shortfall?: { from: number; to: number };
 }) {
   const subset = useMemo(() => {
     if (stepId === undefined) return undefined;
@@ -757,6 +768,7 @@ function Highlight({
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", base.getAttribute("position"));
       g.setAttribute("normal", base.getAttribute("normal"));
+      g.setAttribute("uv", base.getAttribute("uv"));
       g.setIndex(new THREE.BufferAttribute(index, 1));
       return { geometry: g, isSpace: chunk.category === "space" };
     }
@@ -766,10 +778,30 @@ function Highlight({
   // Plain thin edges: drei's fat-line Edges could streak across the canvas from some angles.
   const outline = useMemo(() => (subset ? new THREE.EdgesGeometry(subset.geometry, 25) : undefined), [subset]);
   useEffect(() => () => outline?.dispose(), [outline]);
+  // The shortfall: the element's own surfaces lifted by the missing height and kept between the measured
+  // top and the requirement, hatched, so the band follows the real element (gaps at doors included).
+  const from = shortfall?.from;
+  const to = shortfall?.to;
+  const band = useMemo(() => {
+    if (from === undefined || to === undefined || !(to > from)) return undefined;
+    return {
+      lift: to - from,
+      planes: [new THREE.Plane(new THREE.Vector3(0, 1, 0), -from), new THREE.Plane(new THREE.Vector3(0, -1, 0), to)],
+      map: hatch(1, 1),
+    };
+  }, [from, to]);
+  useEffect(() => () => band?.map.dispose(), [band]);
   if (!subset) return null;
   const color = status ? STATUS_HEX[status] : SELECT_HEX;
   const unclipped = subset.isSpace || service;
   return (
+    <>
+    {band && (
+      <mesh geometry={subset.geometry} position={[0, band.lift, 0]} renderOrder={4}>
+        <meshBasicMaterial map={band.map} color={color} transparent opacity={0.92} depthWrite={false} polygonOffset
+          polygonOffsetFactor={-3} toneMapped={false} clippingPlanes={band.planes} />
+      </mesh>
+    )}
     <mesh geometry={subset.geometry} renderOrder={4}>
       <meshBasicMaterial
         color={color}
@@ -788,6 +820,7 @@ function Highlight({
         </lineSegments>
       )}
     </mesh>
+    </>
   );
 }
 
@@ -830,8 +863,22 @@ function DimensionLine({
     const head = foot.clone().setY(floorY + value);
     const tick = new THREE.Vector3(inward.z, 0, inward.x).multiplyScalar(0.12);
     const limitPoint = limit !== undefined ? foot.clone().setY(floorY + limit) : undefined;
+    // The requirement as a dashed datum line on the measured face, across the element's width (from the
+    // file's box); the hatched shortfall under it is drawn by Highlight from the element's own surfaces.
+    const alongZ = dx < dz;
+    const span = alongZ ? dz : dx;
+    const face = alongZ
+      ? new THREE.Vector3(inward.x > 0 ? box.max[0] + 0.008 : box.min[0] - 0.008, 0, c.z)
+      : new THREE.Vector3(c.x, 0, inward.z > 0 ? box.max[2] + 0.008 : box.min[2] - 0.008);
+    const gap = limit !== undefined && limit > value && span > 0.3 ? limit - value : 0;
+    const across = alongZ ? new THREE.Vector3(0, 0, span / 2) : new THREE.Vector3(span / 2, 0, 0);
+    const limitY = floorY + (limit ?? 0);
     return (
       <group renderOrder={5}>
+        {gap > 0 && (
+          <Line points={[face.clone().sub(across).setY(limitY), face.clone().add(across).setY(limitY)]} color="#161616"
+            lineWidth={2 * SHOT_SCALE} dashed dashSize={0.12} gapSize={0.08} />
+        )}
         <Line points={[foot, head]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
         <Line points={[head.clone().sub(tick), head.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
         <Line points={[foot.clone().sub(tick), foot.clone().add(tick)]} color={color} lineWidth={3 * SHOT_SCALE} depthTest={false} />
@@ -868,6 +915,35 @@ function DimensionLine({
       </Html>
     </group>
   );
+}
+
+let hatchTexture: THREE.CanvasTexture | undefined;
+
+/** Diagonal hatching (8 cm stripes in metre UVs) for the band a measurement falls short by. */
+function hatch(width: number, height: number): THREE.Texture {
+  if (!hatchTexture) {
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const g = canvas.getContext("2d")!;
+    g.fillStyle = "rgba(255, 255, 255, 0.28)";
+    g.fillRect(0, 0, size, size);
+    g.strokeStyle = "#ffffff";
+    g.lineWidth = 9;
+    for (let k = -size; k <= size * 2; k += size / 2) {
+      g.beginPath();
+      g.moveTo(k, size);
+      g.lineTo(k + size, 0);
+      g.stroke();
+    }
+    hatchTexture = new THREE.CanvasTexture(canvas);
+    hatchTexture.wrapS = hatchTexture.wrapT = THREE.RepeatWrapping;
+    hatchTexture.anisotropy = 8;
+  }
+  const t = hatchTexture.clone();
+  t.repeat.set(width / 0.16, height / 0.16);
+  t.needsUpdate = true;
+  return t;
 }
 
 function Markers({
@@ -1146,16 +1222,12 @@ export default function IfcModelViewer({
   const front: Side = useMemo(() => frontSide(building, openingsOf(facts.products)), [facts, building]);
   const site = useMemo(() => siteLayout(building, floorTop, front), [building, floorTop, front]);
   const time = STREET_SHOT ? HERO_TIME : VIEW_TIME;
-  const sunFlat = useMemo((): [number, number] => {
-    const { elevation, azimuth } = solarPosition(RIYADH.lat, RIYADH.lon, time);
-    const [x, , z] = sunVector(elevation, azimuth);
-    const l = Math.hypot(x, z) || 1;
-    return [x / l, z / l];
-  }, [time]);
+  const sunFlat = useMemo(() => sunFlatAt(time), [time]);
   // The side face that joins the front in the street view (front in sun, this face in shade). The street
   // context opens a cross street on that side, so the street, section and services views all look in
-  // across open ground instead of over a neighbour.
-  const cornerSide = useMemo(() => facadeSide(front, sunFlat, "contrast"), [front, sunFlat]);
+  // across open ground instead of over a neighbour. Every shot takes it from the street shots' sun, so
+  // the four story images show the same street.
+  const cornerSide = useMemo(() => facadeSide(front, SHOT ? sunFlatAt(HERO_TIME) : sunFlat, "contrast"), [front, sunFlat]);
   const corner = useMemo(() => {
     const [fx, fz] = SIDE_NORMAL[front];
     return cornerSide[0] * fz - cornerSide[1] * fx > 0 ? "right" : "left";
@@ -1199,8 +1271,10 @@ export default function IfcModelViewer({
   const [showSpaces, setShowSpaces] = useState(false);
   const [level, setLevel] = useState(0);
   const levelY = levels[level]?.y ?? floorTop;
-  // A height measurement (e.g. wall tiles) raises the cut so the measured top stays visible.
-  const cutHeight = measurement?.axis === "height" ? Math.max(CUT_HEIGHT, measurement.value + 0.3) : CUT_HEIGHT;
+  // A height measurement (e.g. wall tiles) raises the cut so the measured top and the required height,
+  // with some wall above them, stay visible.
+  const cutHeight =
+    measurement?.axis === "height" ? Math.max(CUT_HEIGHT, Math.max(measurement.value, measurement.limit ?? 0) + 0.4) : CUT_HEIGHT;
   const cutY = cut ? levelY + cutHeight : Infinity;
 
   useEffect(() => {
@@ -1291,7 +1365,7 @@ export default function IfcModelViewer({
         case "facade":
           if (SHOT === "street") return streetPose(building, front, cornerSide, site.plazaY, lens);
           // The hero stands back at the street corner (a longer lens), turned further towards the open side.
-          if (SHOT === "hero") return facadePose(building, front, sunFlat, site.plazaY, lens, "contrast", 0.8, 46);
+          if (SHOT === "hero") return facadePose(building, front, sunFlat, site.plazaY, lens, "contrast", 0.92, 40, 1.65);
           return facadePose(building, front, sunFlat, site.plazaY, lens);
         case "plan":
           return planPose(building, front, levelY, lens);
@@ -1321,6 +1395,7 @@ export default function IfcModelViewer({
       shot: SHOT ?? null,
       front,
       corner,
+      focusBox: focusBox ?? null,
       layers: layers.map((l) => ({ kind: l.kind, count: l.count, visible: !hidden.has(l.kind) })),
       systems: (facts.systems ?? []).length,
       parts: model.parts.length,
@@ -1332,7 +1407,7 @@ export default function IfcModelViewer({
       },
       setLayer: (kind: LayerKind, on: boolean) => toggleLayer(kind, on),
     }),
-    [view, cut, tier, layers, hidden, facts, model, focus, goto, toggleLayer, front, corner],
+    [view, cut, tier, layers, hidden, facts, model, focus, goto, toggleLayer, front, corner, focusBox],
   );
 
   const services = view === "networks";
@@ -1392,7 +1467,9 @@ export default function IfcModelViewer({
           {services && <ShellEdges parts={model.parts} plane={plane} />}
           {cut && !services && <SectionEdges parts={model.parts} plane={plane} />}
           {marks && (
-            <Highlight stepId={selected ? selectedStepId : undefined} status={selectedStatus} model={model} plane={plane} service={selectedIsService} />
+            <Highlight stepId={selected ? selectedStepId : undefined} status={selectedStatus} model={model} plane={plane} service={selectedIsService}
+              shortfall={cut && measurement?.axis === "height" && measurement.limit !== undefined && measurement.limit > measurement.value
+                ? { from: levelY + measurement.value, to: levelY + measurement.limit } : undefined} />
           )}
           {marks && cut && measurement && focusBox && (
             <DimensionLine

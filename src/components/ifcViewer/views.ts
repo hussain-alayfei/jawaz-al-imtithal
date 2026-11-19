@@ -142,6 +142,8 @@ export function facadePose(
   zoom = 1,
   /** How far the camera turns from the front towards the side face, degrees. */
   turnDeg = 34,
+  /** Eye height above the ground, metres (default: a little above eye level, more from further away). */
+  eyeHeight?: number,
 ): Pose {
   const [fx, fz] = SIDE_NORMAL[front];
   const side = facadeSide(front, sun, prefer);
@@ -165,7 +167,7 @@ export function facadePose(
   // Portrait screens (phones) crop the building's far ends rather than shrink it to a strip.
   const portrait = lens.aspect < 1 ? 0.8 : 1;
   const distance = (half * 1.1 + depth * 0.5) * zoom * portrait;
-  const eye = groundY + Math.min(1.7 + distance * 0.045, 1.7 + height * 0.6);
+  const eye = groundY + (eyeHeight ?? Math.min(1.7 + distance * 0.045, 1.7 + height * 0.6));
   const target: Vec3 = [c[0], groundY + Math.min(height * 0.38, 4), c[2]];
   return { position: [c[0] + dx * distance, eye, c[2] + dz * distance], target };
 }

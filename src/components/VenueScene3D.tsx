@@ -74,18 +74,19 @@ export function TwinHaze({haze=1}:{haze?:number}){
  </>;
 }
 
-/** The strip in front of the plot that the twin's cameras look across (forecourt and near sidewalk). */
-const SIGHTLINE={x0:-13,x1:15,z0:6.5,z1:19};
+/** Where the twin's cameras look across the street: the forecourt and near sidewalk (the corner view),
+    and the axis in front of the building out to the far sidewalk (the facade view). */
+const SIGHTLINES=[{x0:-13,x1:15,z0:6.5,z1:19},{x0:-7,x1:7,z0:19,z1:46}];
 
 /**
- * The shared street frames a frontage with palms in its forecourt and on the near sidewalk; in the twin
- * those stand on the default line of sight and hide the model. Fold those palms (and their planters)
- * away; every other palm on the street stays.
+ * The shared street frames a frontage with palms in its forecourt, on the near sidewalk and on the median;
+ * in the twin those stand on the cameras' lines of sight and hide the model. Fold those palms (and their
+ * planters) away; every other palm on the street stays.
  */
 function clearSightline(root:THREE.Object3D){
  const m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();
  const zero=new THREE.Matrix4().makeScale(0,0,0);
- const inside=(v:THREE.Vector3)=>v.x>SIGHTLINE.x0&&v.x<SIGHTLINE.x1&&v.z>SIGHTLINE.z0&&v.z<SIGHTLINE.z1;
+ const inside=(v:THREE.Vector3)=>SIGHTLINES.some(r=>v.x>r.x0&&v.x<r.x1&&v.z>r.z0&&v.z<r.z1);
  const cleared:THREE.Vector3[]=[];
  const fold=(mesh:THREE.InstancedMesh,test:(i:number)=>boolean)=>{
   let changed=false;
@@ -341,9 +342,10 @@ export function VenueCameraRig({kind,preset,nonce,selected,freeWidth}:{
   } as Record<VenueCameraPreset,[Vec3,Vec3]>)[preset];
   desired.current.set(...v[0]);target.current.set(...v[1]);
   if(selected){target.current.set(...selected);desired.current.set(selected[0]+7,selected[1]+5.2,selected[2]+9.5);}
-  if(size.width<661)desired.current.sub(target.current).multiplyScalar(1.4).add(target.current);
+  /* A narrow view (a phone, or the part a panel leaves free) stands further back. */
+  if(free<661)desired.current.sub(target.current).multiplyScalar(1.4).add(target.current);
   moving.current=true;
- },[kind,preset,nonce,selected,size.width]);
+ },[kind,preset,nonce,selected,free]);
  useFrame(()=>{
   if(!moving.current||!controls.current)return;
   camera.position.lerp(desired.current,.13);controls.current.target.lerp(target.current,.13);controls.current.update();

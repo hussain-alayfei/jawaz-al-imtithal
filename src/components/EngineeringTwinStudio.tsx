@@ -279,11 +279,12 @@ function CameraRig({ preset, selected, floor, nonce, floorCount, freeWidth }: {
       focus.current.set(...selected);
       desired.current.set(selected[0] + 7, selected[1] + 5.8, selected[2] + 8);
     }
-    if (size.width < 661) {
+    /* A narrow view (a phone, or the part the panel leaves free) stands further back. */
+    if (free < 661) {
       desired.current.sub(focus.current).multiplyScalar(floor === "all" ? 1.48 : 1.06).add(focus.current);
     }
     active.current = true;
-  }, [preset, selected, floor, nonce, size.width, floorCount]);
+  }, [preset, selected, floor, nonce, free, floorCount]);
   useFrame(() => {
     if (!active.current || !controls.current) return;
     camera.position.lerp(desired.current, 0.12);
@@ -373,7 +374,7 @@ function Model({ floor, selectedSystem, visible, ghost, exploded, flow, selected
       .map(level=><DetailedServiceNetwork3D key={level} floor={level} visible={visible} selected={selected}
         onSelect={onSelect} animate={flow}/>)}
     {(floor==="all"||floor==="ground") &&
-      <ContactShadows position={[0, -0.005, 0]} opacity={0.32} blur={2.5} scale={30} far={18} frames={1} />}
+      <ContactShadows position={[0, 0.012, 0]} opacity={0.32} blur={2.5} scale={30} far={18} frames={1} />}
     <CameraRig preset={preset} selected={selectedPos} floor={floor} nonce={nonce} floorCount={floorCount} freeWidth={freeWidth} />
   </>;
 }

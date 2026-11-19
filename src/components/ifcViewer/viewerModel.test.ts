@@ -7,7 +7,8 @@ import { elementAtFace } from "./picking";
 import { FrameGovernor, pinnedTier } from "./quality";
 import { siteLayout } from "./site";
 import { daylight, HERO_TIME, RIYADH, solarPosition } from "./sun";
-import { buildingBoxOf, facadePose, focusPose, frontSide, openingsOf, planPose, sectionPose } from "./views";
+import { buildingBoxOf, facadePose, focusPose, frontSide, openingsOf, planPose, sectionPose, streetPose } from "./views";
+import { streetBounds } from "../scene/SaudiStreet";
 
 /* ---------- a tiny synthetic model: boxes merged into chunks, like the reader builds them ---------- */
 
@@ -291,13 +292,47 @@ describe("site context", () => {
   });
 });
 
+describe("street context", () => {
+  const footprint = { minX: -9, minZ: -6, maxX: 9, maxZ: 6 };
+
+  it("lays the street out in front of the building's front, wider along the street than across it", () => {
+    const south = streetBounds({ footprint, front: "south" });
+    expect(south.maxZ).toBeGreaterThan(footprint.maxZ + 30); // forecourt, sidewalk, the street, the far side
+    expect(south.minZ).toBeLessThan(footprint.minZ - 20); // rear lane and the block behind
+    expect(south.maxZ - 6).toBeGreaterThan(-south.minZ - 6);
+    expect(south.maxX - south.minX).toBeGreaterThan(south.maxZ - south.minZ);
+    // An east front turns the whole street a quarter turn: the street runs north-south.
+    const east = streetBounds({ footprint, front: "east" });
+    expect(east.maxX).toBeGreaterThan(footprint.maxX + 30);
+    expect(east.maxZ - east.minZ).toBeGreaterThan(east.maxX - east.minX);
+  });
+
+  it("looks at the street view from the open corner, above eye level", () => {
+    const building: Box3 = { min: [-9, -0.3, -6], max: [9, 4.7, 6] };
+    const pose = streetPose(building, "south", [1, 0], 0, { fov: 32, aspect: 16 / 9 });
+    expect(pose.position[0]).toBeGreaterThan(building.max[0] + 10);
+    expect(pose.position[2]).toBeGreaterThan(building.max[2] + 10);
+    expect(pose.position[1]).toBeGreaterThan(4);
+    expect(pose.position[1]).toBeLessThan(10);
+  });
+});
+
 describe("light and quality", () => {
-  it("lights the hero at golden hour from the west-south-west", () => {
+  it("lights the street views in the afternoon from the south-west, high enough to clear the neighbours", () => {
     const { elevation, azimuth } = solarPosition(RIYADH.lat, RIYADH.lon, HERO_TIME);
-    expect(elevation).toBeGreaterThan(6);
-    expect(elevation).toBeLessThan(16);
-    expect(azimuth).toBeGreaterThan(230);
-    expect(azimuth).toBeLessThan(255);
+    expect(elevation).toBeGreaterThan(25);
+    expect(elevation).toBeLessThan(36);
+    expect(azimuth).toBeGreaterThan(212);
+    expect(azimuth).toBeLessThan(240);
+  });
+
+  it("warms the colours, not the strength, of the street views' light", () => {
+    const plain = daylight(31);
+    const warm = daylight(31, 1);
+    expect(warm.sun.intensity).toBeCloseTo(plain.sun.intensity, 6);
+    expect(warm.exposure).toBeCloseTo(plain.exposure, 6);
+    const blue = (hex: string) => parseInt(hex.slice(5, 7), 16);
+    expect(blue(warm.sun.color)).toBeLessThan(blue(plain.sun.color));
   });
 
   it("warms and weakens the sun near the horizon", () => {
