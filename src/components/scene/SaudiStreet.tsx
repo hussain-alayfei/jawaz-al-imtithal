@@ -6,8 +6,9 @@ import { finishTextures, siteTextures } from "../ifcViewer/textures";
 
 /*
  * SaudiStreet: a lively Riyadh street block built around one building's footprint. Context only:
- * nothing here comes from a file. Everything is made in code (no downloads), static, instanced
- * (about 35 draw calls at "high"), so it costs nothing per frame beyond drawing it.
+ * nothing here comes from a file. Everything is made in code (no downloads), static and instanced
+ * (about 30 meshes at "high", fewer at "low"), so it costs nothing per frame beyond drawing it. The
+ * detailed street reaches about 86 m either side of the building; a plainer city runs on to about 500 m.
  *
  *   <SaudiStreet footprint={{ minX, minZ, maxX, maxZ }} groundY={0} front="south" />
  *
@@ -27,6 +28,8 @@ import { finishTextures, siteTextures } from "../ifcViewer/textures";
  *   sky        true       a light warm-haze sky dome; pass false when the host draws its own sky.
  *   shadows    true       the near context casts and receives shadows (the far city and skyline never do).
  *   seed       7          varies heights, colours and the parked cars.
+ *   clear      []         world plan rects { x0, x1, z0, z1 } kept clear for a host's cameras: no palm (with its
+ *                         planter), street lamp or car stands with its base inside one. Everything else stays put.
  *
  * Also exported: `streetBounds(props)`, the world plan box of the detailed street (for a shadow camera).
  *
@@ -46,6 +49,14 @@ export interface StreetFootprint {
   maxZ: number;
 }
 
+/** A plan rectangle in world metres (x east, z south). */
+export interface StreetRect {
+  x0: number;
+  x1: number;
+  z0: number;
+  z1: number;
+}
+
 export interface SaudiStreetProps {
   footprint: StreetFootprint;
   groundY?: number;
@@ -56,6 +67,7 @@ export interface SaudiStreetProps {
   sky?: boolean;
   shadows?: boolean;
   seed?: number;
+  clear?: readonly StreetRect[];
 }
 
 /* ---------------- street section (metres) ---------------- */
@@ -519,6 +531,23 @@ function surroundGeometry(w: number, h: number, t: number, d: number): THREE.Buf
   ]);
 }
 
+/** A clipped shrub: a smooth ball with a lumpy, leafy surface (about 0.5 m across, base near y 0). */
+function shrubGeometry(): THREE.BufferGeometry {
+  const g = new THREE.SphereGeometry(0.5, 20, 14);
+  const p = g.getAttribute("position");
+  const v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i);
+    const n = v.clone().normalize();
+    const lump = 1 + 0.07 * Math.sin(n.x * 9.1 + n.y * 3.7) * Math.sin(n.z * 8.3 - n.y * 5.1) + 0.035 * Math.sin(n.x * 23 + n.z * 19);
+    v.multiplyScalar(lump);
+    p.setXYZ(i, v.x, Math.max(v.y, -0.2), v.z);
+  }
+  g.translate(0, 0.3, 0);
+  g.computeVertexNormals();
+  return g;
+}
+
 /** Unit triangular prism: base 1 wide on y 0, apex at y 1, 1 deep centred on z 0. */
 function prismGeometry(): THREE.BufferGeometry {
   const shape = new THREE.Shape([new THREE.Vector2(-0.5, 0), new THREE.Vector2(0.5, 0), new THREE.Vector2(0, 1)]);
@@ -776,6 +805,31 @@ interface Batches {
   shrub: Batch;
 }
 
+function newBatches(): Batches {
+  return {
+    stone: new Batch(),
+    plain: new Batch(),
+    glass: new Batch(),
+    metal: new Batch(),
+    prism: new Batch(),
+    window: new Batch(),
+    slot: new Batch(),
+    cylinder: new Batch(),
+    far: new Batch(),
+    trunk: new Batch(),
+    crown: new Batch(),
+    lamp: new Batch(),
+    lamp2: new Batch(),
+    sedan: new Batch(),
+    sedanCabin: new Batch(),
+    suv: new Batch(),
+    suvCabin: new Batch(),
+    wheel: new Batch(),
+    cone: new Batch(),
+    shrub: new Batch(),
+  };
+}
+
 /** Puts a unit-box element on a facade: `u` along it, `v` up from the ground, `w` out from the wall. */
 function onFace(batch: Batch, face: Face, gy: number, u: number, v: number, w: number, size: [number, number, number], color?: string, tilt = 0) {
   const tx = Math.cos(face.rot);
@@ -929,6 +983,7 @@ const PAINTS = ["#f1f0ec", "#f1f0ec", "#eceae4", "#f3f2ee", "#c4c7ca", "#a9adb1"
 /* ---------------- the street ---------------- */
 
 interface Options {
+  clear: readonly StreetRect[];
   footprint: StreetFootprint;
   groundY: number;
   front: StreetSide;
@@ -1109,27 +1164,18 @@ function buildStreet(o: Options, tone: Tone): Built {
   add(withShadow(new THREE.Mesh(groundDisc, m.ground), false, recv), "city-ground");
 
   /* ---- buildings ---- */
-  const b: Batches = {
-    stone: new Batch(),
-    plain: new Batch(),
-    glass: new Batch(),
-    metal: new Batch(),
-    prism: new Batch(),
-    window: new Batch(),
-    slot: new Batch(),
-    cylinder: new Batch(),
-    far: new Batch(),
-    trunk: new Batch(),
-    crown: new Batch(),
-    lamp: new Batch(),
-    lamp2: new Batch(),
-    sedan: new Batch(),
-    sedanCabin: new Batch(),
-    suv: new Batch(),
-    suvCabin: new Batch(),
-    wheel: new Batch(),
-    cone: new Batch(),
-    shrub: new Batch(),
+  const b = newBatches();
+  // Items a host keeps clear (`clear`) go to a batch that is never drawn, so the seeded sequence, and with
+  // it every other palm, lamp and car, stays exactly where it would be without `clear`.
+  const sink = newBatches();
+  const cosA = Math.cos(frame.angle);
+  const sinA = Math.sin(frame.angle);
+  const at = (x: number, z: number): Batches => {
+    const wx = frame.cx + x * cosA + z * sinA;
+    const wz = frame.cz - x * sinA + z * cosA;
+    return o.clear.some((r) => wx > Math.min(r.x0, r.x1) && wx < Math.max(r.x0, r.x1) && wz > Math.min(r.z0, r.z1) && wz < Math.max(r.z0, r.z1))
+      ? sink
+      : b;
   };
   // Mirror helper: x on the side away from the corner is -s * |x|.
   const away = (x: number) => -s * x;
@@ -1188,10 +1234,11 @@ function buildStreet(o: Options, tone: Tone): Built {
       const dir = x1 >= x0 ? 1 : -1;
       for (let x = x0; (x1 - x) * dir >= 0; x += dir * stepM) {
         if (cross && x > cross.a - 1.5 && x < cross.b + 1.5) continue;
-        palm(b, random, [x, gy + (planter ? 0.48 : 0), z], high);
+        const to = at(x, z);
+        palm(to, random, [x, gy + (planter ? 0.48 : 0), z], high);
         if (planter) {
-          b.plain.add([x, gy + 0.24, z], [1.5, 0.48, 1.5], 0, "#ddd3c1");
-          b.plain.add([x, gy + 0.47, z], [1.26, 0.03, 1.26], 0, "#5e5141");
+          to.plain.add([x, gy + 0.24, z], [1.5, 0.48, 1.5], 0, "#ddd3c1");
+          to.plain.add([x, gy + 0.47, z], [1.26, 0.03, 1.26], 0, "#5e5141");
         }
       }
     };
@@ -1205,9 +1252,10 @@ function buildStreet(o: Options, tone: Tone): Built {
     else palmsX(front0, -range, zK - 1.4, 9, true);
     // One palm on the forecourt corner away from the corner, framing the frontage in the street views.
     const fx = s > 0 ? front0 - 1.2 : front1 + 1.2;
-    palm(b, random, [fx, gy + 0.48, plot.z1 - 2], high);
-    b.plain.add([fx, gy + 0.24, plot.z1 - 2], [1.5, 0.48, 1.5], 0, "#ddd3c1");
-    b.plain.add([fx, gy + 0.47, plot.z1 - 2], [1.26, 0.03, 1.26], 0, "#5e5141");
+    const fz = plot.z1 - 2;
+    palm(at(fx, fz), random, [fx, gy + 0.48, fz], high);
+    at(fx, fz).plain.add([fx, gy + 0.24, fz], [1.5, 0.48, 1.5], 0, "#ddd3c1");
+    at(fx, fz).plain.add([fx, gy + 0.47, fz], [1.26, 0.03, 1.26], 0, "#5e5141");
     // Low planters of shrubs along the forecourt's sides.
     for (const side of [-1, 1]) {
       const x = side * (frame.across + 1.6);
@@ -1222,28 +1270,28 @@ function buildStreet(o: Options, tone: Tone): Built {
     palmsX(-range - 5, range + 5, zm, 10, false);
     for (let x = -range + 10; x <= range; x += 30) {
       if (cross && x > cross.a - 4 && x < cross.b + 4) continue;
-      b.lamp2.add([x + 5, gy - 0.02, zm], [1, 1, 1], Math.PI / 2);
+      at(x + 5, zm).lamp2.add([x + 5, gy - 0.02, zm], [1, 1, 1], Math.PI / 2);
     }
     // Far sidewalk palms, and single lamps along both kerbs.
     palmsX(-range, range, zFar + 1.5, 10, false);
     for (let x = -range; x <= range; x += 25) {
       const xs = x + 12;
       if (!(xs > front0 - 2 && xs < front1 + 2) && !(cross && xs > cross.a - 2 && xs < cross.b + 2)) {
-        b.lamp.add([xs, gy, zK - 0.55], [1, 1, 1], -Math.PI / 2);
+        at(xs, zK - 0.55).lamp.add([xs, gy, zK - 0.55], [1, 1, 1], -Math.PI / 2);
       }
-      if (!(cross && x > cross.a - 2 && x < cross.b + 2)) b.lamp.add([x, gy, zFar + 0.55], [1, 1, 1], Math.PI / 2);
+      if (!(cross && x > cross.a - 2 && x < cross.b + 2)) at(x, zFar + 0.55).lamp.add([x, gy, zFar + 0.55], [1, 1, 1], Math.PI / 2);
     }
     if (cross) {
       // Along the cross street, beside the buildings (the corner itself stays open).
       const xa = cross.a - 1.3;
       const xb = cross.b + 1.3;
       for (let z = zRear + 4; z < zFront - 1.5; z += 9) {
-        palm(b, random, [xa, gy, z], high);
-        palm(b, random, [xb, gy, z], high);
+        palm(at(xa, z), random, [xa, gy, z], high);
+        palm(at(xb, z), random, [xb, gy, z], high);
       }
     }
     // Parked cars along both parking lanes and the cross street; a few on the move.
-    const park = (x: number, z: number, rot: number) => car(b, random, [x, road, z], rot);
+    const park = (x: number, z: number, rot: number) => car(at(x, z), random, [x, road, z], rot);
     for (let x = -range; x < range; x += 6.2) {
       // Customers park along the frontage too; the corner by the cross street stays clear.
       const clear = cross && (s > 0 ? x > cross.a - 13 && x < cross.b + 5 : x > cross.a - 5 && x < cross.b + 13);
@@ -1265,10 +1313,14 @@ function buildStreet(o: Options, tone: Tone): Built {
       park(away(26), zK + PARK + LANE * 0.5, 0);
       park(away(-6), zMed1 + LANE * 0.5, Math.PI);
       park(away(40), zMed1 + LANE * 1.5, Math.PI);
-      // Median planting between the palms.
+      // Median planting between the palms, along the stretch the cameras see (the seeded sequence runs on
+      // over the whole median, so everything placed after it stays put).
       for (const [a, c] of spans(2)) {
         for (let x = Math.max(a, -NEAR) + 1.5; x < Math.min(c, NEAR) - 1.5; x += 2.2) {
-          b.shrub.add([x + random() * 0.6, gy - 0.05, zm + (random() - 0.5) * 0.6], [0.9 + random() * 0.5, 0.45 + random() * 0.3, 0.9 + random() * 0.3], random() * 3);
+          const at3: [number, number, number] = [x + random() * 0.6, gy - 0.05, zm + (random() - 0.5) * 0.6];
+          const size: [number, number, number] = [0.9 + random() * 0.5, 0.45 + random() * 0.3, 0.9 + random() * 0.3];
+          const turn = random() * 3;
+          if (Math.abs(x) < 52) b.shrub.add(at3, size, turn);
         }
       }
       // Cafe umbrellas in front of the shops across the street.
@@ -1317,7 +1369,7 @@ function buildStreet(o: Options, tone: Tone): Built {
   const slotSurround = own(surroundGeometry(0.8, 2.1, 0.14, 0.16));
   const cylinder = own(new THREE.CylinderGeometry(1, 1, 1, 14));
   const cone = own(new THREE.ConeGeometry(1, 1, 10, 1, false));
-  const shrub = own(new THREE.SphereGeometry(0.5, 10, 6).translate(0, 0.3, 0));
+  const shrub = own(shrubGeometry());
   add(b.stone.mesh(unit, m.stone, cast, recv), "neighbours");
   add(b.plain.mesh(unit, m.plain, cast, recv), "details");
   add(b.glass.mesh(unit, m.glass, false, recv), "glazing");
@@ -1489,13 +1541,20 @@ export function SaudiStreet({
   sky = true,
   shadows = true,
   seed = 7,
+  clear,
 }: SaudiStreetProps) {
   const invalidate = useThree((state) => state.invalidate);
   const tone = useMemo<Tone>(() => ({ desat: { value: 0.18 }, flat: { value: 0.09 }, ground: { value: 0 } }), []);
   const { minX, minZ, maxX, maxZ } = footprint;
+  // Hosts usually pass `clear` inline: rebuild only when its values change.
+  const clearKey = JSON.stringify(clear ?? []);
   const built = useMemo(
-    () => buildStreet({ footprint: { minX, minZ, maxX, maxZ }, groundY, front, corner, detail, sky, shadows, seed }, tone),
-    [minX, minZ, maxX, maxZ, groundY, front, corner, detail, sky, shadows, seed, tone],
+    () =>
+      buildStreet(
+        { footprint: { minX, minZ, maxX, maxZ }, groundY, front, corner, detail, sky, shadows, seed, clear: JSON.parse(clearKey) as StreetRect[] },
+        tone,
+      ),
+    [minX, minZ, maxX, maxZ, groundY, front, corner, detail, sky, shadows, seed, clearKey, tone],
   );
   useEffect(() => () => built.dispose(), [built]);
   useEffect(() => {

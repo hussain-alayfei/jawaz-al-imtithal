@@ -78,53 +78,13 @@ export function TwinHaze({haze=1}:{haze?:number}){
     and the axis in front of the building out to the far sidewalk (the facade view). */
 const SIGHTLINES=[{x0:-13,x1:15,z0:6.5,z1:19},{x0:-7,x1:7,z0:19,z1:46}];
 
-/**
- * The shared street frames a frontage with palms in its forecourt, on the near sidewalk and on the median;
- * in the twin those stand on the cameras' lines of sight and hide the model. Fold those palms (and their
- * planters) away; every other palm on the street stays.
- */
-function clearSightline(root:THREE.Object3D){
- const m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();
- const zero=new THREE.Matrix4().makeScale(0,0,0);
- const inside=(v:THREE.Vector3)=>SIGHTLINES.some(r=>v.x>r.x0&&v.x<r.x1&&v.z>r.z0&&v.z<r.z1);
- const cleared:THREE.Vector3[]=[];
- const fold=(mesh:THREE.InstancedMesh,test:(i:number)=>boolean)=>{
-  let changed=false;
-  for(let i=0;i<mesh.count;i++){
-   mesh.getMatrixAt(i,m);m.decompose(p,q,s);
-   if(test(i)){mesh.setMatrixAt(i,zero);changed=true;}
-  }
-  if(changed){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();}
- };
- root.traverse(o=>{
-  if(!(o instanceof THREE.InstancedMesh)||!/palm/.test(o.name))return;
-  fold(o,()=>{
-   if(!inside(p))return false;
-   if(/trunk/.test(o.name))cleared.push(p.clone());
-   return true;
-  });
- });
- if(!cleared.length)return;
- root.traverse(o=>{
-  if(!(o instanceof THREE.InstancedMesh)||o.name!=="details")return;
-  fold(o,()=>s.y<.6&&cleared.some(c=>Math.abs(c.x-p.x)<.05&&Math.abs(c.z-p.z)<.05));
- });
-}
-
-/** The Riyadh street around a twin scene (shared with the results viewer): fewer details on touch screens. */
+/** The Riyadh street around a twin scene (shared with the results viewer): fewer details on touch screens.
+    Palms, lamps and cars on the cameras' sightlines are left out by the street itself (`clear`). */
 export function TwinStreet(){
  const coarse=useMediaQuery("(pointer: coarse)");
  const detail:StreetDetail=coarse?"medium":"high";
- const wrap=useRef<THREE.Group>(null);
- const done=useRef<THREE.Object3D|null>(null);
- useFrame(()=>{
-  const street=wrap.current?.children[0];
-  if(!street||street===done.current)return;
-  done.current=street;
-  clearSightline(street);
- });
- return <group ref={wrap} name="twin-street">
-   <SaudiStreet footprint={TWIN_FOOTPRINT} groundY={0} front="south" corner="right" detail={detail} intensity={.62}/>
+ return <group name="twin-street">
+   <SaudiStreet footprint={TWIN_FOOTPRINT} groundY={0} front="south" corner="right" detail={detail} intensity={.62} clear={SIGHTLINES}/>
  </group>;
 }
 
