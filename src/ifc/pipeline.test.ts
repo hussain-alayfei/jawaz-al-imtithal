@@ -611,6 +611,12 @@ describe("files under the contract from before the Mowaem name", () => {
     const fromCurrent = await runIfcCompliance({ upload: current, activityId: "restaurant", facility });
     const statuses = (run: typeof fromCurrent) => run.findings.map((f) => [f.ruleId, f.status]);
     expect(statuses(fromLegacy)).toEqual(statuses(fromCurrent));
+    // The fingerprint is the chosen file's own, not the converted copy's.
+    const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(legacy.bytes));
+    const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    expect(fromLegacy.file.sha256).toBe(hex);
+    expect(fromLegacy.report.fileSha256).toBe(hex);
+    expect(fromLegacy.file.size).toBe(legacy.bytes.byteLength);
   });
 
   it("recognises either legacy marker in any letter case, and nothing else", () => {

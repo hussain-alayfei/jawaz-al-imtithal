@@ -65,6 +65,13 @@ export function hasLegacyContract(bytes: Uint8Array): boolean {
   return false;
 }
 
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", copy);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 /**
  * The same contract under the old name: rewrite every occurrence of the retired name (any letter case) to
  * Mowaem in the same case, so Pset_<old>Project becomes Pset_MowaemProject and <OLD>-IFC-1.0 becomes
@@ -222,7 +229,10 @@ export async function runIfcCompliance({
   };
 
   // A file under the contract from before the Mowaem name is the same contract: read it under the new name.
+  // The report fingerprints the file the user chose, not the converted copy.
+  let original: { size: number; sha256: string } | undefined;
   if (hasLegacyContract(upload.bytes)) {
+    original = { size: upload.bytes.byteLength, sha256: await sha256Hex(upload.bytes) };
     const bytes = upgradeLegacyContract(upload.bytes);
     upload = { ...upload, bytes, size: bytes.byteLength };
   }
@@ -463,8 +473,8 @@ export async function runIfcCompliance({
       scenario,
       file: {
         name: upload.name,
-        size: upload.bytes.byteLength,
-        sha256: document.sha256,
+        size: original?.size ?? upload.bytes.byteLength,
+        sha256: original?.sha256 ?? document.sha256,
       },
       model,
       metadata,
@@ -473,7 +483,7 @@ export async function runIfcCompliance({
       processedAt,
       report: {
         generatedAt: processedAt,
-        fileSha256: document.sha256,
+        fileSha256: original?.sha256 ?? document.sha256,
         rulePackVersion: activity?.ruleVersion ?? "UNKNOWN",
         scoreMethod: "passed_over_total",
         modelEvidence: {
