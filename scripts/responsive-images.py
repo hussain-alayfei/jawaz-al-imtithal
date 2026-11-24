@@ -27,6 +27,7 @@ PICTURES = (
     "story-3",
     "story-4",
     "twin",
+    "about",
 )
 
 

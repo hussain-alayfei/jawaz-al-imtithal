@@ -15,10 +15,10 @@ import { reveal, twoDigits } from "./motion";
 /* Real renders of the 3D model built from the sample file, one per step. They are 16:9 (1920×1080 or
    larger) and are re-rendered in place, so the frames crop them with object-fit and assume nothing else. */
 const SHOTS: readonly string[] = [story1Url, story2Url, story3Url, story4Url];
-const SHOT_WIDTH = 1920;
-const SHOT_HEIGHT = 1080;
-/* The files are 2400×1350, with smaller copies for srcset (scripts/responsive-images.py). */
-const SHOT_SRCSETS: readonly string[] = SHOTS.map((url, index) => srcSetOf(`story-${index + 1}`, url, 2400));
+const SHOT_WIDTH = 2048;
+const SHOT_HEIGHT = 1152;
+/* The files are 2048×1152, with smaller copies for srcset (scripts/responsive-images.py). */
+const SHOT_SRCSETS: readonly string[] = SHOTS.map((url, index) => srcSetOf(`story-${index + 1}`, url, 2048));
 
 /** From this width the story runs beside one pinned frame; below it each step shows its own picture. */
 const WIDE = "(min-width: 1024px)";

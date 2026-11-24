@@ -459,13 +459,10 @@
   line-height: 1.4;
 }
 
+/* Step numbers stand alone: no rule beside them. */
 .hm-row__rule,
 .hm-step__rule {
-  display: block;
-  width: 56px;
-  height: 1px;
-  background: var(--line-strong);
-  transform-origin: right center;
+  display: none;
 }
 
 .hm-row__title {
