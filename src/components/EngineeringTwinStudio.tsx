@@ -98,7 +98,8 @@ const CUSTOM_NODES: NodeInfo[] = [
 ];
 const viewDefaults: Record<Preset, { position: Vec3; target: Vec3 }> = {
   iso: { position: [30, 25, 30], target: [0, 8.2, 0] },
-  top: { position: [0.01, 38, 0], target: [0, 8.2, 0] },
+  // A hair off vertical (about 0.04 rad), inside the controls' minPolarAngle (0.03), so the camera can arrive.
+  top: { position: [0, 38, 1.2], target: [0, 8.2, 0] },
   front: { position: [0, 13.5, 36], target: [0, 8.2, 0] },
   inside: { position: [6.5, 7.5, 10.5], target: [0, 5, -1] },
 };
@@ -282,7 +283,7 @@ function CameraRig({ preset, selected, floor, nonce, floorCount, freeWidth }: {
       const base = Math.max(0,levelOf(floor)) * STOREY_HEIGHT;
       focus.current.set(0,base + 1.6,0);
       if (preset==="iso") desired.current.set(13,base+8.4,14);
-      else if (preset==="top") desired.current.set(.01,base+23,.01);
+      else if (preset==="top") desired.current.set(0,base+23,.9);
       else if (preset==="front") desired.current.set(0,base+8,22);
       else desired.current.set(5.3,base+5.1,9);
     }
