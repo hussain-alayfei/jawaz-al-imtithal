@@ -2,7 +2,7 @@ import { Fragment, useRef, type CSSProperties } from "react";
 import { copy } from "../../content/copy";
 import aboutUrl from "../../assets/site/about.webp";
 import { srcSetOf } from "./images";
-import { motionAllowed, reveal, useScrollFrame } from "./motion";
+import { motionAllowed, useScrollFrame } from "./motion";
 
 const WORDS = copy.web.intro.text.split(/\s+/);
 const LATIN = /[A-Za-z]/;
@@ -28,8 +28,21 @@ export function Intro() {
   }, active);
 
   return (
-    <section id="home-intro" className="hm-section hm-intro" aria-label={copy.web.labels.intro}>
-      <div className="hm-wide hm-intro__grid">
+    <section id="home-intro" className="hm-intro on-dark" aria-label={copy.web.labels.intro}>
+      <div className="hm-intro__bg" aria-hidden="true">
+        <img
+          className="hm-intro__img"
+          src={aboutUrl}
+          srcSet={srcSetOf("about", aboutUrl, 2000)}
+          sizes="100vw"
+          alt=""
+          width={2000}
+          height={1500}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div className="hm-wide hm-intro__inner">
         <p ref={textRef} className="hm-intro__text" data-read={active || undefined}>
           {WORDS.map((word, index) => (
             <Fragment key={index}>
@@ -40,24 +53,7 @@ export function Intro() {
             </Fragment>
           ))}
         </p>
-        <figure className="hm-intro__figure">
-          <div className="hm-intro__media hm-frame" {...reveal("media")}>
-            <img
-              className="hm-intro__img"
-              src={aboutUrl}
-              srcSet={srcSetOf("about", aboutUrl, 1200)}
-              sizes="(min-width: 1024px) 34vw, 100vw"
-              alt={copy.web.intro.imageAlt}
-              width={1200}
-              height={1500}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <figcaption className="hm-intro__caption">
-            <span className="hm-intro__credit">{copy.web.intro.credit}</span>
-          </figcaption>
-        </figure>
+        <p className="hm-intro__credit">{copy.web.intro.credit}</p>
       </div>
     </section>
   );
