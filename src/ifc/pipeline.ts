@@ -51,9 +51,6 @@ const RETIRED_NAME = String.fromCharCode(109, 105, 121, 97, 114);
 const LEGACY_MARKERS = [`pset_${RETIRED_NAME}`, `${RETIRED_NAME}-ifc-`].map((marker) =>
   [...marker].map((char) => char.charCodeAt(0)),
 );
-export const LEGACY_CONTRACT_MESSAGE =
-  "هذا الملف بصيغة عقد قديمة سابقة لاسم موائم. صدّر الملف مجددًا بصيغة IFC قياسية أو بعقد MOWAEM-IFC-1.0 ثم أعد الفحص.";
-
 /** True when the bytes contain a legacy property set or contract tag (ASCII, any letter case). */
 export function hasLegacyContract(bytes: Uint8Array): boolean {
   const lower = (byte: number) => (byte >= 65 && byte <= 90 ? byte + 32 : byte);
@@ -66,6 +63,31 @@ export function hasLegacyContract(bytes: Uint8Array): boolean {
     }
   }
   return false;
+}
+
+/**
+ * The same contract under the old name: rewrite every occurrence of the retired name (any letter case) to
+ * Mowaem in the same case, so Pset_<old>Project becomes Pset_MowaemProject and <OLD>-IFC-1.0 becomes
+ * MOWAEM-IFC-1.0. STEP files are ASCII, so this works on bytes; everything else is kept as it is.
+ */
+export function upgradeLegacyContract(bytes: Uint8Array): Uint8Array {
+  const name = [...RETIRED_NAME].map((char) => char.charCodeAt(0));
+  const lower = (byte: number) => (byte >= 65 && byte <= 90 ? byte + 32 : byte);
+  const out: number[] = [];
+  for (let i = 0; i < bytes.length; i++) {
+    let hit = i + name.length <= bytes.length;
+    for (let j = 0; hit && j < name.length; j++) hit = lower(bytes[i + j]) === name[j];
+    if (!hit) {
+      out.push(bytes[i]);
+      continue;
+    }
+    const upper = bytes[i] >= 65 && bytes[i] <= 90;
+    const allUpper = upper && bytes[i + 1] >= 65 && bytes[i + 1] <= 90;
+    const word = allUpper ? "MOWAEM" : upper ? "Mowaem" : "mowaem";
+    for (const char of word) out.push(char.charCodeAt(0));
+    i += name.length - 1;
+  }
+  return Uint8Array.from(out);
 }
 
 function elapsed(start: number): number {
@@ -199,11 +221,10 @@ export async function runIfcCompliance({
     }
   };
 
-  // A file under the contract from before the Mowaem name stops at the first stage with its own message.
+  // A file under the contract from before the Mowaem name is the same contract: read it under the new name.
   if (hasLegacyContract(upload.bytes)) {
-    return runStage<ComplianceRun>("validate", async () => {
-      throw new IfcProcessingError("validate", "LEGACY_CONTRACT", LEGACY_CONTRACT_MESSAGE);
-    });
+    const bytes = upgradeLegacyContract(upload.bytes);
+    upload = { ...upload, bytes, size: bytes.byteLength };
   }
 
   // Any IFC file without the MOWAEM-IFC-1.0 contract is read as a standard BIM export.

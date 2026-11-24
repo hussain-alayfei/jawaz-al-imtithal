@@ -12,7 +12,7 @@ import {
   type IfcUpload,
   type PipelineEvent,
 } from ".";
-import { hasLegacyContract, LEGACY_CONTRACT_MESSAGE } from "./pipeline";
+import { hasLegacyContract, upgradeLegacyContract } from "./pipeline";
 import { hasMowaemContract } from "./standard/pipeline";
 
 const fixtureUrl = (relativePath: string) =>
@@ -577,8 +577,6 @@ describe("real IFC compliance pipeline", () => {
 const RETIRED_NAME = String.fromCharCode(109, 105, 121, 97, 114);
 const RETIRED_TITLE = RETIRED_NAME.charAt(0).toUpperCase() + RETIRED_NAME.slice(1);
 const RETIRED_TAG = `${RETIRED_NAME.toUpperCase()}-IFC-1.0`;
-const LEGACY_MESSAGE =
-  "هذا الملف بصيغة عقد قديمة سابقة لاسم موائم. صدّر الملف مجددًا بصيغة IFC قياسية أو بعقد MOWAEM-IFC-1.0 ثم أعد الفحص.";
 const encode = (text: string) => new TextEncoder().encode(text);
 
 function asLegacyContract(upload: IfcUpload): IfcUpload {
@@ -600,30 +598,19 @@ async function loadStandardSample(): Promise<IfcUpload> {
 }
 
 describe("files under the contract from before the Mowaem name", () => {
-  it("stops a legacy contract file at the first stage with LEGACY_CONTRACT", async () => {
-    const legacy = asLegacyContract(await loadUpload("ifc/restaurant/submission-v1.ifc"));
-    // It carries no Pset_Mowaem set, so without the check it would be read as a standard IFC file.
+  it("reads a legacy contract file as the same contract under the new name", async () => {
+    const current = await loadUpload("ifc/restaurant/submission-v1.ifc");
+    const legacy = asLegacyContract(current);
+    // It carries no Pset_Mowaem set, so without the conversion it would be read as a standard IFC file.
     expect(hasMowaemContract(legacy.bytes)).toBe(false);
     expect(hasLegacyContract(legacy.bytes)).toBe(true);
+    expect(new TextDecoder().decode(upgradeLegacyContract(legacy.bytes))).toBe(new TextDecoder().decode(current.bytes));
 
-    const events: PipelineEvent[] = [];
-    const run = runIfcCompliance({
-      upload: legacy,
-      activityId: "restaurant",
-      facility: getDefaultFacility("restaurant"),
-      onEvent: (event) => events.push(event),
-    });
-    await expect(run).rejects.toBeInstanceOf(IfcProcessingError);
-    await expect(run).rejects.toMatchObject({
-      code: "LEGACY_CONTRACT",
-      stageId: "validate",
-      message: LEGACY_MESSAGE,
-    });
-    expect(LEGACY_CONTRACT_MESSAGE).toBe(LEGACY_MESSAGE);
-    expect(events.filter((event) => event.state === "failed")).toEqual([
-      expect.objectContaining({ id: "validate", errorCode: "LEGACY_CONTRACT", detail: LEGACY_MESSAGE }),
-    ]);
-    expect(events.every((event) => event.id === "validate")).toBe(true);
+    const facility = getDefaultFacility("restaurant");
+    const fromLegacy = await runIfcCompliance({ upload: legacy, activityId: "restaurant", facility });
+    const fromCurrent = await runIfcCompliance({ upload: current, activityId: "restaurant", facility });
+    const statuses = (run: typeof fromCurrent) => run.findings.map((f) => [f.ruleId, f.status]);
+    expect(statuses(fromLegacy)).toEqual(statuses(fromCurrent));
   });
 
   it("recognises either legacy marker in any letter case, and nothing else", () => {
@@ -636,16 +623,15 @@ describe("files under the contract from before the Mowaem name", () => {
     expect(hasLegacyContract(encode("'Pset_MowaemProject' 'MOWAEM-IFC-1.0' 'Pset_WallCommon'"))).toBe(false);
   });
 
-  it("treats the legacy contract tag alone as the old contract too", async () => {
+  it("reads a file with only the legacy contract tag as the current contract", async () => {
     const upload = mutateUpload(
       await loadUpload("ifc/restaurant/submission-v1.ifc"),
       "IFCLABEL('MOWAEM-IFC-1.0')",
       `IFCLABEL('${RETIRED_TAG}')`,
       "legacy-tag.ifc",
     );
-    await expect(
-      runIfcCompliance({ upload, activityId: "restaurant", facility: getDefaultFacility("restaurant") }),
-    ).rejects.toMatchObject({ code: "LEGACY_CONTRACT", stageId: "validate" });
+    const run = await runIfcCompliance({ upload, activityId: "restaurant", facility: getDefaultFacility("restaurant") });
+    expect(run.model.project?.properties.FixtureContractVersion).toBe("MOWAEM-IFC-1.0");
   });
 
   it("still routes a MOWAEM-IFC-1.0 contract file through the contract checks", async () => {
