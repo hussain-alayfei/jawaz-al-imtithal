@@ -302,6 +302,29 @@ describe("building services read from the file (systems, ports, connections)", (
     expect(status("MOMAH-REST-4.8.1-STORE")).toBe("unknown");
   });
 
+  it("judges an exit measured only from its geometry box with room for the frame", async () => {
+    const { facts } = (await check(PASS)).standard!;
+    const facility = getDefaultFacility("restaurant");
+    const width = (value: number) => {
+      const doors = facts.doors.map((d) => (d.fireExit ? { ...d, width: value, widthSource: "geometry" as const } : d));
+      return evaluateStandardRestaurant({ ...facts, doors }, facility).find((e) => e.ruleId === "MOMAH-REST-4.9.1-WIDTH")!;
+    };
+    expect(width(0.85).status).toBe("fail"); // the box already includes the frame: too narrow for certain
+    expect(width(0.95).status).toBe("unknown"); // within a frame's thickness of the limit
+    expect(width(1.05).status).toBe("pass");
+  });
+
+  it("does not judge the store share against a licensed area smaller than the file's rooms", async () => {
+    const { facts } = (await check(PASS)).standard!;
+    const store = (area: number) =>
+      evaluateStandardRestaurant(facts, { ...getDefaultFacility("restaurant"), area }).find(
+        (e) => e.ruleId === "MOMAH-REST-4.8.1-STORE",
+      )!;
+    expect(store(100).status).toBe("unknown");
+    expect(store(100).actual).toContain("أكبر من مساحة الترخيص المدخلة");
+    expect(store(284).status).toBe("pass");
+  });
+
   it("refuses a file cut off before END-ISO-10303-21", async () => {
     const whole = await upload(PASS);
     const bytes = whole.bytes.subarray(0, Math.floor(whole.bytes.byteLength * 0.6));
@@ -343,6 +366,11 @@ describe("space classification from names", () => {
     ["Store Room", "STORAGE"],
     ["Dry store / المخزن", "STORAGE"],
     ["Cashier", "SERVICE"],
+    ["Toilets", "WC"],
+    ["Men's Restrooms", "WC"],
+    ["Dry Store", "STORAGE"],
+    ["Pantry", "STORAGE"],
+    ["Kitchens", "KITCHEN"],
   ])("%s -> %s", (label, role) => {
     expect(classifySpace(label)?.role).toBe(role);
   });

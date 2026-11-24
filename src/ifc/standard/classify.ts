@@ -6,10 +6,10 @@ import type { SpaceRole } from "./model";
  * guesses a role, and an unclassified space is reported as such.
  */
 const ROLE_KEYWORDS: [SpaceRole, string[]][] = [
-  ["KITCHEN", ["kitchen", "مطبخ"]],
-  ["WC", ["wc", "toilet", "restroom", "bathroom", "lavatory", "دورة مياه", "دورة المياه", "حمام", "دورات المياه"]],
-  ["STORAGE", ["storage", "store room", "storeroom", "مخزن", "مستودع"]],
-  ["DINING", ["dining", "seating area", "صالة الطعام", "صالة طعام", "منطقة الجلوس", "صالة الجلوس"]],
+  ["KITCHEN", ["kitchen", "food preparation", "مطبخ", "منطقة التحضير", "منطقة الطهي"]],
+  ["WC", ["wc", "toilet", "restroom", "bathroom", "lavatory", "washroom", "دورة مياه", "دورة المياه", "حمام", "دورات المياه"]],
+  ["STORAGE", ["storage", "store room", "storeroom", "stock room", "stockroom", "dry store", "cold store", "pantry", "مخزن", "مستودع"]],
+  ["DINING", ["dining", "seating area", "صالة الطعام", "صالة طعام", "منطقة الجلوس", "صالة الجلوس", "صالة التقديم"]],
   ["SERVICE", ["service", "cashier", "خدمة", "الخدمة", "كاشير"]],
 ];
 
@@ -25,7 +25,8 @@ function matches(text: string, keyword: string): boolean {
   const t = normalise(text);
   const k = normalise(keyword);
   if (/^[a-z ]+$/.test(k)) {
-    return new RegExp(`(^|[^a-z])${k}([^a-z]|$)`).test(t);
+    // whole words, plurals included («Toilets», «Restrooms», «WCs»)
+    return new RegExp(`(^|[^a-z])${k}(e?s)?([^a-z]|$)`).test(t);
   }
   return t.includes(k);
 }

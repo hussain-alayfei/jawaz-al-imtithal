@@ -35,6 +35,9 @@ export const STORE_SHARE_LIMIT = 0.25; // 4.8.1
 export const STORE_AREA_CAP_M2 = 150; // 4.8.1
 /** Provisional: 4.9.1 refers to SBC-801 without a number in the requirements document. */
 export const EXIT_WIDTH_LIMIT_M = 0.9;
+/** A door's geometry box includes its frame (typically 5–10 cm each side together); a width read from the
+    box alone can prove a door too narrow, but passes only with this much to spare. */
+export const DOOR_FRAME_ALLOWANCE_M = 0.1;
 
 const SHARED_WALL_GAP_M = 0.3;
 const HANDWASH_NEAR_M = 1.0;
@@ -229,12 +232,22 @@ export function evaluateStandardRestaurant(
   // 4.8.1 storage share of the licensed area
   const storeArea = stores.reduce((sum, s) => sum + (s.netFloorArea ?? 0), 0);
   const licensed = facility.area;
+  const fileArea = facts.spaces.reduce((sum, s) => sum + (s.netFloorArea ?? 0), 0);
   const limit = Math.min(STORE_SHARE_LIMIT * licensed, STORE_AREA_CAP_M2);
   if (!stores.length) {
     // No room classified as a store: either there is none or it is not named. Not judged either way.
     results.push(unknown("MOMAH-REST-4.8.1-STORE", "لم يُصنَّف أي فراغ في الملف مستودعًا، فلا تُقاس نسبة مساحته"));
   } else if (!(licensed > 0) || stores.some((s) => s.netFloorArea === undefined)) {
     results.push(unknown("MOMAH-REST-4.8.1-STORE", "مساحة المستودع أو المساحة الإجمالية للترخيص غير متوفرة", entity(stores[0].expressId)));
+  } else if (fileArea > licensed * 1.05) {
+    // The rooms in the file cover more floor than the licence states: the entered area is not this building's.
+    results.push(
+      unknown(
+        "MOMAH-REST-4.8.1-STORE",
+        `مساحة الغرف في الملف (${area(fileArea)}) أكبر من مساحة الترخيص المدخلة (${area(licensed)})، فلا تُقاس نسبة المستودع قبل تصحيح مساحة الترخيص في بيانات المشروع`,
+        entity(stores[0].expressId),
+      ),
+    );
   } else {
     results.push({
       ruleId: "MOMAH-REST-4.8.1-STORE",
@@ -379,17 +392,26 @@ export function evaluateStandardRestaurant(
     if (!narrowest) {
       results.push(unknown("MOMAH-REST-4.9.1-WIDTH", "مخرج الطوارئ موجود لكن عرضه غير مسجل ولا هندسة له", entity(exits[0]?.expressId)));
     } else {
-      const source =
-        narrowest.widthSource === "OverallWidth"
-          ? "من خاصية OverallWidth في الملف"
-          : "تقديري من حدود هندسة الباب (يشمل الإطار)";
-      results.push({
-        ruleId: "MOMAH-REST-4.9.1-WIDTH",
-        status: narrowest.width >= EXIT_WIDTH_LIMIT_M - 1e-9 ? "pass" : "fail",
-        actual: `${metres(narrowest.width)}: أضيق مخرج طوارئ (${label(narrowest)})، ${source}`,
-        target: entity(narrowest.expressId),
-        measurement: { value: narrowest.width, unit: "m", source, limit: EXIT_WIDTH_LIMIT_M, axis: "width" },
-      });
+      const fromAttribute = narrowest.widthSource === "OverallWidth";
+      const source = fromAttribute ? "من خاصية OverallWidth في الملف" : "تقديري من حدود هندسة الباب (يشمل الإطار)";
+      const meets = narrowest.width >= EXIT_WIDTH_LIMIT_M - 1e-9;
+      // From the geometry box only: too narrow is certain, wide enough needs room for the frame.
+      const clearlyMeets = fromAttribute || narrowest.width - DOOR_FRAME_ALLOWANCE_M >= EXIT_WIDTH_LIMIT_M - 1e-9;
+      results.push(
+        meets && !clearlyMeets
+          ? unknown(
+              "MOMAH-REST-4.9.1-WIDTH",
+              `${metres(narrowest.width)} لأضيق مخرج طوارئ (${label(narrowest)}) ${source}، والفرق عن الحد (${metres(EXIT_WIDTH_LIMIT_M)}) أقل من سماكة الإطار، والملف لا يسجل الخاصية OverallWidth`,
+              entity(narrowest.expressId),
+            )
+          : {
+              ruleId: "MOMAH-REST-4.9.1-WIDTH",
+              status: meets ? "pass" : "fail",
+              actual: `${metres(narrowest.width)}: أضيق مخرج طوارئ (${label(narrowest)})، ${source}`,
+              target: entity(narrowest.expressId),
+              measurement: { value: narrowest.width, unit: "m", source, limit: EXIT_WIDTH_LIMIT_M, axis: "width" },
+            },
+      );
     }
   }
 
