@@ -1,7 +1,8 @@
 import { Fragment, useRef, type CSSProperties } from "react";
 import { copy } from "../../content/copy";
-import { SectionLabel } from "./SectionHead";
-import { motionAllowed, useScrollFrame } from "./motion";
+import aboutUrl from "../../assets/site/about.webp";
+import { srcSetOf } from "./images";
+import { motionAllowed, reveal, useScrollFrame } from "./motion";
 
 const WORDS = copy.web.intro.text.split(/\s+/);
 const LATIN = /[A-Za-z]/;
@@ -29,9 +30,6 @@ export function Intro() {
   return (
     <section id="home-intro" className="hm-section hm-intro" aria-label={copy.web.labels.intro}>
       <div className="hm-wide hm-intro__grid">
-        <div className="hm-intro__label">
-          <SectionLabel n={1} text={copy.web.labels.intro} />
-        </div>
         <p ref={textRef} className="hm-intro__text" data-read={active || undefined}>
           {WORDS.map((word, index) => (
             <Fragment key={index}>
@@ -42,6 +40,25 @@ export function Intro() {
             </Fragment>
           ))}
         </p>
+        <figure className="hm-intro__figure">
+          <div className="hm-intro__media hm-frame" {...reveal("media")}>
+            <img
+              className="hm-intro__img"
+              src={aboutUrl}
+              srcSet={srcSetOf("about", aboutUrl, 1200)}
+              sizes="(min-width: 1024px) 34vw, 100vw"
+              alt={copy.web.intro.imageAlt}
+              width={1200}
+              height={1500}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <figcaption className="hm-intro__caption">
+            <span>{copy.web.intro.caption}</span>
+            <span className="hm-intro__credit">{copy.web.intro.credit}</span>
+          </figcaption>
+        </figure>
       </div>
     </section>
   );

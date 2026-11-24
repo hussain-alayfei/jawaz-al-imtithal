@@ -1,15 +1,10 @@
 import type { ReactNode } from "react";
-import { reveal, twoDigits } from "./motion";
+import { reveal } from "./motion";
 
-/** A section's small label: its two-digit number, a thin rule that draws in, and one word. */
-export function SectionLabel({ n, text }: { n: number; text: string }) {
-  return (
-    <p className="hm-label" {...reveal("rule")}>
-      <span className="hm-label__no num">{twoDigits(n)}</span>
-      <span className="hm-label__line" aria-hidden="true" />
-      <span className="hm-label__text">{text}</span>
-    </p>
-  );
+/** Section labels (number, rule, word) are not shown: the headings carry the sections. Kept as a no-op so
+    callers stay simple. */
+export function SectionLabel(_props: { n: number; text: string }) {
+  return null;
 }
 
 /** A section head: the label, a large light headline on the start side, and (from 1024px) the lead and any

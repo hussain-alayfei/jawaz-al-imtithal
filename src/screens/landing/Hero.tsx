@@ -76,10 +76,6 @@ export function Hero({ onStart, onTwin }: { onStart: () => void; onTwin: () => v
 
       <div ref={contentRef} className="hm-hero__content on-dark">
         <div className="hm-hero__inner">
-          <p className="hm-hero__label hm-hero__in" style={{ "--hm-d": "300ms" } as CSSProperties}>
-            <span className="hm-hero__label-line" aria-hidden="true" />
-            {hero.label}
-          </p>
           <h1 id="hm-hero-title" className="hm-hero__title">
             {hero.titleLines.map((line, index) => (
               <Fragment key={line}>
