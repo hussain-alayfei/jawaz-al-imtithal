@@ -1,4 +1,14 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Box, Check, ChevronDown, Copy, Info, PanelRightClose, PanelRightOpen } from "../brand/icons";
 import { IconButton, StatusGlyph, StatusMark } from "../brand/ui";
 import { copy } from "../content/copy";
@@ -56,7 +66,10 @@ const L = {
   tabAll: "كل البنود",
   hide: "إخفاء التفاصيل",
   show: "عرض التفاصيل",
-  noIssues: "لا توجد مخالفات. كل البنود المقيسة مطابقة.",
+  /* «المخالفات» holds failures only; with none, it says so and points to «كل البنود». */
+  noFailures: "لا يوجد بند غير مطابق.",
+  unknownElsewhere: "البنود التي لا يمكن التحقق منها من الملف في «كل البنود»، ولا تُحسب مطابقة.",
+  showAll: "عرض كل البنود",
 } as const;
 
 type Tab = "issues" | "all";
@@ -375,6 +388,16 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
   const listRef = useRef<HTMLElement>(null);
   const hideRef = useRef<HTMLButtonElement>(null);
   const showRef = useRef<HTMLButtonElement>(null);
+  const allTabRef = useRef<HTMLButtonElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  /* Screen readers start at the results heading, at the top of the page. The shell's smooth scroll to the top
+     can still be running when this screen mounts, and the browser's scroll anchoring then carries the page
+     down with the new content, so the top is settled at once, before paint, and the focus does not scroll. */
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    headingRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
     const first = defaultFinding(findings);
@@ -391,6 +414,8 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
   /* Older MOWAEM-IFC-1.0 contract files carry no geometry: their findings are shown on the procedural scene. */
   const contract = !standard && run.source !== "standard-ifc";
   const visibleGroups = tab === "issues" ? issueGroups : groups;
+  /** «المخالفات» can hold a failing data check without any failing clause; it still says no clause failed. */
+  const failedClauses = issueGroups.some((group) => group.key === "fail");
   const floating = !compact;
 
   const markers = useMemo(
@@ -513,6 +538,12 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
     setTab(next);
   };
 
+  /* The empty «المخالفات» list's own button: it leaves with the list, so focus moves to the tab it chose. */
+  const showAllClauses = () => {
+    chooseTab("all");
+    requestAnimationFrame(() => allTabRef.current?.focus());
+  };
+
   const hidePanel = () => {
     setPanelOpen(false);
     requestAnimationFrame(() => showRef.current?.focus());
@@ -563,6 +594,7 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
                 {L.tabIssues}
               </button>
               <button
+                ref={allTabRef}
                 type="button"
                 className="rs-seg__item"
                 aria-pressed={tab === "all"}
@@ -619,7 +651,17 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
             ref={listRef}
             aria-label={tab === "issues" ? L.tabIssues : L.tabAll}
           >
-            {visibleGroups.length === 0 && <p className="rs-list__empty">{L.noIssues}</p>}
+            {tab === "issues" && !failedClauses && (
+              <div className="rs-list__empty">
+                <p>
+                  <strong>{L.noFailures}</strong>
+                  {summary.unknown > 0 && <> {L.unknownElsewhere}</>}
+                </p>
+                <button type="button" className="link" onClick={showAllClauses}>
+                  {L.showAll}
+                </button>
+              </div>
+            )}
             {visibleGroups.map((group) => (
               <ListGroup key={group.key} group={group} selectedRule={selectedRule} onSelect={selectFinding} />
             ))}
@@ -676,7 +718,7 @@ export default function Results({ run, onReport, onNew, onTwin, notify }: Result
       <header className="rs-bar">
         <div className="page rs-bar__inner">
           <div className="rs-bar__file">
-            <h1 className="rs-bar__name">
+            <h1 className="rs-bar__name" ref={headingRef} tabIndex={-1}>
               <span className="sr-only">{L.pageTitle}: </span>
               <bdi dir="ltr">{run.file.name}</bdi>
             </h1>

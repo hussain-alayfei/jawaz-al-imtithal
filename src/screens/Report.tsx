@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { ChevronRight } from "../brand/icons";
-import { BrandMark, StatusGlyph, StatusMark, statusLabel } from "../brand/ui";
+import { StatusGlyph, StatusMark, Wordmark, statusLabel } from "../brand/ui";
 import { copy } from "../content/copy";
-import type { Finding } from "../data";
+import { activityExamples, type Finding } from "../data";
 import type { ComplianceRun } from "../ifc/types";
 import type { ReportProps } from "./types";
 import { Bidi } from "./results/Bidi";
@@ -34,7 +34,26 @@ const L = {
   newTab: "يفتح في نافذة جديدة",
   tools: "إجراءات التقرير",
   counts: "النتائج حسب الحالة",
+  /* Project data as the user entered it on the check page; clause 4.8.1 (store share) is computed from the area. */
+  activity: "النشاط",
+  area: "مساحة الترخيص",
+  areaUnit: "م²",
+  notEntered: "غير مُدخلة",
+  /* Short form of the disclaimer, on the first page under the title; the full text closes the report. */
+  notice: "فحص مسبق مستقل، لا يمنح موافقة أو ترخيصًا.",
 } as const;
+
+/** The activity as the check page names it (its label), else the facility's own wording. */
+function activityOf(run: ComplianceRun): string {
+  return activityExamples.find((item) => item.id === run.activityId)?.label ?? run.facility?.activity ?? run.activityId;
+}
+
+/** The licensed area the user entered, e.g. "284 م²". */
+function areaOf(run: ComplianceRun): string {
+  const area = run.facility?.area;
+  if (typeof area !== "number" || !Number.isFinite(area) || area <= 0) return L.notEntered;
+  return `${area.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${L.areaUnit}`;
+}
 
 function formatDate(iso: string): string {
   try {
@@ -179,6 +198,8 @@ export default function Report({ run, onBack, notify }: ReportProps) {
   const dataGroup = groups.find((group) => group.key === "data");
   const reference = referenceOf(run);
   const scopeText = scopeOf(run);
+  const activity = activityOf(run);
+  const area = areaOf(run);
 
   const downloadReport = () => {
     const sections = groups
@@ -211,7 +232,7 @@ export default function Report({ run, onBack, notify }: ReportProps) {
           })
           .join("");
         const note = groupNote(group) ?? "";
-        return `<section><h2>${escapeHtml(copy.results.groups[group.key])} <span class="count">${group.items.length}</span></h2>${
+        return `<section class="grp"><h2>${escapeHtml(copy.results.groups[group.key])} <span class="count">${group.items.length}</span></h2>${
           note ? `<p class="note">${escapeHtml(note)}</p>` : ""
         }${rows}</section>`;
       })
@@ -224,23 +245,27 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;color:#1d1d1f;ma
 h1,h2,h3{color:#1d1d1f;line-height:1.3;font-weight:700}
 .brand{margin:0 0 28px;font-weight:800;font-size:20px;color:#0a7a4d}
 h1{margin:0;font-size:36px}.file{margin:4px 0 0;color:#6e6e73}
+.notice{margin:16px 0 0;padding-inline-start:12px;border-inline-start:3px solid #1d1d1f;font-weight:600}
 hr{border:0;border-top:1px solid #d2d2d7;margin:28px 0}
 dl.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;margin:0}dl.meta dt{font-size:13px;color:#6e6e73}dl.meta dd{margin:0 0 10px;overflow-wrap:anywhere}
 h2{font-size:24px;margin:36px 0 8px}.counts span{margin-inline-end:20px;font-weight:600}
-section{margin-top:36px;page-break-before:always}section h2{font-size:21px;margin:0;padding-bottom:8px;border-bottom:1px solid #d2d2d7}.count{color:#6e6e73;font-weight:400}
+section{margin-top:36px}.grp+.grp{break-before:page;page-break-before:always}section h2{font-size:21px;margin:0;padding-bottom:8px;border-bottom:1px solid #d2d2d7}.count{color:#6e6e73;font-weight:400}
 article{padding:18px 0;border-bottom:1px solid #d2d2d7;page-break-inside:avoid}h3{font-size:17px;margin:0 0 10px}.no{color:#0a7a4d;font-variant-numeric:tabular-nums}
 .st{font-size:14px;font-weight:600;margin-inline-start:8px}.st-fail{color:#c9182b}.st-pass{color:#0a7a4d}.st-unknown{color:#6e6e73}
 table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:7px 8px;text-align:right;vertical-align:top;border-bottom:1px solid #e8e8ed}th{width:140px;color:#6e6e73;font-weight:400}
 td b{font-size:18px;font-variant-numeric:tabular-nums}
 blockquote{margin:12px 0 0;padding-inline-start:14px;border-inline-start:2px solid #0a7a4d}cite{display:block;font-style:normal;font-size:13px;color:#6e6e73}
 .note{font-size:14px;color:#6e6e73}.foot{margin-top:40px;font-size:14px;color:#6e6e73}
-@media print{body{margin:0;max-width:none;font-size:12.5px}}
+@media print{body{margin:0;max-width:none;font-size:12.5px}h2,section>.note,h3{break-after:avoid;page-break-after:avoid}article{page-break-inside:auto}tr,blockquote,article>.note{break-inside:avoid;page-break-inside:avoid}}
 </style></head><body>
 <p class="brand">${escapeHtml(copy.brand.name)}</p>
 <h1>${escapeHtml(copy.report.title)}</h1>
 <p class="file"><bdi dir="ltr">${escapeHtml(run.file.name)}</bdi></p>
+<p class="notice">${escapeHtml(L.notice)}</p>
 <hr>
 <dl class="meta">
+<dt>${escapeHtml(L.activity)}</dt><dd>${escapeHtml(activity)}</dd>
+<dt>${escapeHtml(L.area)}</dt><dd>${escapeHtml(area)}</dd>
 <dt>${escapeHtml(copy.results.file)}</dt><dd><bdi dir="ltr">${escapeHtml(run.file.name)}</bdi></dd>
 <dt>${escapeHtml(copy.dossier.schemaLabel)}</dt><dd>${escapeHtml(metadata.schema)}</dd>
 <dt>${escapeHtml(copy.dossier.elementsLabel)}</dt><dd>${escapeHtml(counted(metadata.elements, ELEMENT_FORMS))}</dd>
@@ -250,7 +275,7 @@ blockquote{margin:12px 0 0;padding-inline-start:14px;border-inline-start:2px sol
 </dl>
 <h2>${escapeHtml(copy.report.summary)}</h2>
 <p>${escapeHtml(copy.results.scope)}: ${escapeHtml(scopeText)}</p>
-<p class="counts"><span>${summary.passed} ${escapeHtml(copy.status.pass)}</span><span>${summary.failed} ${escapeHtml(copy.status.fail)}</span><span>${summary.unknown} ${escapeHtml(copy.status.unknown)}</span></p>
+<p class="counts"><span>${summary.failed} ${escapeHtml(copy.status.fail)}</span><span>${summary.unknown} ${escapeHtml(copy.status.unknown)}</span><span>${summary.passed} ${escapeHtml(copy.status.pass)}</span></p>
 ${sections}
 <hr>
 <p class="foot">${escapeHtml(copy.report.disclaimer)}<br>${escapeHtml(copy.footer.basis)}</p>
@@ -260,8 +285,12 @@ ${sections}
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `mowaem-report-${run.file.name.replace(/\.ifc$/i, "")}.html`;
+    anchor.hidden = true;
+    document.body.append(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    // Revoking at once can cancel the download in Safari and Firefox; the small blob is kept for a minute.
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     notify(L.downloaded);
   };
 
@@ -285,33 +314,43 @@ ${sections}
       <article className="rp-sheet" aria-labelledby="rp-title">
         <header className="rp-head">
           <p className="rp-letterhead">
-            <BrandMark className="rp-letterhead__mark" />
-            <span>{copy.brand.name}</span>
+            <Wordmark size={26} />
           </p>
           <h1 id="rp-title">{copy.report.title}</h1>
           <p className="rp-head__file">
             <bdi dir="ltr">{run.file.name}</bdi>
           </p>
+          <p className="rp-head__notice" role="note">
+            {L.notice}
+          </p>
         </header>
 
         <dl className="rp-record">
+          <div className="rp-record__activity">
+            <dt>{L.activity}</dt>
+            <dd>{activity}</dd>
+          </div>
+          <div className="rp-record__area">
+            <dt>{L.area}</dt>
+            <dd>{area}</dd>
+          </div>
           <div className="rp-record__file">
             <dt>{copy.results.file}</dt>
             <dd>
               <bdi dir="ltr">{run.file.name}</bdi>
             </dd>
           </div>
-          <div>
+          <div className="rp-record__schema">
             <dt>{copy.dossier.schemaLabel}</dt>
             <dd>
               <bdi dir="ltr">{metadata.schema}</bdi>
             </dd>
           </div>
-          <div>
+          <div className="rp-record__elements">
             <dt>{copy.dossier.elementsLabel}</dt>
             <dd>{counted(metadata.elements, ELEMENT_FORMS)}</dd>
           </div>
-          <div>
+          <div className="rp-record__date">
             <dt>{L.generated}</dt>
             <dd>{generatedAt}</dd>
           </div>
@@ -335,18 +374,18 @@ ${sections}
             <span className="rp-summary__label">{copy.results.scope}</span>
             <strong className="rp-summary__figure">{scopeText}</strong>
           </p>
+          {/* One status order everywhere: fail, unknown, pass. The unknown group carries its own note. */}
           <ul className="rp-counts" aria-label={L.counts}>
-            <li>
-              <StatusMark status="pass" size="large" label={`${summary.passed} ${copy.status.pass}`} />
-            </li>
             <li>
               <StatusMark status="fail" size="large" label={`${summary.failed} ${copy.status.fail}`} />
             </li>
             <li>
               <StatusMark status="unknown" size="large" label={`${summary.unknown} ${copy.status.unknown}`} />
             </li>
+            <li>
+              <StatusMark status="pass" size="large" label={`${summary.passed} ${copy.status.pass}`} />
+            </li>
           </ul>
-          {summary.unknown > 0 && <p className="rp-note">{copy.results.groups.unknownNote}</p>}
           {findings.length === 0 && <p className="rp-note">{copy.results.empty}</p>}
         </section>
 

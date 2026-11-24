@@ -1,7 +1,7 @@
 /* Report (v4): a white document. Noto Sans Arabic, big confident headings, generous space, text kept to
    72ch, green only as an accent (clause numbers, the quote rule, the letterhead). On screen the actions sit
-   above the document; in print only the document, in black, each group of findings on its own page.
-   Prefix: rp-. */
+   above the document; in print only the document, in black: the summary and the first group of findings
+   share page 1, each later group starts its own page. Prefix: rp-. */
 
 .rp {
   padding-block: 24px 112px;
@@ -90,7 +90,21 @@
   overflow-wrap: anywhere;
 }
 
-/* File record */
+/* The short not-an-approval notice, on the first page under the title (the full text closes the report).
+   A plain rule at its start, so it reads as a note and never as a button. */
+.rp-head__notice {
+  max-width: 72ch;
+  margin-block-start: 24px;
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Project and file record. Phones, two columns: activity | area, file, schema | elements, date,
+   then the fingerprint and the reference. */
 .rp-record {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -105,13 +119,13 @@
   border-block-end: 1px solid var(--line);
 }
 
-/* Schema and elements share a row on phones. */
-.rp-record > div:nth-child(3) {
+.rp-record__area,
+.rp-record__elements {
   padding-inline-start: 20px;
 }
 
 .rp-record__file,
-.rp-record > div:nth-child(4),
+.rp-record__date,
 .rp-record > .rp-record__wide {
   grid-column: 1 / -1;
 }
@@ -450,26 +464,31 @@
     padding-block-start: 88px;
   }
 
+  /* Four columns: activity | area | file, then schema | elements | date; the rules line up. */
   .rp-record {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.7fr) minmax(0, 0.85fr) minmax(0, 1.25fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .rp-record > div {
     padding-inline: 20px;
   }
 
-  .rp-record > div:not(.rp-record__wide) + div:not(.rp-record__wide) {
+  .rp-record__area,
+  .rp-record__file,
+  .rp-record__elements,
+  .rp-record__date {
     border-inline-start: 1px solid var(--line);
   }
 
-  .rp-record > div:first-child,
+  .rp-record__activity,
+  .rp-record__schema,
   .rp-record > .rp-record__wide {
     padding-inline-start: 0;
   }
 
   .rp-record__file,
-  .rp-record > div:nth-child(4) {
-    grid-column: auto;
+  .rp-record__date {
+    grid-column: span 2;
   }
 
   .rp-finding__head {
@@ -517,6 +536,7 @@
   .gf,
   .site-header,
   .site-footer,
+  .skip-link,
   .rp-tools,
   .rp-screen,
   .toast {
@@ -537,6 +557,7 @@
 
   .rp-letterhead {
     display: flex;
+    margin-block-end: 14px;
   }
 
   .rp-sheet,
@@ -546,36 +567,49 @@
   }
 
   .rp-head h1 {
-    font-size: 30px;
+    font-size: 26px;
   }
 
   .rp-head__file {
-    margin-block-start: 4px;
-    font-size: 15px;
+    margin-block-start: 2px;
+    font-size: 14px;
   }
 
+  .rp-head__notice {
+    margin-block-start: 10px;
+    padding-inline-start: 8px;
+    border-inline-start: 2px solid #000000;
+    font-size: 12.5px;
+  }
+
+  /* The same four columns as on a wide screen, whatever the print width. */
   .rp-record {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.7fr) minmax(0, 0.85fr) minmax(0, 1.25fr);
-    margin-block-start: 22px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-block-start: 16px;
   }
 
   .rp-record > div {
-    padding-block: 10px;
+    padding-block: 7px;
     padding-inline: 12px;
   }
 
-  .rp-record > div:first-child,
+  .rp-record__activity,
+  .rp-record__schema,
   .rp-record > .rp-record__wide {
     padding-inline-start: 0;
   }
 
   .rp-record__file,
-  .rp-record > div:nth-child(4) {
-    grid-column: auto;
+  .rp-record__date {
+    grid-column: span 2;
   }
 
   .rp-record > .rp-record__wide {
     grid-column: 1 / -1;
+  }
+
+  .rp-record dt {
+    font-size: 11.5px;
   }
 
   .rp-record dd {
@@ -590,12 +624,14 @@
   .rp-record > div,
   .rp-group__head,
   .rp-finding,
-  .rp-foot,
-  .rp-record > div:not(.rp-record__wide) + div:not(.rp-record__wide) {
+  .rp-foot {
     border-color: #9a9a9a;
   }
 
-  .rp-record > div:not(.rp-record__wide) + div:not(.rp-record__wide) {
+  .rp-record__area,
+  .rp-record__file,
+  .rp-record__elements,
+  .rp-record__date {
     border-inline-start: 1px solid #9a9a9a;
   }
 
@@ -619,7 +655,7 @@
   }
 
   .rp-summary {
-    padding-block-start: 24px;
+    padding-block-start: 18px;
   }
 
   .rp-summary h2 {
@@ -654,8 +690,19 @@
     padding-block-start: 0;
   }
 
+  /* The first group follows the summary on page 1, so the first page is never left half empty. */
+  .rp-summary + .rp-group {
+    break-before: auto;
+    padding-block-start: 28px;
+  }
+
   .rp-group__head {
     padding-block-end: 8px;
+  }
+
+  /* A group heading and its note never close a page: they stay with the first finding. */
+  .rp-group__head,
+  .rp-group__note {
     break-after: avoid;
   }
 
@@ -667,7 +714,13 @@
     font-size: 16px;
   }
 
-  .rp-finding,
+  /* A finding may go on to the next page between its parts, never inside one, and its heading always
+     stays with its measurement. Whole findings left most of a page blank before each tall one. */
+  .rp-finding__head {
+    break-after: avoid;
+  }
+
+  .rp-finding > *,
   .rp-foot {
     break-inside: avoid;
   }

@@ -225,7 +225,7 @@ try {
   if (await next.isEnabled()) throw new Error("Step 2: «التالي» is enabled before a file or sample is chosen.");
   const fileInput = check.locator('input[type="file"]');
   await fileInput.setInputFiles(path.join(fixtureDirectory, "invalid", "invalid-envelope.ifc"));
-  await expectText(page, "تعذرت قراءة الملف", "Step 2 inline file error");
+  await expectText(page, "ليس ملف IFC صالحًا", "Step 2 inline file error");
   await fileInput.setInputFiles(path.join(fixtureDirectory, "restaurant", "submission-v1.ifc"));
   await check.getByRole("radio", { name: "submission-v1.ifc" }).waitFor();
   await shot(page, "06-check-file");

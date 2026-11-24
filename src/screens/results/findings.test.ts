@@ -59,11 +59,17 @@ describe("results views over a run", () => {
     expect(groups[0].items.map((item) => item.ruleId)).toEqual(["MOMAH-REST-4.5.2-CLADDING"]);
   });
 
-  it("keeps failures, unknowns and failing data checks for the violations tab, and drops every pass", () => {
+  it("keeps only failures (clauses, then failing data checks) for the violations tab", () => {
     const issues = issueGroupsOf(groupFindings(FINDINGS));
-    expect(issues.map((group) => group.key)).toEqual(["fail", "unknown", "data"]);
+    expect(issues.map((group) => group.key)).toEqual(["fail", "data"]);
     expect(issues.at(-1)?.items.map((item) => item.ruleId)).toEqual(["MOWAEM-DATA-SPACES"]);
     expect(issueGroupsOf(groupFindings([FINDINGS[0], FINDINGS[3], FINDINGS[4]]))).toEqual([]);
+  });
+
+  it("leaves what the file cannot prove out of the violations tab, so a run without failures has none", () => {
+    const unknownData = finding("MOWAEM-DATA-NETWORKS", "unknown");
+    // The exit95 shape: passes and unknowns, no failure.
+    expect(issueGroupsOf(groupFindings([FINDINGS[0], FINDINGS[2], FINDINGS[3], unknownData]))).toEqual([]);
   });
 
   it("counts requirement clauses only, so a failing data check never changes the scope", () => {

@@ -227,7 +227,7 @@ export default function App() {
   }, [route]);
 
   useEffect(() => {
-    if (!pendingSection) window.scrollTo({ top: 0 });
+    if (!pendingSection) window.scrollTo({ top: 0, behavior: "instant" });
     // Only on route changes; a pending section scroll handles its own position.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route]);
@@ -274,7 +274,7 @@ export default function App() {
     if (target === "twin") return go("twin");
     if (target === "home") {
       go("landing");
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: "instant" });
       return;
     }
     const hash = `#/${target}`;

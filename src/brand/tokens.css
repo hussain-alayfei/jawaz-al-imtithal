@@ -558,3 +558,9 @@ img {
 .app__screen[hidden] {
   display: none;
 }
+
+@media print {
+  .skip-link {
+    display: none;
+  }
+}

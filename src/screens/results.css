@@ -44,6 +44,11 @@
   overflow-wrap: anywhere;
 }
 
+/* Focused on arrival so screen readers start here; it is not a control, so it draws no ring. */
+.rs-bar__name:focus {
+  outline: none;
+}
+
 .rs-bar__schema {
   font-size: 14px;
   line-height: 1.5;
@@ -564,10 +569,23 @@
 }
 
 .rs-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   padding-block: 16px 4px;
   font-size: 16px;
   line-height: 1.7;
   color: var(--ink-2);
+}
+
+.rs-list__empty strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rs-list__empty .link {
+  font-size: 15px;
 }
 
 .rs-group + .rs-group {
