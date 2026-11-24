@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Wordmark } from "../brand/ui";
 import { copy } from "../content/copy";
 import { SAMPLE_FILES, type SampleId } from "../content/samples";
 import type { NavTarget } from "./SiteHeader";
@@ -8,7 +9,8 @@ const REQUIREMENTS_URL = "https://momah.gov.sa/ar/node/14955";
 
 type Item = { label: string; href: string; target?: NavTarget; sample?: SampleId; external?: boolean };
 
-/** Footer: fine print first, then a small link directory, then the legal line. */
+/** Footer, in deep green: the white wordmark beside the fine print, then the link directory between thin
+    rules, then the legal line. */
 export function SiteFooter({
   onNavigate,
   onSample,
@@ -27,6 +29,7 @@ export function SiteFooter({
         { label: copy.web.nav.cta, href: "#/check", target: "check" },
         { label: copy.web.nav.model, href: "#/model", target: "model" },
         { label: copy.web.nav.rules, href: "#/clauses", target: "clauses" },
+        { label: copy.web.nav.files, href: "#/files", target: "files" },
         { label: copy.web.nav.faq, href: "#/faq", target: "faq" },
       ],
     },
@@ -47,10 +50,13 @@ export function SiteFooter({
   return (
     <footer className="gf">
       <div className="gf__inner">
-        <div className="gf__fine">
-          {copy.web.footer.fine.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+        <div className="gf__top">
+          <Wordmark className="gf__brand" size={30} onClick={() => onNavigate("home")} />
+          <div className="gf__fine">
+            {copy.web.footer.fine.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         </div>
 
         <nav className="gf__dir" aria-label={copy.web.nav.footerLabel}>

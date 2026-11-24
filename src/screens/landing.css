@@ -1,13 +1,21 @@
-/* Home page (v5). A full-bleed opening photograph, then white space, big type, big pictures, few words.
-   Mobile-first: phones first, then 834px (rows side by side) and 1024px (the pinned model story, the
-   clause list in two columns). Every class carries the hm- prefix; colours, type, space and buttons come
-   from src/brand/tokens.css. Motion: plain fades only (the hero on load, sections once as they appear,
-   the model story's cross-fade); with reduced motion everything is simply there. */
+/* Home page (v6, quiet luxury). A full-screen opening photograph, then a warm off-white page: large light
+   type, small numbered labels on a thin orange rule, thin rules between rows, sharp-edged pictures, one
+   deep-green section, generous space. Mobile-first: phones, then 834px (rows side by side) and 1024px
+   (section heads in two columns, the pinned model story, the clause list in two columns). Every class
+   carries the hm- prefix; colours, type, buttons and links come from src/brand/tokens.css.
+
+   Motion is slow and soft (--ease-lux): the hero on load (the photo settles from a slight zoom, the
+   title's lines rise from behind a mask, the rest fades in) and on scroll (parallax, the words fade);
+   the statement's words brighten as it is read; headings and words rise in, pictures are wiped open,
+   rules draw in, once each, as they arrive (landing/motion.ts). Only transform, opacity and clip-path
+   move. Nothing is hidden unless script switched motion on (.hm[data-motion]), and never with
+   prefers-reduced-motion: reduce. */
 
 .hm {
-  --hm-head-gap: clamp(64px, 7.5vw, 104px);
+  --hm-gap: clamp(56px, 7vw, 112px);
+  --hm-wide: 1280px;
   display: block;
-  background: var(--paper);
+  background: var(--page);
   color: var(--ink);
 }
 
@@ -17,205 +25,359 @@
 }
 
 .hm-section {
-  padding-block: var(--section-y);
+  padding-block: clamp(104px, 12vw, 184px);
 }
 
-/* The picture rows (stages, twin) use a wider measure than .page, so the pictures get the room. */
 .hm-wide {
   width: 100%;
-  max-width: calc(1280px + 2 * var(--gutter));
+  max-width: calc(var(--hm-wide) + 2 * var(--gutter));
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
-/* Section heads: a centred headline and one sentence. */
-.hm-head {
+/* ---- Labels and section heads ---- */
+
+/* «01 —— عن الخدمة»: the number, a thin orange rule, one word. */
+.hm-label {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: 16px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
-.hm-title {
-  font-size: var(--t-h2);
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
+.hm-label__no {
+  color: var(--ink);
 }
 
-.hm-lead {
-  max-width: var(--text-max);
-  margin-block-start: 20px;
-  font-size: var(--t-lead);
-  line-height: 1.55;
-  color: var(--ink-2);
-  text-wrap: balance;
+.hm-label__line {
+  display: block;
+  flex: none;
+  width: 48px;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: right center;
 }
 
-.hm-head__link {
-  margin-block-start: 16px;
-  font-size: var(--t-body);
+.on-dark .hm-label {
+  color: var(--on-deep-2);
 }
 
-/* 1. Hero: one photograph, edge to edge, as tall as the screen under the header (520–1100px; about 80% of
-   the screen on phones). The hero is a size container, so the photo is placed in proportion to it.
-   The whole building shows, from the palm tops to the steps: the photo sits low, with calm sky above it
-   for a short headline, one line and two actions: start a check, or open the digital twin studio. */
-.hm-hero {
-  /* Photo height: its own 2:1 at full width, or 58% of the hero when that is taller (phones crop its sides).
-     Resolved where it is used, so cq units refer to the hero. */
-  --hm-photo-h: max(50cqw, 58cqh);
-  position: relative;
-  container: hm-hero / size;
-  height: max(520px, min(100vh - var(--header-h), 1100px));
-  height: max(520px, min(100svh - var(--header-h), 1100px));
-  overflow: hidden;
-  isolation: isolate;
-  background: #3162a3;
+.on-dark .hm-label__no {
   color: #ffffff;
 }
 
-/* The sky behind the photo: the photo's own top-edge colours, drawn as wide as the photo is drawn, so the
-   photo's sky runs on into it without a seam where the screen is narrower than the photo's 2:1. */
+.hm-head {
+  display: grid;
+  gap: 28px;
+}
+
+.hm-title {
+  max-width: 14em;
+  color: var(--ink);
+  font-size: var(--t-h2);
+  font-weight: 300;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.hm-head__aside {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.hm-lead {
+  max-width: 34em;
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.hm-head__link {
+  font-size: 16px;
+}
+
+@media (min-width: 1024px) {
+  .hm-head {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: clamp(48px, 6vw, 112px);
+    row-gap: 36px;
+    align-items: end;
+  }
+
+  .hm-head > .hm-label {
+    grid-column: 1 / -1;
+  }
+
+  .hm-head__aside {
+    padding-block-end: 0.6em;
+  }
+}
+
+/* ---- 1. Hero ---- */
+
+/* The whole screen, under the header (which lies over it). */
+.hm-hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+  margin-block-start: calc(-1 * var(--header-h));
+  overflow: hidden;
+  isolation: isolate;
+  background: #16212b;
+  color: #ffffff;
+}
+
 .hm-hero__media {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background:
-    linear-gradient(to right, #5179b9, #3f6bae 25%, #3162a3 50%, #305c9d 75%, #255693) 50% 0 /
-      max(100cqw, 2 * var(--hm-photo-h)) 100% no-repeat,
-    #3162a3;
+  will-change: transform;
 }
 
-/* Where the photo sits (palm tops at 29% of it, roof at 36%, glass front to 80%, steps to 86%): by default
-   with only the far plaza (6%) below the screen's edge; lower when the words need the room, so the palms
-   start 14px under the actions (--hm-head-end, measured by Hero.tsx); never so low that the steps are cut. */
 .hm-hero__img {
-  --hm-photo-top: min(
-    max(100cqh - 0.94 * var(--hm-photo-h), var(--hm-head-end, 0px) + 14px - 0.29 * var(--hm-photo-h)),
-    100cqh - 0.88 * var(--hm-photo-h)
-  );
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: var(--hm-photo-top);
   width: 100%;
   max-width: none;
-  height: var(--hm-photo-h);
+  height: 100%;
   object-fit: cover;
-  object-position: 50% 50%;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%);
-  mask-image: linear-gradient(to bottom, transparent, #000 14%);
-  transform-origin: 50% 70%;
+  object-position: 50% 62%;
 }
 
-/* A soft dark scrim from the top for the white words (4.5:1 over the sky). */
-.hm-hero__media::after {
-  content: "";
+/* A dark shade for the white words: deepest at the bottom and on the start side, where they sit, and a
+   little at the top under the header. */
+.hm-hero__shade {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background:
     linear-gradient(
-      to bottom,
-      rgb(0 0 0 / 0.12) 0%,
-      rgb(0 0 0 / 0.08) 26%,
-      rgb(0 0 0 / 0.02) 40%,
-      rgb(0 0 0 / 0) 52%
-    );
+      to top,
+      rgb(5 13 10 / 0.86) 0%,
+      rgb(5 13 10 / 0.58) 30%,
+      rgb(5 13 10 / 0.12) 60%,
+      rgb(5 13 10 / 0.08) 80%,
+      rgb(5 13 10 / 0.42) 100%
+    ),
+    linear-gradient(to left, rgb(5 13 10 / 0.5) 0%, rgb(5 13 10 / 0) 62%);
   pointer-events: none;
 }
 
-.hm-hero__head {
-  position: relative;
+.hm-hero__content {
+  position: absolute;
+  inset: 0;
   z-index: 1;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* At least the sky above the photo's default place (down to 14px over the palm tops), with the words
-     centred in it; taller words grow the box, and Hero.tsx moves the photo down to match. */
-  min-height: calc(100cqh - 0.65 * var(--hm-photo-h) - 14px);
-  max-width: calc(1240px + 2 * var(--gutter));
+  align-items: flex-end;
+  padding-block: calc(var(--header-h) + 24px) clamp(80px, 13vh, 136px);
+}
+
+.hm-hero__inner {
+  width: 100%;
+  max-width: calc(var(--hm-wide) + 2 * var(--gutter));
   margin-inline: auto;
-  padding: clamp(20px, 3cqh, 32px) var(--gutter) 0;
-  text-align: center;
+  padding-inline: var(--gutter);
+}
+
+.hm-hero__label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-block-end: 28px;
+  color: rgb(255 255 255 / 0.88);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.hm-hero__label-line {
+  display: block;
+  flex: none;
+  width: 48px;
+  height: 1px;
+  background: var(--accent);
+  transform-origin: right center;
 }
 
 .hm-hero__title {
-  max-width: 1100px;
+  max-width: 12em;
   color: #ffffff;
-  font-size: clamp(34px, 5.2vw, 72px);
-  font-weight: 700;
-  line-height: 1.15;
-  text-wrap: balance;
+  font-size: clamp(36px, 5.4vw + 6px, 84px);
+  font-weight: 300;
+  line-height: 1.28;
+  letter-spacing: 0;
+  text-wrap: initial;
+}
+
+/* Each line rises from behind its own mask. The padding keeps the letters' tops and tails inside the
+   mask; the negative margin gives the space back. */
+.hm-hero__mask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.06em 0.14em;
+  margin-block: -0.06em -0.14em;
+}
+
+.hm-hero__line {
+  display: block;
 }
 
 .hm-hero__sub {
-  max-width: 640px;
-  margin-block-start: 14px;
-  color: #ffffff;
-  font-size: clamp(17px, 1.5vw, 21px);
-  line-height: 1.55;
-  text-wrap: balance;
+  max-width: 34em;
+  margin-block-start: 26px;
+  color: rgb(255 255 255 / 0.88);
+  font-size: clamp(17px, 0.5vw + 12px, 19px);
+  line-height: 1.9;
 }
 
 .hm-hero__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-block-start: 26px;
+  gap: 16px 40px;
+  margin-block-start: 40px;
 }
 
-/* Two buttons of one size: green to start a check, white for the digital twin studio. */
-.hm-hero__cta,
-.hm-hero__twin {
-  min-width: 168px;
-}
-
-.hm-hero__twin {
+/* On the photograph the solid button is white; deep green slides in on hover. */
+.hm-hero__cta {
   --btn-bg: #ffffff;
   --btn-fg: var(--ink);
   --btn-border: #ffffff;
+  --btn-fill: var(--deep);
+  --btn-fill-fg: #ffffff;
+  min-width: 184px;
 }
 
-.hm-hero__twin:hover {
-  --btn-bg: var(--surface);
-  --btn-border: var(--surface);
+.hm-hero__cta:hover {
+  --btn-border: var(--deep);
 }
 
-.hm-hero__twin .icon {
-  color: var(--brand);
+.hm-hero__twin {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 400;
 }
 
-/* Short, wide heroes (most laptop windows): smaller words, so the whole building fits below them. */
-@container hm-hero (height < 700px) and (aspect-ratio > 14 / 10) {
+/* The scroll cue: a thin line at the bottom on the end side, with a light that runs down it. */
+.hm-hero__cue {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: var(--gutter);
+  z-index: 1;
+  width: 1px;
+  height: clamp(56px, 9vh, 88px);
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.28);
+}
+
+.hm-hero__cue-line {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  height: 40%;
+  background: #ffffff;
+}
+
+/* Short, wide screens (most laptop windows): smaller words and tighter spacing. */
+@media (min-width: 834px) and (max-height: 720px) {
   .hm-hero__title {
-    font-size: min(clamp(34px, 5.2vw, 72px), 46px);
+    font-size: min(clamp(36px, 5.4vw + 6px, 84px), 64px);
+  }
+
+  .hm-hero__label {
+    margin-block-end: 18px;
   }
 
   .hm-hero__sub {
-    margin-block-start: 8px;
-    font-size: 17px;
-  }
-
-  .hm-hero__actions {
     margin-block-start: 16px;
   }
 
-  .hm-hero__cta,
-  .hm-hero__twin {
-    min-height: 44px;
-    padding-inline: 22px;
-    font-size: 16px;
+  .hm-hero__actions {
+    margin-block-start: 26px;
+  }
+
+  .hm-hero__content {
+    padding-block-end: 64px;
   }
 }
 
-/* 2 and 5. Zig-zag rows: the picture first on phones, then picture and words side by side. */
+@media (max-width: 833px) {
+  .hm-hero__shade {
+    background:
+      linear-gradient(
+        to top,
+        rgb(5 13 10 / 0.9) 0%,
+        rgb(5 13 10 / 0.66) 34%,
+        rgb(5 13 10 / 0.12) 66%,
+        rgb(5 13 10 / 0.44) 100%
+      );
+  }
+
+  .hm-hero__content {
+    padding-block-end: 88px;
+  }
+
+  .hm-hero__actions {
+    gap: 12px 28px;
+  }
+
+  .hm-hero__cta {
+    min-width: 0;
+  }
+}
+
+/* ---- 2. The statement ---- */
+
+.hm-intro {
+  padding-block: clamp(120px, 14vw, 208px) clamp(48px, 6vw, 96px);
+}
+
+.hm-intro__grid {
+  display: grid;
+  gap: 36px;
+}
+
+.hm-intro__text {
+  max-width: 23em;
+  color: var(--ink);
+  font-size: clamp(26px, 2.6vw + 12px, 48px);
+  font-weight: 300;
+  line-height: 1.72;
+  text-wrap: pretty;
+}
+
+/* Words light up as the paragraph is read: from 20% to full, one after another (--hm-read is the number
+   of words lit, set by Intro.tsx). */
+.hm-intro__text[data-read] .hm-word {
+  opacity: clamp(0.2, calc(0.2 + 0.8 * (var(--hm-read, 0) - var(--i, 0))), 1);
+  transition: opacity 240ms linear;
+}
+
+@media (min-width: 1024px) {
+  .hm-intro__grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    column-gap: clamp(48px, 6vw, 112px);
+    align-items: start;
+  }
+
+  .hm-intro__label {
+    padding-block-start: 0.9em;
+  }
+}
+
+/* ---- 3 and 7. Picture rows (the stages; the twin) ---- */
+
 .hm-rows {
   display: grid;
-  gap: clamp(104px, 11vw, 160px);
-  margin-block: var(--hm-head-gap) 0;
+  gap: clamp(104px, 12vw, 176px);
+  margin-block: var(--hm-gap) 0;
   padding-block: 0;
   list-style: none;
 }
@@ -226,7 +388,7 @@
   grid-template-areas:
     "media"
     "text";
-  gap: 32px;
+  gap: 36px;
 }
 
 .hm-row__media {
@@ -234,13 +396,17 @@
   min-width: 0;
 }
 
+/* A picture frame: sharp edges; the picture inside can settle from a slight zoom without spilling. */
+.hm-frame {
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
 .hm-row__img {
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
 }
 
 .hm-row__img--wide {
@@ -255,33 +421,53 @@
   min-width: 0;
 }
 
+/* «01 ——»: the stage's number on a thin rule. */
+.hm-row__no,
+.hm-step__no {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.hm-row__rule,
+.hm-step__rule {
+  display: block;
+  width: 56px;
+  height: 1px;
+  background: var(--line-strong);
+  transform-origin: right center;
+}
+
 .hm-row__title {
   font-size: var(--t-h3);
-  font-weight: 700;
-  line-height: 1.3;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .hm-row__heading {
+  margin-block-start: 28px;
   font-size: var(--t-h2);
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 300;
+  line-height: 1.3;
 }
 
 .hm-row__body {
-  max-width: 30em;
-  margin-block-start: 16px;
-  font-size: 19px;
-  line-height: 1.65;
+  max-width: 28em;
+  margin-block-start: 18px;
   color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.9;
   text-wrap: pretty;
 }
 
-.hm-row__heading + .hm-row__body {
-  margin-block-start: 20px;
-}
-
 .hm-row__link {
-  margin-block-start: 16px;
+  margin-block-start: 20px;
+  font-size: 17px;
 }
 
 .hm-how,
@@ -289,18 +475,41 @@
   overflow-x: clip;
 }
 
-/* 3. How the check works: the model story. */
+@media (min-width: 834px) {
+  .hm-row {
+    align-items: center;
+    column-gap: clamp(48px, 7vw, 120px);
+  }
+
+  /* In RTL the first track is on the right: "text media" puts the picture on the visual left. */
+  .hm-row--media-end {
+    grid-template-columns: minmax(0, 1fr) 58%;
+    grid-template-areas: "text media";
+  }
+
+  .hm-row--media-start {
+    grid-template-columns: 58% minmax(0, 1fr);
+    grid-template-areas: "media text";
+  }
+
+  .hm-row--feature.hm-row--media-start {
+    grid-template-columns: 60% minmax(0, 1fr);
+  }
+}
+
+/* ---- 4. How the check works: the model story ---- */
+
 .hm-model {
   background: var(--surface);
 }
 
 .hm-story {
-  margin-block-start: var(--hm-head-gap);
+  margin-block-start: var(--hm-gap);
 }
 
 .hm-story__steps {
   display: grid;
-  gap: clamp(72px, 12vw, 112px);
+  gap: clamp(80px, 12vw, 120px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -310,27 +519,25 @@
 .hm-step__media {
   position: relative;
   aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: var(--surface-2);
 }
 
 .hm-step__text {
   max-width: calc(var(--text-max) + 2 * var(--gutter));
-  margin-block-start: 28px;
+  margin-block-start: 32px;
   padding-inline: var(--gutter);
 }
 
 .hm-step__title {
   font-size: var(--t-h3);
-  font-weight: 700;
-  line-height: 1.3;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .hm-step__body {
-  margin-block-start: 12px;
-  font-size: 19px;
-  line-height: 1.65;
+  margin-block-start: 14px;
   color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.9;
   text-wrap: pretty;
 }
 
@@ -346,121 +553,18 @@
 .hm-model__foot {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 28px;
-  margin-block-start: clamp(64px, 7vw, 96px);
-  text-align: center;
+  margin-block-start: clamp(72px, 8vw, 112px);
+  padding-block-start: 40px;
+  border-block-start: 1px solid var(--line);
 }
 
 .hm-caption {
-  max-width: var(--text-max);
+  max-width: 44em;
+  color: var(--muted);
   font-size: var(--t-small);
-  line-height: 1.6;
-  color: var(--muted);
-  text-wrap: balance;
-}
-
-/* 4. The clauses: a calm list, marked by what the file can prove. */
-.hm-clauses {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 1040px;
-  margin: var(--hm-head-gap) auto 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hm-clause {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: 16px;
-  padding-block: 18px;
-  border-block-end: 1px solid var(--line);
-}
-
-.hm-clause__no {
-  min-width: 6.6em;
-  font-size: 15px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.hm-clause__subject {
-  font-size: var(--t-body);
-  line-height: 1.5;
-  color: var(--ink);
-}
-
-.hm-mark {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-inline-end: 14px;
-  border-radius: 50%;
-  vertical-align: 0.12em;
-}
-
-.hm-mark--measured {
-  background: var(--pass);
-}
-
-.hm-mark--open {
-  border: 1.5px solid var(--unknown);
-}
-
-.hm-legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 32px;
-  margin-block-start: 40px;
-  font-size: var(--t-small);
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.hm-legend__item {
-  display: inline-flex;
-  align-items: center;
-}
-
-.hm-legend .hm-mark {
-  margin-inline-end: 10px;
-  vertical-align: 0;
-}
-
-/* 5. The digital twin. Its grey runs into the grey footer, so a hairline at the footer's content
-   width closes the page. */
-.hm-twin {
-  padding-block-end: 0;
-  background: var(--surface);
-}
-
-.hm-twin::after {
-  content: "";
-  display: block;
-  width: min(980px, 100% - 2 * var(--gutter));
-  height: 1px;
-  margin: var(--section-y) auto 0;
-  background: var(--line);
-}
-
-/* Phones: the hero is about 80% of the screen tall. */
-@media (max-width: 833px) {
-  .hm-hero {
-    --hm-photo-h: max(50cqw, 64cqh);
-    height: max(500px, 80vh);
-    height: max(500px, 80svh);
-  }
-
-  .hm-hero__cta,
-  .hm-hero__twin {
-    min-width: 0;
-    min-height: 46px;
-    padding-inline: 20px;
-    font-size: 16px;
-  }
+  line-height: 1.8;
 }
 
 @media (min-width: 600px) {
@@ -469,46 +573,24 @@
   }
 }
 
-/* From 834px: rows go side by side, the picture about 58% of the row (62% for the twin). */
 @media (min-width: 834px) {
-  .hm-row {
+  .hm-model__foot {
+    flex-direction: row;
     align-items: center;
-    column-gap: clamp(48px, 6vw, 88px);
-  }
-
-  /* In RTL the first track is on the right: "text media" puts the picture on the visual left. */
-  .hm-row--media-end {
-    grid-template-columns: minmax(0, 1fr) 58%;
-    grid-template-areas: "text media";
-  }
-
-  .hm-row--media-start {
-    grid-template-columns: 58% minmax(0, 1fr);
-    grid-template-areas: "media text";
-  }
-
-  .hm-row--feature.hm-row--media-start {
-    grid-template-columns: 62% minmax(0, 1fr);
+    justify-content: space-between;
+    gap: 48px;
   }
 }
 
-/* From 1024px: the clause list in two columns, read down the first column, then the second; the model
-   steps scroll beside one large pinned frame (about 64% of the width) that cross-fades between the
-   renders, with the step rail under it. */
+/* From 1024px the steps scroll beside one large pinned frame (about 64% of the width) that cross-fades
+   between the renders, with the step rail under it. */
 @media (min-width: 1024px) {
-  .hm-clauses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(var(--hm-rows, 7), auto);
-    grid-auto-flow: column;
-    column-gap: clamp(48px, 6vw, 88px);
-  }
-
   .hm-story--pinned {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 64%;
     grid-template-areas: "steps media";
     column-gap: clamp(48px, 5vw, 96px);
-    max-width: calc(1600px + 2 * var(--gutter));
+    max-width: calc(var(--hm-wide) + 2 * var(--gutter));
     margin-inline: auto;
     padding-inline: var(--gutter);
   }
@@ -523,8 +605,8 @@
     display: flex;
     align-items: center;
     min-height: 80vh;
-    opacity: 0.3;
-    transition: opacity 600ms var(--ease);
+    opacity: 0.28;
+    transition: opacity 900ms var(--ease-lux);
   }
 
   .hm-story--pinned .hm-step[data-active],
@@ -578,7 +660,6 @@
     position: relative;
     height: var(--hm-frame-h);
     overflow: hidden;
-    border-radius: var(--radius-xl);
     background: var(--surface-2);
   }
 
@@ -586,16 +667,16 @@
      covered, then drops out, so the frame never dips through a half-transparent mix. */
   .hm-story__frame .hm-shot {
     opacity: 0;
-    transition: opacity 0s linear 800ms;
+    transition: opacity 0s linear 1100ms;
   }
 
   .hm-story__frame .hm-shot[data-active] {
     z-index: 1;
     opacity: 1;
-    transition: opacity 800ms var(--ease);
+    transition: opacity 1100ms var(--ease-lux);
   }
 
-  /* The rail: the four step titles over a thin line that fills as the story is read. */
+  /* The rail: the four step titles over a thin line that fills (orange) as the story is read. */
   .hm-rail {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -620,10 +701,9 @@
   .hm-rail__track {
     position: relative;
     display: block;
-    height: 2px;
+    height: 1px;
     overflow: hidden;
-    border-radius: 1px;
-    background: var(--line);
+    background: var(--line-strong);
   }
 
   /* RTL: each segment fills from its right (start) end. */
@@ -636,10 +716,10 @@
   }
 
   .hm-rail__label {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.4;
-    transition: color 300ms var(--ease);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    transition: color 500ms var(--ease-lux);
   }
 
   .hm-rail__item:hover .hm-rail__label,
@@ -648,50 +728,247 @@
   }
 }
 
-/* Motion: plain fades only. The hero's words and photo fade in on load; sections fade in once as they
-   enter the screen (Landing.tsx adds .is-in); the model story cross-fades its renders. Nothing moves,
-   scales or slides. With reduced motion, everything is simply there. */
-@media (prefers-reduced-motion: no-preference) {
-  .hm-hero__head {
-    animation: hm-fade 700ms var(--ease) both;
-  }
+/* ---- 5. The reference clauses ---- */
 
-  .hm-hero__img {
-    opacity: 0;
-  }
+.hm-clauses {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: var(--hm-gap) 0 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--line);
+}
 
-  .hm-hero__media[data-ready] .hm-hero__img {
-    animation: hm-fade 900ms var(--ease) both;
-  }
+.hm-clause {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 20px;
+  padding-block: 20px;
+  border-block-end: 1px solid var(--line);
+}
 
-  .hm-reveal {
-    opacity: 0;
-    transition: opacity 700ms var(--ease);
-  }
+.hm-clause__no {
+  min-width: 6.6em;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
 
-  .hm-reveal.is-in {
-    opacity: 1;
+.hm-clause__subject {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.hm-mark {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 14px;
+  border-radius: 50%;
+  vertical-align: 0.12em;
+}
+
+.hm-mark--measured {
+  background: var(--pass);
+}
+
+.hm-mark--open {
+  border: 1px solid var(--unknown);
+}
+
+.hm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 36px;
+  margin-block-start: 36px;
+  color: var(--muted);
+  font-size: var(--t-small);
+  line-height: 1.6;
+}
+
+.hm-legend__item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hm-legend .hm-mark {
+  margin-inline-end: 10px;
+  vertical-align: 0;
+}
+
+@media (min-width: 1024px) {
+  .hm-clauses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--hm-rows, 7), auto);
+    grid-auto-flow: column;
+    column-gap: clamp(48px, 6vw, 112px);
   }
 }
 
-@keyframes hm-fade {
-  from {
-    opacity: 0;
+/* ---- 6. Sample files ---- */
+
+.hm-files {
+  border-block-start: 1px solid var(--line);
+}
+
+.hm-files__list {
+  margin: var(--hm-gap) 0 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--ink);
+}
+
+.hm-file {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-areas:
+    "no main"
+    "no meta"
+    "no actions";
+  gap: 14px 12px;
+  padding-block: 32px;
+  border-block-end: 1px solid var(--line);
+}
+
+/* On hover (or while an action has focus) a deep-green rule draws along the row's foot. */
+.hm-file::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -1px;
+  height: 1px;
+  background: var(--deep);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 900ms var(--ease-lux);
+}
+
+.hm-file:hover::after,
+.hm-file:focus-within::after {
+  transform: scaleX(1);
+}
+
+.hm-file__no {
+  grid-area: no;
+  padding-block-start: 0.45em;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.hm-file__main {
+  grid-area: main;
+  min-width: 0;
+}
+
+.hm-file__title {
+  font-size: clamp(20px, 0.8vw + 13px, 25px);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.hm-file__about {
+  max-width: 36em;
+  margin-block-start: 6px;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.hm-file__meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.hm-file__name {
+  align-self: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.hm-file__actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 32px;
+  margin-block-start: 4px;
+}
+
+.hm-file__download {
+  min-width: 148px;
+}
+
+.hm-file__check {
+  font-size: 16px;
+}
+
+@media (min-width: 1024px) {
+  .hm-file {
+    grid-template-columns: 64px minmax(0, 1fr) 216px auto;
+    grid-template-areas: "no main meta actions";
+    align-items: center;
+    column-gap: clamp(24px, 3vw, 48px);
+    padding-block: 36px;
   }
 
-  to {
-    opacity: 1;
+  .hm-file__no {
+    align-self: start;
+    padding-block-start: 0.6em;
+  }
+
+  .hm-file__meta {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .hm-file__actions {
+    flex-wrap: nowrap;
+    margin: 0;
   }
 }
 
-/* Common questions: a narrow column of disclosure rows divided by rules; the chevron turns when open. */
-.hm-faq__inner {
-  max-width: calc(860px + 2 * var(--gutter));
+/* ---- 7. The digital twin: deep green ---- */
+
+.hm-twin {
+  background: var(--deep);
+  color: #ffffff;
+}
+
+.hm-twin .hm-frame {
+  background: #0e4a38;
+}
+
+.hm-twin .hm-row__heading {
+  color: #ffffff;
+}
+
+.hm-twin .hm-row__body {
+  color: var(--on-deep-2);
+}
+
+.hm-twin .hm-row__link {
+  color: #ffffff;
+}
+
+/* ---- 8. Common questions ---- */
+
+.hm-faq__grid {
+  display: grid;
+  gap: var(--hm-gap);
 }
 
 .hm-faq__list {
-  margin-block-start: 40px;
-  border-block-start: 1px solid var(--line);
+  border-block-start: 1px solid var(--ink);
 }
 
 .hm-faq__item {
@@ -702,15 +979,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  min-height: 64px;
-  padding-block: 16px;
+  gap: 32px;
+  min-height: 80px;
+  padding-block: 20px;
   color: var(--ink);
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 1.5;
+  font-size: clamp(17px, 0.5vw + 14px, 20px);
+  font-weight: 400;
+  line-height: 1.6;
   list-style: none;
   cursor: pointer;
+  transition: color 400ms var(--ease-lux);
 }
 
 .hm-faq__q::-webkit-details-marker {
@@ -721,19 +999,218 @@
   color: var(--brand);
 }
 
-.hm-faq__chevron {
-  color: var(--muted);
-  transition: transform 200ms var(--ease);
+/* A thin plus; its upright turns flat when the answer opens, leaving a minus. */
+.hm-faq__sign {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-2);
 }
 
-.hm-faq__item[open] .hm-faq__chevron {
-  transform: rotate(180deg);
+.hm-faq__sign::before,
+.hm-faq__sign::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(50% - 0.5px);
+  height: 1px;
+  background: currentColor;
+  transition: transform 700ms var(--ease-lux);
 }
 
-.hm-faq__a {
-  max-width: 720px;
-  padding-block: 0 24px;
+.hm-faq__sign::after {
+  transform: rotate(90deg);
+}
+
+.hm-faq__item[open] .hm-faq__sign::after {
+  transform: rotate(0deg);
+}
+
+.hm-faq__a p {
+  max-width: 40em;
+  padding-block: 0 32px;
   color: var(--ink-2);
   font-size: 17px;
-  line-height: 1.75;
+  line-height: 1.9;
+}
+
+/* The answer opens slowly where the browser can animate a disclosure's content. */
+@supports selector(::details-content) {
+  .hm-faq__item {
+    interpolate-size: allow-keywords;
+  }
+
+  .hm-faq__item::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: clip;
+    transition:
+      block-size 800ms var(--ease-lux),
+      opacity 800ms var(--ease-lux),
+      content-visibility 800ms allow-discrete;
+  }
+
+  .hm-faq__item[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hm-faq__grid {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: clamp(48px, 6vw, 112px);
+    align-items: start;
+  }
+
+  .hm-faq__head {
+    grid-template-columns: minmax(0, 1fr);
+    position: sticky;
+    inset-block-start: calc(var(--header-h) + 48px);
+  }
+}
+
+/* ---- Motion ---- */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The hero on load: the photo settles from a slight zoom once it has arrived, the title's lines rise
+     one after the other, then the label, the line under the title, the actions and the cue fade in. */
+  .hm-hero__media:not([data-ready]) .hm-hero__img {
+    opacity: 0;
+  }
+
+  .hm-hero__media[data-ready] .hm-hero__img {
+    animation:
+      hm-fade 1400ms var(--ease) both,
+      hm-settle 2800ms var(--ease-lux) both;
+  }
+
+  .hm-hero__line {
+    animation: hm-rise 1500ms var(--ease-lux) both;
+    animation-delay: calc(550ms + var(--hm-i, 0) * 180ms);
+  }
+
+  .hm-hero__in {
+    animation: hm-up 1300ms var(--ease-lux) both;
+    animation-delay: var(--hm-d, 0ms);
+  }
+
+  .hm-hero__label-line {
+    animation: hm-draw 1400ms var(--ease-lux) both;
+    animation-delay: 450ms;
+  }
+
+  .hm-hero__cue {
+    animation: hm-fade 1200ms var(--ease) 2200ms both;
+  }
+
+  .hm-hero__cue-line {
+    animation: hm-cue 2600ms var(--ease-in-out) 2600ms infinite both;
+  }
+
+  /* Reveals, once each, as elements arrive (landing/motion.ts). */
+  .hm[data-motion] [data-reveal] {
+    transition:
+      opacity 1100ms var(--ease-lux) var(--hm-d, 0ms),
+      transform 1200ms var(--ease-lux) var(--hm-d, 0ms);
+  }
+
+  .hm[data-motion] [data-reveal="up"]:not([data-in]) {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+
+  .hm[data-motion] [data-reveal="fade"]:not([data-in]),
+  .hm[data-motion] [data-reveal="rule"]:not([data-in]) {
+    opacity: 0;
+  }
+
+  .hm[data-motion] [data-reveal="rule"] :is(.hm-label__line, .hm-row__rule) {
+    transition: transform 1400ms var(--ease-lux) calc(var(--hm-d, 0ms) + 150ms);
+  }
+
+  .hm[data-motion] [data-reveal="rule"]:not([data-in]) :is(.hm-label__line, .hm-row__rule) {
+    transform: scaleX(0);
+  }
+
+  /* Pictures: wiped open from below while the picture settles from a slight zoom. */
+  .hm[data-motion] :is([data-reveal="media"], [data-reveal="wipe"]) {
+    transition: clip-path 1400ms var(--ease-lux) var(--hm-d, 0ms);
+  }
+
+  .hm[data-motion] :is([data-reveal="media"], [data-reveal="wipe"]):not([data-in]) {
+    clip-path: inset(100% 0 0 0);
+  }
+
+  .hm[data-motion] [data-reveal="media"] > img {
+    transition: transform 1800ms var(--ease-lux) var(--hm-d, 0ms);
+  }
+
+  .hm[data-motion] [data-reveal="media"]:not([data-in]) > img {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes hm-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes hm-settle {
+  from {
+    transform: scale(1.08);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hm-rise {
+  from {
+    transform: translate3d(0, 108%, 0);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hm-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hm-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes hm-cue {
+  0% {
+    transform: translate3d(0, -100%, 0);
+  }
+
+  60%,
+  100% {
+    transform: translate3d(0, 260%, 0);
+  }
+}
+
+@media print {
+  .hm [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
 }

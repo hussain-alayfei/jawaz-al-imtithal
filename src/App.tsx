@@ -64,9 +64,9 @@ function routeFromHash(hash: string): Route {
   return "landing";
 }
 
-/** "#/how", "#/clauses", "#/model", "#/faq": the landing page scrolled to that section (shareable links). */
+/** "#/how", "#/clauses", "#/model", "#/files", "#/faq": the landing page scrolled to that section (shareable links). */
 function sectionFromHash(hash: string): string | undefined {
-  const match = /^#\/(how|clauses|model|faq)$/.exec(hash);
+  const match = /^#\/(how|clauses|model|files|faq)$/.exec(hash);
   return match ? `home-${match[1]}` : undefined;
 }
 
@@ -107,6 +107,7 @@ function ScreenLoading({ text = "جارٍ التحميل" }: { text?: string }) 
 const SPY: [string, NavTarget][] = [
   ["home-model", "model"],
   ["home-clauses", "clauses"],
+  ["home-files", "files"],
   ["home-faq", "faq"],
 ];
 

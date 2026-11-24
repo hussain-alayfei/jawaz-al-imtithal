@@ -9,6 +9,8 @@ import { follow } from "./follow";
 import { SIZES, srcSetOf } from "./images";
 import { HOME } from "./strings";
 import { useMediaQuery } from "./useMediaQuery";
+import { SectionHead } from "./SectionHead";
+import { reveal, twoDigits } from "./motion";
 
 /* Real renders of the 3D model built from the sample file, one per step. They are 16:9 (1920×1080 or
    larger) and are re-rendered in place, so the frames crop them with object-fit and assume nothing else. */
@@ -40,11 +42,11 @@ function ShotImage({ index, active }: { index: number; active?: boolean }) {
 }
 
 /** How the check works, in four steps through the model, told with scroll: on wide screens a large pinned
-    frame cross-fades between the renders while the steps pass beside it, and a thin rail under the frame
-    names the four steps and fills as the reading moves on. On smaller screens each step shows its own
-    picture, edge to edge, above its words. */
+    frame cross-fades between the renders while the numbered steps pass beside it, and a thin rail under
+    the frame names the four steps and fills (a thin orange line) as the reading moves on. On smaller
+    screens each step shows its own picture, edge to edge, wiped open as it arrives, above its words. */
 export function ModelStory({ onStart }: { onStart: () => void }) {
-  const { model } = copy.web;
+  const { model, labels } = copy.web;
   const wide = useMediaQuery(WIDE);
   const [active, setActive] = useState(0);
   const steps = useRef<(HTMLLIElement | null)[]>([]);
@@ -135,12 +137,9 @@ export function ModelStory({ onStart }: { onStart: () => void }) {
 
   return (
     <section id="home-model" tabIndex={-1} className="hm-section hm-model" aria-labelledby="hm-model-title">
-      <header className="page hm-head">
-        <h2 id="hm-model-title" className="hm-title">
-          {model.title}
-        </h2>
-        <p className="hm-lead">{model.sub}</p>
-      </header>
+      <div className="hm-wide">
+        <SectionHead n={3} label={labels.model} id="hm-model-title" title={model.title} lead={model.sub} />
+      </div>
 
       <div className={`hm-story${wide ? " hm-story--pinned" : ""}`}>
         <ol className="hm-story__steps" role="list">
@@ -155,11 +154,15 @@ export function ModelStory({ onStart }: { onStart: () => void }) {
               className="hm-step"
             >
               {!wide && (
-                <div className="hm-step__media">
+                <div className="hm-step__media hm-frame" {...reveal("media")}>
                   <ShotImage index={index} />
                 </div>
               )}
-              <div className="hm-step__text">
+              <div className="hm-step__text" {...reveal("up", wide ? 0 : 1)}>
+                <p className="hm-step__no num">
+                  <span>{twoDigits(index + 1)}</span>
+                  <span className="hm-step__rule" aria-hidden="true" />
+                </p>
                 <h3 className="hm-step__title">
                   {wide ? (
                     <button
@@ -185,7 +188,7 @@ export function ModelStory({ onStart }: { onStart: () => void }) {
         {wide && (
           <div className="hm-story__media">
             <div className="hm-story__pin">
-              <div className="hm-story__frame">
+              <div className="hm-story__frame" {...reveal("wipe")}>
                 {SHOTS.map((_, index) => (
                   <ShotImage key={index} index={index} active={index === active} />
                 ))}
@@ -215,7 +218,7 @@ export function ModelStory({ onStart }: { onStart: () => void }) {
         )}
       </div>
 
-      <div className="page hm-model__foot">
+      <div className="hm-wide hm-model__foot" {...reveal("up")}>
         <p className="hm-caption">{HOME.modelCaption}</p>
         <a href="#/check" className="btn btn--primary btn--large" onClick={follow(onStart)}>
           {model.cta}

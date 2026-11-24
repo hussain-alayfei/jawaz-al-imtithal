@@ -1,31 +1,32 @@
-import { ChevronDown } from "../../brand/icons";
 import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
+import { reveal } from "./motion";
+import { SectionHead } from "./SectionHead";
 
-/** Common questions, answered in a sentence or two each. Native disclosure widgets: keyboard and screen
-    readers work without script, and every answer is in the page for search. */
+/** Common questions, answered in a sentence or two each: the head on the start side, the questions beside
+    it between thin rules, each with a thin plus that turns into a minus; an answer opens slowly (height
+    and opacity, where the browser can animate a disclosure; landing.css). Native disclosure widgets:
+    keyboard and screen readers work without script, and every answer is in the page for search. */
 export function Faq() {
-  const { faq } = copy.web;
+  const { faq, labels } = copy.web;
   return (
     <section id="home-faq" tabIndex={-1} className="hm-section hm-faq" aria-labelledby="hm-faq-title">
-      <div className="page hm-faq__inner">
-        <header className="hm-head">
-          <h2 id="hm-faq-title" className="hm-title">
-            {faq.title}
-          </h2>
-        </header>
+      <div className="hm-wide hm-faq__grid">
+        <SectionHead n={7} label={labels.faq} id="hm-faq-title" title={faq.title} className="hm-faq__head" />
         <div className="hm-faq__list">
-          {faq.items.map((item) => (
-            <details key={item.q} className="hm-faq__item">
+          {faq.items.map((item, index) => (
+            <details key={item.q} className="hm-faq__item" {...reveal("up", index * 0.6)}>
               <summary className="hm-faq__q">
                 <span>
                   <Latin text={item.q} />
                 </span>
-                <ChevronDown className="hm-faq__chevron" size={20} />
+                <span className="hm-faq__sign" aria-hidden="true" />
               </summary>
-              <p className="hm-faq__a">
-                <Latin text={item.a} />
-              </p>
+              <div className="hm-faq__a">
+                <p>
+                  <Latin text={item.a} />
+                </p>
+              </div>
             </details>
           ))}
         </div>

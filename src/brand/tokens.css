@@ -1,15 +1,25 @@
-/* موائم v5: white mode, IBM Plex Sans Arabic. Green brand, orange accent, near-black ink, white and
-   light-grey surfaces. Big type, generous space, pill buttons, quiet chrome. Screens own their layout CSS. */
+/* موائم v6: quiet luxury. A warm off-white page, near-black ink, a deep green for dark sections and the
+   primary action, the brand green for links, orange only as a thin accent line. IBM Plex Sans Arabic in
+   light weights at large sizes, thin rules, generous space, slow refined motion. Screens own their layout
+   CSS; --paper stays white for cards and tool panels, --page is the warm page behind them. */
 
 :root {
+  --page: #faf8f4;
   --paper: #ffffff;
-  --surface: #f5f5f7;
-  --surface-2: #e8e8ed;
-  --ink: #1d1d1f;
-  --ink-2: #424245;
-  --muted: #6e6e73;
-  --line: #d2d2d7;
-  --line-strong: #b0b0b6;
+  --surface: #f3f1ec;
+  --surface-2: #e7e3db;
+  --ink: #141413;
+  --ink-2: #3a3935;
+  --muted: #66635c;
+  --line: #dcd7cd;
+  --line-strong: #b9b2a5;
+
+  /* Deep green: dark sections, the footer, the primary button. Text on it is white or --on-deep-2. */
+  --deep: #0b3d2e;
+  --deep-hover: #0a7a4d;
+  --deep-ink: #ffffff;
+  --on-deep-2: #c6d3cd;
+  --on-deep-line: rgb(255 255 255 / 0.16);
 
   /* Brand: green for actions and links, orange only as an accent (logo line, highlights). */
   --brand: #0a7a4d;
@@ -31,10 +41,10 @@
   --font: "IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
 
   /* Type scale */
-  --t-hero: clamp(40px, 6.2vw, 80px);
-  --t-h2: clamp(32px, 4.6vw, 56px);
-  --t-h3: clamp(22px, 2.4vw, 30px);
-  --t-lead: clamp(19px, 1.9vw, 24px);
+  --t-hero: clamp(40px, 6vw, 88px);
+  --t-h2: clamp(32px, 4.2vw, 60px);
+  --t-h3: clamp(22px, 2.2vw, 32px);
+  --t-lead: clamp(18px, 1.6vw, 21px);
   --t-body: 17px;
   --t-small: 14px;
   --t-fine: 12px;
@@ -49,10 +59,13 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-pill: 980px;
-  --radius-btn: 4px;
+  --radius-btn: 2px;
   --header-h: 72px;
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Slow, soft motion for reveals and hovers. */
+  --ease-lux: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* Legacy names kept so older components keep compiling. */
   --stone: var(--surface-2);
@@ -101,7 +114,7 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--page);
   color: var(--ink);
   font-family: var(--font);
   font-size: var(--t-body);
@@ -173,19 +186,25 @@ img {
   padding-inline: var(--gutter);
 }
 
-/* Buttons: formal and rectangular. A 4px radius, medium weight, 44px tall (48px large); one solid green
-   primary, a white secondary with a green border, and plain text links for everything else. No pills,
-   blur, glow or press scaling. */
+/* Buttons: refined rectangles. A 2px radius, medium weight, 48px tall (52px large). One solid deep-green
+   primary; outline styles whose fill slides in from the start side on hover; plain text links for
+   everything else. No pills, blur, glow or press scaling. The fill is a ::before layer under the label
+   (the button isolates its own stacking context). */
 .btn {
   --btn-bg: transparent;
   --btn-fg: var(--brand);
   --btn-border: transparent;
+  --btn-fill: transparent;
+  --btn-fill-fg: var(--btn-fg);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 9px 22px;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 26px;
   border: 1px solid var(--btn-border);
   border-radius: var(--radius-btn);
   background: var(--btn-bg);
@@ -194,13 +213,37 @@ img {
   font-size: 16px;
   font-weight: 500;
   line-height: 1.3;
+  letter-spacing: 0;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 150ms var(--ease),
-    border-color 150ms var(--ease),
-    color 150ms var(--ease);
+    background-color 450ms var(--ease-lux),
+    border-color 450ms var(--ease-lux),
+    color 450ms var(--ease-lux);
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: var(--btn-fill);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 650ms var(--ease-lux);
+}
+
+[dir="ltr"] .btn::before {
+  transform-origin: left center;
+}
+
+.btn:hover:not([disabled]):not([aria-disabled="true"]) {
+  color: var(--btn-fill-fg);
+}
+
+.btn:hover:not([disabled]):not([aria-disabled="true"])::before {
+  transform: scaleX(1);
 }
 
 .btn .icon {
@@ -215,63 +258,67 @@ img {
   cursor: not-allowed;
 }
 
+/* Primary: solid deep green; the brand green slides in on hover. */
 .btn--primary,
 .btn--accent {
-  --btn-bg: var(--brand);
-  --btn-fg: var(--brand-ink);
-  --btn-border: var(--brand);
+  --btn-bg: var(--deep);
+  --btn-fg: var(--deep-ink);
+  --btn-border: var(--deep);
+  --btn-fill: var(--deep-hover);
+  --btn-fill-fg: var(--deep-ink);
 }
 
-.btn--primary:hover,
-.btn--accent:hover {
-  --btn-bg: var(--brand-hover);
-  --btn-border: var(--brand-hover);
+.btn--primary:hover:not([disabled]),
+.btn--accent:hover:not([disabled]) {
+  --btn-border: var(--deep-hover);
 }
 
 .btn--primary:active,
 .btn--accent:active {
-  --btn-bg: #06522f;
-  --btn-border: #06522f;
+  --btn-fill: #06522f;
 }
 
+/* Outline: a deep-green line; deep green fills it on hover and the label turns white. */
 .btn--secondary {
-  --btn-bg: #ffffff;
-  --btn-fg: var(--brand);
-  --btn-border: var(--brand);
+  --btn-bg: transparent;
+  --btn-fg: var(--deep);
+  --btn-border: var(--deep);
+  --btn-fill: var(--deep);
+  --btn-fill-fg: #ffffff;
 }
 
-.btn--secondary:hover {
-  --btn-bg: var(--brand-tint);
-}
-
-/* Neutral action next to a primary: white with a grey border and dark text. */
+/* Neutral action next to a primary: a grey line and dark text; a soft warm fill slides in. */
 .btn--quiet {
-  --btn-bg: #ffffff;
+  --btn-bg: var(--paper);
   --btn-fg: var(--ink);
   --btn-border: var(--line-strong);
+  --btn-fill: var(--surface-2);
+  --btn-fill-fg: var(--ink);
 }
 
-.btn--quiet:hover {
-  --btn-bg: var(--surface);
+.btn--quiet:hover:not([disabled]) {
   --btn-border: var(--ink-2);
 }
 
+/* On a dark section or photo: a white line and white text; white fills it on hover. */
 .btn--on-dark,
 .btn--gold {
-  --btn-bg: #ffffff;
-  --btn-fg: var(--ink);
-  --btn-border: #ffffff;
+  --btn-bg: transparent;
+  --btn-fg: #ffffff;
+  --btn-border: rgb(255 255 255 / 0.7);
+  --btn-fill: #ffffff;
+  --btn-fill-fg: var(--ink);
 }
 
 .btn--large {
-  min-height: 48px;
-  padding: 11px 26px;
+  min-height: 52px;
+  padding: 12px 32px;
   font-size: 17px;
 }
 
 .btn--small {
-  min-height: 34px;
-  padding: 5px 14px;
+  min-height: 36px;
+  padding: 6px 16px;
   font-size: 14px;
 }
 
@@ -280,11 +327,11 @@ img {
   align-items: center;
 }
 
-/* Text link. Add .link--more for a small arrow («آلية الفحص ←»). */
+/* Text link. Add .link--more for a thin arrow («عرض الاستوديو ←»); the arrow steps forward on hover. */
 .link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   min-height: 44px;
   padding: 0;
   border: 0;
@@ -298,16 +345,44 @@ img {
 
 .link:hover {
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 
 .link--more::after {
   content: "";
-  width: 0.85em;
-  height: 0.85em;
+  flex: none;
+  width: 22px;
+  height: 10px;
   background: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13 8H3m4-4L3 8l4 4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13 8H3m4-4L3 8l4 4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 10'%3E%3Cpath d='M21.5 5H.8M5 .8.8 5 5 9.2' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 10'%3E%3Cpath d='M21.5 5H.8M5 .8.8 5 5 9.2' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 500ms var(--ease-lux);
+}
+
+.link--more:hover::after {
+  transform: translateX(-5px);
+}
+
+/* A text link whose underline draws from the start side on hover: put the words in a <span>.
+   Add .link--more for the arrow. */
+.link-draw {
+  text-decoration: none;
+}
+
+.link-draw:hover {
+  text-decoration: none;
+}
+
+.link-draw > span:not(.sr-only) {
+  padding-block-end: 4px;
+  background: linear-gradient(currentColor, currentColor) right bottom / 0% 1px no-repeat;
+  transition: background-size 650ms var(--ease-lux);
+}
+
+.link-draw:hover > span:not(.sr-only),
+.link-draw:focus-visible > span:not(.sr-only) {
+  background-size: 100% 1px;
 }
 
 /* Glyphs (src/brand/icons.tsx) sit on the text's centre line. */
@@ -519,10 +594,30 @@ img {
   transform: translateX(50%);
   z-index: 80;
   padding: 12px 22px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--ink);
   color: #ffffff;
   font-size: 15px;
+}
+
+/* A small section label: a two-digit number, a thin rule and a word (landing, other pages may reuse). */
+.label-rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.label-rule__line {
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
 }
 
 @media (prefers-reduced-motion: reduce) {

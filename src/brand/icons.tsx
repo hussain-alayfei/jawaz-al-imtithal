@@ -1,10 +1,10 @@
 import type { ReactNode, SVGProps } from "react";
 
-/* موائم's own glyphs, drawn for this site in the manner of system symbols: a 24 px grid, one thin
-   round-capped stroke, generous inner space, and filled circles for statuses. Every glyph takes the
-   text colour. Names follow the ones the screens already use, so a screen only changes its import.
-   `strokeWidth` from callers is ignored on purpose: the family keeps one weight (slightly heavier at
-   small sizes, so the optical weight holds). */
+/* موائم's own glyphs: a 24 px grid, one fine round-capped stroke (about 1.25 at 24 px, 1.35 at 20 px),
+   generous inner space, and filled circles for statuses. Drawn light, like the site's large light type,
+   so they sit quietly beside the words. Every glyph takes the text colour. Names follow the ones the
+   screens already use, so a screen only changes its import. `strokeWidth` from callers is ignored on
+   purpose: the family keeps one weight (a little heavier at small sizes, so the optical weight holds). */
 
 export interface IconProps extends Omit<SVGProps<SVGSVGElement>, "children"> {
   size?: number | string;
@@ -17,7 +17,7 @@ type Glyph = (props: IconProps) => ReactNode;
 function glyph(name: string, body: ReactNode, filled = false): Glyph {
   function Icon({ size = 20, strokeWidth: _ignored, className, title, ...rest }: IconProps) {
     const px = typeof size === "number" ? size : Number.parseFloat(size) || 20;
-    const stroke = px <= 16 ? 1.8 : px <= 20 ? 1.6 : 1.5;
+    const stroke = px <= 14 ? 1.6 : px <= 16 ? 1.5 : px <= 20 ? 1.35 : 1.25;
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -44,7 +44,7 @@ function glyph(name: string, body: ReactNode, filled = false): Glyph {
   return Icon;
 }
 
-const dot = (cx: number, cy: number, r = 1.05) => <circle cx={cx} cy={cy} r={r} fill="currentColor" stroke="none" />;
+const dot = (cx: number, cy: number, r = 0.95) => <circle cx={cx} cy={cy} r={r} fill="currentColor" stroke="none" />;
 const ring = <circle cx="12" cy="12" r="8.75" />;
 const page = <path d="M13.75 3.75H7.5a2 2 0 0 0-2 2v12.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8.5z M13.75 3.75V8.5h4.75" />;
 
@@ -62,13 +62,13 @@ export const CircleDot = glyph("circle-dot", <>{ring}<circle cx="12" cy="12" r="
 const filledCheck = (
   <>
     <circle cx="12" cy="12" r="9.5" fill="currentColor" stroke="none" />
-    <path d="M7.9 12.4l2.75 2.75 5.5-6" stroke="#fff" strokeWidth="1.9" />
+    <path d="M7.9 12.4l2.75 2.75 5.5-6" stroke="#fff" strokeWidth="1.6" />
   </>
 );
 const filledX = (
   <>
     <circle cx="12" cy="12" r="9.5" fill="currentColor" stroke="none" />
-    <path d="M8.9 8.9l6.2 6.2M15.1 8.9l-6.2 6.2" stroke="#fff" strokeWidth="1.9" />
+    <path d="M8.9 8.9l6.2 6.2M15.1 8.9l-6.2 6.2" stroke="#fff" strokeWidth="1.6" />
   </>
 );
 export const CircleCheck = glyph("checkmark-circle-fill", filledCheck, true);

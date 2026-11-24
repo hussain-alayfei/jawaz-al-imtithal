@@ -3,7 +3,7 @@ import { Wordmark } from "../brand/ui";
 import { copy } from "../content/copy";
 import "./site.css";
 
-export type NavTarget = "home" | "how" | "clauses" | "model" | "faq" | "twin" | "check";
+export type NavTarget = "home" | "how" | "clauses" | "model" | "files" | "faq" | "twin" | "check";
 
 export interface SiteHeaderProps {
   /** The link that matches the current page, for aria-current. */
@@ -11,18 +11,21 @@ export interface SiteHeaderProps {
   onNavigate: (target: NavTarget) => void;
 }
 
-/* Order: home, the service itself, how it works, what it checks against, then questions. The digital twin
-   is a separate studio reached from the hero and the footer, not a page of the service. */
+/* Order: home, the service itself, how it works, what it checks against, the sample files, then questions.
+   The digital twin is a separate studio reached from the hero and the footer, not a page of the service. */
 const LINKS: { target: NavTarget; label: string; href: string }[] = [
   { target: "home", label: copy.web.nav.home, href: "#/" },
   { target: "check", label: copy.web.nav.check, href: "#/check" },
   { target: "model", label: copy.web.nav.model, href: "#/model" },
   { target: "clauses", label: copy.web.nav.rules, href: "#/clauses" },
+  { target: "files", label: copy.web.nav.files, href: "#/files" },
   { target: "faq", label: copy.web.nav.faq, href: "#/faq" },
 ];
 
-/** Global navigation: the wordmark at the start, then five links. Solid white with a rule underneath; the
-    current page carries a green bar. */
+/** Global navigation: the wordmark at the start, then six links (a menu below 1024px). Solid warm
+    off-white with a thin rule underneath; the current page carries a thin green line. On the home page
+    the header lies transparent over the opening photograph, in white, until the page scrolls (the hero
+    sets data-hm-overlay on the root while it is mounted; site.css). */
 export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -32,7 +35,7 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
 
   /* The menu is for narrow screens: widening past them (a phone turned sideways) closes it. */
   useEffect(() => {
-    const wide = window.matchMedia("(min-width: 834px)");
+    const wide = window.matchMedia("(min-width: 1024px)");
     const onChange = () => {
       if (wide.matches) setOpen(false);
     };
@@ -41,7 +44,7 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

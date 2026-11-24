@@ -29,14 +29,9 @@ export function srcSetOf(name: string, original: string, originalWidth: number):
  * and the plain one after it applies.
  */
 export const SIZES = {
-  /* The hero photo is 2:1 and as tall as max(50vw, 64% of the hero) on phones (hero: max(500px, 80svh)),
-     max(50vw, 58% of the hero) from 834px (hero: max(520px, min(100svh - header, 1100px))). */
-  hero: [
-    "(max-width: 833px) max(100vw, 640px, 102.4vh)",
-    "(max-width: 833px) 102.4vh",
-    "max(100vw, 116vh - 74px)",
-    "100vw",
-  ].join(", "),
+  /* The hero photo is 2:1 and covers the whole screen (100svh by 100vw): as wide as the screen on screens
+     wider than 2:1, otherwise twice as wide as the screen is tall. */
+  hero: "(min-aspect-ratio: 2/1) 100vw, 200vh",
   /* The three stage rows (4:3 picture in a 4:3 box): full width inside the gutters on phones, then 58% of
      the row (the row is at most 1280px wide). */
   rows: "(min-width: 1376px) 743px, (min-width: 834px) 54vw, 92vw",
@@ -44,7 +39,7 @@ export const SIZES = {
   twin: "(min-width: 1376px) 794px, (min-width: 834px) 58vw, 92vw",
   /* The model story's 16:9 renders. Below 1024px each fills a full-width 4:3 box (below 600px) or 16:10 box,
      so it is drawn 4/3 or 10/9 as wide as the screen. From 1024px the pinned frame is 64% of the story
-     (at most 1600px wide) and 0.8 times as tall as it is wide, so the render is drawn about 1.42 times the
-     frame's width. */
-  story: "(min-width: 1696px) 1456px, (min-width: 1024px) calc(91vw - 87px), (min-width: 600px) 112vw, 134vw",
+     (the page's 1280px measure inside the gutters) and 0.8 times as tall as it is wide, so the render is
+     drawn about 1.42 times the frame's width. */
+  story: "(min-width: 1376px) 1164px, (min-width: 1024px) calc(91vw - 87px), (min-width: 600px) 112vw, 134vw",
 } as const;
