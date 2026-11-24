@@ -257,6 +257,17 @@ export default function Check({
     return () => controller.abort();
   }, [request]);
 
+  /* A finished check: fetch the results screen and the viewer it will show while the summary is read, so
+     «عرض النتائج» does not wait on them (both still load on demand: App.tsx and Results.tsx import them
+     lazily, and get these same modules). A failed fetch here is left to those imports to report. */
+  useEffect(() => {
+    if (!run) return;
+    const ignore = () => {};
+    import("./Results").catch(ignore);
+    if (run.standard) import("../components/IfcModelViewer").catch(ignore);
+    else if (run.source !== "standard-ifc") import("../components/Viewer3D").catch(ignore);
+  }, [run]);
+
   /* After a change made further down the page, bring the title and the step indicator back into view. */
   const revealSteps = () => {
     const steps = stepsRef.current;

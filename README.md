@@ -113,6 +113,9 @@ npm run test:e2e
 - `npm run build` يتحقق من TypeScript وينتج حزمة الإنتاج.
 - `npm run test:e2e` يختبر التدفق في المتصفح ويحفظ اللقطات تحت
   `artifacts/e2e/`.
+- `python scripts/responsive-images.py` يعيد إنشاء النسخ الأصغر (800 و1200
+  و1600 بكسل) من صور الصفحة الرئيسية في `src/assets/site/sized/`؛ شغّله بعد
+  استبدال أي صورة في `src/assets/site/`.
 
 ## النشر
 
@@ -125,7 +128,8 @@ npm run test:e2e
   في `vite.config.ts`. لا يُشغّل Vercel سكربت `scripts/prepare-sites.mjs`
   لأنه خاص بمنصة استضافة أخرى.
 - إعادة كتابة كل المسارات إلى `index.html` ليعمل التنقل داخل التطبيق.
-- تخزين مؤقت طويل للأصول المبصومة تحت `/assets/`.
+- تخزين مؤقت طويل للأصول المبصومة تحت `/assets/`، وتخزين ليوم واحد مع إعادة
+  التحقق لملفات `/samples/` و`/demo-bim/` لأنها غير مبصومة.
 
 يستثني [`.vercelignore`](.vercelignore) مجلد `test-fixtures` من الرفع، حتى لا
 تصل ملفات IFC الخاصة بالاختبار إلى حزمة الموقع.

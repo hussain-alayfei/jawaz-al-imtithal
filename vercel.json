@@ -6,7 +6,7 @@
   "outputDirectory": "dist/client",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|samples/|demo-bim/).*)",
       "destination": "/index.html"
     }
   ],
