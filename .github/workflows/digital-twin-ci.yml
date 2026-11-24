@@ -10,7 +10,8 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # The browser check renders the 3D studio in software (no GPU on hosted runners): allow for it.
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -28,7 +29,12 @@ jobs:
       - name: Typecheck and production build
         run: npm run build
       - name: Browser acceptance and screenshots
+        # Serves dist/client with vite preview and drives the preinstalled Google Chrome (SwiftShader WebGL).
         run: node scripts/twin-visual-check.mjs
+        timeout-minutes: 30
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          TWIN_TIMEOUT: "180000"
       - name: Attach screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

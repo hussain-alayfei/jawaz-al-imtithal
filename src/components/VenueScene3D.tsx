@@ -14,13 +14,14 @@ export type VenueArea = "all" | "entrance" | "seating" | "counter" | "back";
 export type VenueCameraPreset = "iso" | "top" | "front" | "inside";
 type Vec3=[number,number,number];
 export interface VenueSpot { id:string;area:Exclude<VenueArea,"all">;title:string;description:string;position:Vec3 }
-export const VENUE_META:Record<VenueKind,{title:string;tag:string;subtitle:string;areas:Record<Exclude<VenueArea,"all">,string>}> = {
+/** The demo venues are fictional examples: neutral names (never the product's), and a plain Arabic shop sign. */
+export const VENUE_META:Record<VenueKind,{title:string;sign:string;subtitle:string;areas:Record<Exclude<VenueArea,"all">,string>}> = {
   cafe:{
-    title:"مقهى موائم",tag:"COFFEE HOUSE",subtitle:"مقهى مستقل بطابق أرضي، تحضير قهوة وجلسات داخلية وخارجية",
+    title:"مقهى تجريبي",sign:"مقهى",subtitle:"مقهى مستقل بطابق أرضي، تحضير قهوة وجلسات داخلية وخارجية",
     areas:{entrance:"المدخل والاستقبال",seating:"الجلسات الداخلية",counter:"بار القهوة والطلبات",back:"الغسيل والمخزن"}
   },
   restaurant:{
-    title:"مطعم موائم",tag:"RESTAURANT",subtitle:"مطعم مستقل بطابق أرضي، صالة ضيوف ومطبخ خلفي مجهز",
+    title:"مطعم تجريبي",sign:"مطعم",subtitle:"مطعم مستقل بطابق أرضي، صالة ضيوف ومطبخ خلفي مجهز",
     areas:{entrance:"المدخل والانتظار",seating:"صالة الطعام",counter:"الاستقبال والدفع",back:"المطبخ والتجهيز"}
   }
 };
@@ -265,10 +266,10 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
        <Cylinder p={[x,3.77,0]} h={.65} r={.025} c="#b0afa3"/>
        <Cylinder p={[x,3.4,0]} h={.24} r={.28} c={cafe?"#cfb998":"#e0d7c7"}/>
      </group>)}
-    {/* Brand sign is 3D-positioned, not a screenshot decoration. */}
+    {/* The shop sign is placed in the scene, on the facade (not drawn over a screenshot). */}
     <Html position={[0,4.88,6.33]} center transform distanceFactor={13} occlude={false}>
      <div className={"venue-sign "+(cafe?"is-cafe":"is-restaurant")} dir="rtl">
-       <strong>{VENUE_META[kind].title}</strong><span>{VENUE_META[kind].tag}</span>
+       <strong>{VENUE_META[kind].sign}</strong>
      </div>
     </Html>
  </group>;
@@ -276,12 +277,66 @@ function RoomShell({kind,ghost}: {kind:VenueKind;ghost:boolean}){
 function VenueNetworks({kind,visible,onSelect,selected}: {kind:VenueKind;visible:ServiceVisibility;onSelect:(id:string)=>void;selected:string|null}){
  return <VenueServiceNetwork3D kind={kind} visible={visible} selected={selected} onSelect={onSelect}/>;
 }
+/** Far enough for any fitted view; the haze only starts beyond it (TwinHaze). */
+export const TWIN_MAX_DISTANCE=88;
+const fitCamera=new THREE.PerspectiveCamera();
+const fitPoint=new THREE.Vector3();
+const fitOffset=new THREE.Vector3();
+/**
+ * How many times further from `target` the camera at `position` must stand so that every point shows in a
+ * view `width` x `height` px wide (the part of the canvas the panel leaves free) with a vertical field of
+ * `fov` degrees, keeping `margin` of the half-width and half-height inside the edges. 1 when they already
+ * fit; never so far that the distance passes `maxDistance`.
+ */
+export function fitScale(position:THREE.Vector3,target:THREE.Vector3,fov:number,width:number,height:number,
+  points:readonly Vec3[],margin=.92,maxDistance=TWIN_MAX_DISTANCE-2):number{
+  fitOffset.subVectors(position,target);
+  const distance=fitOffset.length();
+  if(!(width>0&&height>0&&distance>0))return 1;
+  fitCamera.fov=fov;fitCamera.aspect=width/height;fitCamera.near=.1;fitCamera.far=4000;
+  fitCamera.updateProjectionMatrix();
+  const limit=Math.max(1,maxDistance/distance);
+  let scale=1;
+  for(let step=0;step<80;step++){
+    fitCamera.position.copy(target).addScaledVector(fitOffset,scale);
+    fitCamera.lookAt(target);
+    fitCamera.updateMatrixWorld();
+    let worst=0;
+    for(const point of points){
+      fitPoint.set(point[0],point[1],point[2]).project(fitCamera);
+      worst=Math.max(worst,fitPoint.z>1?Infinity:Math.max(Math.abs(fitPoint.x),Math.abs(fitPoint.y)));
+    }
+    if(worst<=margin||scale>=limit)break;
+    scale=Math.min(limit,scale*1.03);
+  }
+  return scale;
+}
+/** Points that outline each venue: the shell with its awning and entrance mat, and its terrace (slab and
+    parasols). The default views keep all of them in view. */
+const VENUE_SHELL:Vec3[]=[
+  ...[-8,8].flatMap(x=>[-6,6].flatMap(z=>[0,5.1].map(y=>[x,y,z] as Vec3))),
+  [-5.5,4.7,7.2],[5.5,4.7,7.2],[-2.2,0,8.7],[2.2,0,8.7],
+];
+const VENUE_OUTLINE:Record<VenueKind,Vec3[]>={
+  cafe:[...VENUE_SHELL,[-8.7,0,12.2],[-3.3,0,12.2],[-8.7,0,7.2],[-7.35,2.5,12.35],[-4.65,2.5,12.35],[-7.35,2.5,7.15]],
+  restaurant:[...VENUE_SHELL,[-8.4,0,11.9],[-3.6,0,11.9],[-8.4,0,7.5],[-7.35,2.5,11.05],[-4.65,2.5,11.05]],
+};
+const venueFov=(free:number)=>free<661?51:free<1000?47:44;
+/** The share of the way a camera eases per frame, scaled to the frame's length so a flight takes the same
+    time at 60 or at 2 frames a second (`perFrame` is the share at 60 fps). */
+export const easeStep=(perFrame:number,delta:number)=>1-Math.pow(1-perFrame,Math.min(delta,.5)*60);
+/** Marks the canvas while the camera flies to a view (data-camera="moving", then "still"), for tests. */
+export function markCamera(canvas:HTMLCanvasElement,moving:boolean){
+  const state=moving?"moving":"still";
+  if(canvas.dataset.camera!==state)canvas.dataset.camera=state;
+}
+
 export function VenueCameraRig({kind,preset,nonce,selected,freeWidth}:{
  kind:VenueKind;preset:VenueCameraPreset;nonce:number;selected:Vec3|null;
  /** Width of the canvas the studio's panel leaves free (the whole canvas when omitted). */
  freeWidth?:number;
 }){
- const {camera,size}=useThree();
+ const {camera,size,gl}=useThree();
  const free=Math.min(size.width,freeWidth||size.width);
  const controls=useRef<any>(null);
  const desired=useRef(new THREE.Vector3(21,14,24));
@@ -289,7 +344,7 @@ export function VenueCameraRig({kind,preset,nonce,selected,freeWidth}:{
  const moving=useRef(true);
  useEffect(()=>{
   if(camera instanceof THREE.PerspectiveCamera){
-    camera.fov=free<661?51:free<1000?47:44;
+    camera.fov=venueFov(free);
     camera.updateProjectionMatrix();
   }
  },[camera,free]);
@@ -304,15 +359,26 @@ export function VenueCameraRig({kind,preset,nonce,selected,freeWidth}:{
   if(selected){target.current.set(...selected);desired.current.set(selected[0]+7,selected[1]+5.2,selected[2]+9.5);}
   /* A narrow view (a phone, or the part a panel leaves free) stands further back. */
   if(free<661)desired.current.sub(target.current).multiplyScalar(1.4).add(target.current);
+  /* The views from outside then step back until the whole venue, terrace included, fits the free part
+     of the canvas (a portrait tablet beside the panel is narrow and tall). */
+  if(!selected&&preset!=="inside"){
+    const scale=fitScale(desired.current,target.current,venueFov(free),free,size.height,VENUE_OUTLINE[kind]);
+    if(scale>1)desired.current.sub(target.current).multiplyScalar(scale).add(target.current);
+  }
   moving.current=true;
- },[kind,preset,nonce,selected,free]);
- useFrame(()=>{
+  markCamera(gl.domElement,true);
+ },[kind,preset,nonce,selected,free,size.height,gl]);
+ useFrame((_,delta)=>{
   if(!moving.current||!controls.current)return;
-  camera.position.lerp(desired.current,.13);controls.current.target.lerp(target.current,.13);controls.current.update();
-  if(camera.position.distanceTo(desired.current)<.05&&controls.current.target.distanceTo(target.current)<.05)moving.current=false;
+  const k=easeStep(.13,delta);
+  camera.position.lerp(desired.current,k);controls.current.target.lerp(target.current,k);controls.current.update();
+  if(camera.position.distanceTo(desired.current)<.05&&controls.current.target.distanceTo(target.current)<.05){
+    moving.current=false;markCamera(gl.domElement,false);
+  }
  });
  return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={.085} minDistance={3}
-  maxDistance={64} maxPolarAngle={Math.PI*.47} onStart={()=>moving.current=false}/>;
+  maxDistance={TWIN_MAX_DISTANCE} maxPolarAngle={Math.PI*.47}
+  onStart={()=>{moving.current=false;markCamera(gl.domElement,false);}}/>;
 }
 export function VenueScene3D({kind,visible,ghost,furniture,selected,onSelect,preset,nonce,freeWidth}:{
  kind:VenueKind;visible:ServiceVisibility;ghost:boolean;furniture:boolean;

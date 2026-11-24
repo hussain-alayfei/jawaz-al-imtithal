@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, ShieldAlert, XCircle } from "../brand/icons";
 import { SERVICE_META, type ServiceKey } from "./EngineeringNetworks3D";
-import { getVenueEngineeringElements, getVenueMetrics, type VenueBimElement } from "./VenueEngineeringData";
+import {
+ ELEMENT_FORMS, POINT_FORMS, countNoun, countPhrase, getVenueEngineeringElements, getVenueMetrics,
+ type CountForms, type VenueBimElement,
+} from "./VenueEngineeringData";
 import type { VenueKind } from "./VenueScene3D";
 
+/* Counted nouns with their adjectives (the figure is drawn apart, over the words). */
+const LINKED:CountForms={one:"عنصر تجريبي مرتبط",two:"عنصران تجريبيان مرتبطان",few:"عناصر تجريبية مرتبطة",many:"عنصرًا تجريبيًا مرتبطًا",hundred:"عنصر تجريبي مرتبط"};
+const INDEXED:CountForms={one:"عنصر مفهرس",two:"عنصران مفهرسان",few:"عناصر مفهرسة",many:"عنصرًا مفهرسًا",hundred:"عنصر مفهرس"};
+const SEMANTIC:CountForms={one:"عنصر دلالي",two:"عنصران دلاليان",few:"عناصر دلالية",many:"عنصرًا دلاليًا",hundred:"عنصر دلالي",single:"عنصر دلالي واحد"};
+const AREAS:CountForms={one:"منطقة تشغيل",two:"منطقتا تشغيل",few:"مناطق تشغيل",many:"منطقة تشغيل",hundred:"منطقة تشغيل"};
+const STRUCTURAL:CountForms={one:"عنصر إنشائي",two:"عنصران إنشائيان",few:"عناصر إنشائية",many:"عنصرًا إنشائيًا",hundred:"عنصر إنشائي"};
+const SERVICE_POINTS:CountForms={one:"نقطة تمديدات",two:"نقطتا تمديدات",few:"نقاط تمديدات",many:"نقطة تمديدات",hundred:"نقطة تمديدات"};
 type VenueManifest={version:string;kind:VenueKind;files:{id:string;name:string;label:string;desc:string;count:number;elements:VenueBimElement[]}[]};
 export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBimElement)=>void}){
  const [manifest,setManifest]=useState<VenueManifest|null>(null);
@@ -34,7 +44,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
    const missing=file.elements.find(x=>!content.includes("'"+x.sceneId+"'"));
    if(missing)throw Error("لم يُعثر على ربط العنصر "+missing.sceneId);
    setActive(file.id);setSystem("all");
-   setMessage("قُرئ "+file.count+" عنصرًا دلاليًا من "+file.name+" وتم التحقق من معرفاتهم.");
+   setMessage("قُرئ "+countPhrase(file.count,SEMANTIC)+" من "+file.name+"، وتم التحقق من معرّفاتها.");
   }catch(e){setError(true);setMessage(e instanceof Error?e.message:"تعذر فتح الملف");}
   finally{setBusy(null);}
  }
@@ -47,7 +57,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
    <p>4 ملفات IFC4 خاصة بهذه المنشأة، تحتوي بيانات معمارية وإنشائية وتمديدات وحريق لطابق واحد.</p>
    <span className="bim-library__demo"><Info size={13}/> بيانات دلالية تجريبية؛ ليست مخططات مصدقة ولا هندسة IFC مستوردة.</span>
   </div>
-  <div className="venue-bim__metric"><strong>{total??"—"}</strong><span>عنصر تجريبي مرتبط بمشهد {kind==="cafe"?"المقهى":"المطعم"}</span></div>
+  <div className="venue-bim__metric"><strong>{total??"—"}</strong><span>{total===undefined?"عناصر تجريبية مرتبطة":countNoun(total,LINKED)} بمشهد {kind==="cafe"?"المقهى":"المطعم"}</span></div>
   {!manifest&&!error&&<p className="bim-library__loading"><LoaderCircle size={14}/> فتح ملفات التجربة…</p>}
   <div className="bim-library__files">
    {manifest?.files.map(f=>{
@@ -58,7 +68,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
      </div>
      <p>{f.desc}</p>
      <div className="bim-library__file-actions">
-      <button type="button" disabled={busy!==null} onClick={()=>void open(f)}>
+      <button type="button" data-testid="bim-file-open" disabled={busy!==null} onClick={()=>void open(f)}>
        {busy===f.id?<LoaderCircle size={13}/>:active===f.id?<CheckCircle2 size={13}/>:<Layers3 size={13}/>}
        {active===f.id?"العناصر معروضة":"فتح العناصر"}
       </button>
@@ -79,7 +89,7 @@ export function VenueBimPanel({kind,onPick}:{kind:VenueKind;onPick:(item:VenueBi
    {error?<XCircle size={14}/>:<CheckCircle2 size={14}/>} {message}
   </p>}
   {file&&<div className="bim-library__content" data-testid="venue-bim-elements">
-   <header><span><FileText size={14}/> عناصر {file.name}</span><b>{listed.length} عنصر</b></header>
+   <header><span><FileText size={14}/> عناصر {file.name}</span><b>{countPhrase(listed.length,ELEMENT_FORMS)}</b></header>
    {file.id==="mep"&&<label>فلترة عناصر التمديدات
     <select aria-label="فلتر نظام عناصر الملف" value={system} onChange={e=>setSystem(e.target.value)}>
      <option value="all">كل أنظمة الملف</option>
@@ -108,17 +118,17 @@ export function VenueAnalysisPanel({kind,onSystem,onPick}:{
    <div><strong>قراءة هندسية تجريبية</strong><span>معلومات مبدئية من عناصر النموذج، بدون أحمال أو حسابات امتثال.</span></div>
   </div>
   <div className="venue-analysis__stats">
-   <div><strong>{metrics.total}</strong><span>عنصر مفهرس</span></div>
-   <div><strong>{metrics.areas}</strong><span>مناطق تشغيل</span></div>
-   <div><strong>{metrics.structural}</strong><span>عناصر إنشائية</span></div>
-   <div><strong>{metrics.networkPoints}</strong><span>نقاط تمديدات</span></div>
+   <div><strong>{metrics.total}</strong><span>{countNoun(metrics.total,INDEXED)}</span></div>
+   <div><strong>{metrics.areas}</strong><span>{countNoun(metrics.areas,AREAS)}</span></div>
+   <div><strong>{metrics.structural}</strong><span>{countNoun(metrics.structural,STRUCTURAL)}</span></div>
+   <div><strong>{metrics.networkPoints}</strong><span>{countNoun(metrics.networkPoints,SERVICE_POINTS)}</span></div>
   </div>
   <h3>تحليل الأنظمة وتفاصيل المراجعة</h3>
   <div className="venue-analysis__systems">
    {metrics.bySystem.map(x=><article key={x.system} className={focused===x.system?"is-active":""}>
     <button type="button" onClick={()=>{setFocused(focused===x.system?null:x.system);onSystem(x.system);}}>
      <span className="venue-analysis__color" style={{background:SERVICE_META[x.system].color}}/>
-     <strong>{x.title}</strong><b>{x.count} نقاط</b>
+     <strong>{x.title}</strong><b>{countPhrase(x.count,POINT_FORMS)}</b>
     </button>
     <p>{x.spec}</p>
     <div className="venue-analysis__review"><ShieldAlert size={13}/>{x.risk}</div>

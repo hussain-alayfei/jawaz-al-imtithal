@@ -1,10 +1,11 @@
 /* Digital twin studio (v5): the site's identity on a full-screen tool. A white 64 px bar like the site
-   header (wordmark, title and note, a pill switch for the scenes, «العودة»), the 3D scene as the stage, ONE
+   header (wordmark, title and note, a button group for the scenes, «العودة»), the 3D scene as the stage, ONE
    white panel over the scene's inline-start side (a bottom sheet with a handle on phones) and one small
    floating view switcher. Tokens from src/brand/tokens.css: IBM Plex Sans Arabic through --font, green
-   (--brand) for chosen states and actions, orange only in the wordmark, pills and --radius / --radius-lg,
-   no gradients. The six network colours appear only as small dots, because they are what tells the
-   networks apart in the scene. Prefix: tw- (the root keeps .twin-studio). */
+   (--brand) for chosen states and actions, orange only in the wordmark, rectangular 4 px buttons and button
+   groups (--radius-btn, --seg-*), plain fades only, no pills, blur or gradients. The six network colours
+   appear only as small dots, because they are what tells the networks apart in the scene. Prefix: tw- (the
+   root keeps .twin-studio). */
 
 .twin-studio {
   --tw-gap: 16px;
@@ -65,7 +66,7 @@
   color: #ffffff;
 }
 
-/* ---------------------------------------------------------------- Pill segmented control */
+/* ---------------------------------------------------------------- Segmented control (a button group) */
 
 .tw-seg {
   display: inline-grid;
@@ -295,7 +296,7 @@
   display: none;
 }
 
-/* The folded panel's pill (desktop). */
+/* The folded panel's button (desktop). */
 .tw-reopen {
   position: absolute;
   z-index: 3;
@@ -712,7 +713,7 @@
   height: 32px;
   margin-inline-end: -4px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-btn);
   background: var(--surface);
   color: var(--ink-2);
   transition: background-color 200ms var(--ease);
@@ -760,27 +761,19 @@
   }
 }
 
-/* Motion: the panel settles in from its edge, the pill appears in its place. */
+/* Motion: plain fades. The panel fades in, and so does the button that brings it back. */
 @media (prefers-reduced-motion: no-preference) {
   .tw-panel:not([hidden]) {
-    animation: tw-panel-in 480ms var(--ease-out) both;
+    animation: tw-fade-in 320ms var(--ease) both;
   }
 
   .tw-reopen {
-    animation: tw-pill-in 360ms var(--ease-out) both;
+    animation: tw-fade-in 240ms var(--ease) both;
   }
 
-  @keyframes tw-panel-in {
+  @keyframes tw-fade-in {
     from {
       opacity: 0;
-      transform: translateX(24px);
-    }
-  }
-
-  @keyframes tw-pill-in {
-    from {
-      opacity: 0;
-      transform: scale(0.94);
     }
   }
 }
@@ -941,7 +934,7 @@
   min-height: 36px;
   padding-inline: 14px 16px;
   border: 1px solid var(--brand);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--paper);
   color: var(--brand);
   font-size: 14px;
@@ -1261,7 +1254,7 @@
   min-height: 36px;
   padding-inline: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--paper);
   font-size: 13px;
   text-align: start;
@@ -1297,14 +1290,14 @@
 }
 
 /* ---------------------------------------------------------------- Labels placed in the 3D scene
-   Small name pills only: the description of whatever is chosen lives in the panel. */
+   Small name tags only: the description of whatever is chosen lives in the panel. */
 
 .twin-floor-number {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink);
   font: 500 12px/1.45 var(--font);
@@ -1323,7 +1316,7 @@
   display: block;
   padding: 4px 10px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
   font: 600 12px/1.4 var(--font);
@@ -1346,7 +1339,7 @@
   display: block;
   max-width: 220px;
   padding: 5px 12px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--paper);
   color: var(--ink);
   font: 600 12px/1.45 var(--font);
@@ -1372,12 +1365,11 @@
   display: none;
 }
 
-/* The storefront sign sits on the facade in the scene. */
+/* The storefront sign sits on the facade in the scene: one Arabic word, like a real shop sign. */
 .venue-sign {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
   min-width: 150px;
   padding: 6px 16px;
   border-radius: 2px;
@@ -1392,13 +1384,6 @@
   font-size: 19px;
   font-weight: 700;
   line-height: 1.3;
-}
-
-.venue-sign span {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  direction: ltr;
 }
 
 .venue-sign.is-restaurant {
@@ -1517,7 +1502,11 @@
     height: 40px;
   }
 
-  /* The sheet: always full height, slid down so only its top part peeks. */
+  /* The sheet: always full height, moved down so only its top part peeks. It moves at once, with no
+     transform transition: Chrome starts such a transition on the compositor only after the main thread
+     commits a frame, and the 3D scene keeps that thread busy (a pick also starts a camera flight), so a
+     folded sheet stayed drawn open for seconds while its list was already inert. Opening fades the
+     list in instead (below). */
   .tw-panel {
     inset-block: auto 0;
     inset-inline: 0;
@@ -1526,7 +1515,6 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.12);
     transform: translateY(calc(100% - var(--tw-peek, 0px)));
-    transition: transform 380ms var(--ease-out);
   }
 
   .tw-panel.is-sheet-open {
@@ -1557,7 +1545,7 @@
   .tw-panel__handle span {
     width: 40px;
     height: 5px;
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-btn);
     background: var(--line-strong);
   }
 
@@ -1615,6 +1603,10 @@
   @media (prefers-reduced-motion: no-preference) {
     .tw-panel:not([hidden]) {
       animation: none;
+    }
+
+    .tw-panel.is-sheet-open .tw-panel__body {
+      animation: tw-fade-in 200ms var(--ease) both;
     }
   }
 }

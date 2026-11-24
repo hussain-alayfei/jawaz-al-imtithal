@@ -269,14 +269,14 @@ const activityRooms: Record<ActivityId, RoomDefinition[]> = {
     },
     {
       id: "CLINIC-SPACE-EXAM-01",
-      name: "غرفة الكشف ١",
+      name: "غرفة الكشف 1",
       position: [4.14, 2.99],
       size: [7.42, 4.72],
       color: "#7894c5",
     },
     {
       id: "CLINIC-SPACE-EXAM-02",
-      name: "غرفة الكشف ٢",
+      name: "غرفة الكشف 2",
       position: [4.14, -2.44],
       size: [7.42, 5.82],
       color: "#968dc1",
@@ -528,13 +528,13 @@ const elementLabels: Record<string, string> = {
   "CAFE-SPACE-WC": "دورة مياه المقهى",
   "CLINIC-SPACE-WAITING": "الاستقبال والانتظار",
   "SPACE-CORRIDOR": "الممر السريري",
-  "CLINIC-SPACE-EXAM-01": "غرفة الكشف ١",
-  "CLINIC-SPACE-EXAM-02": "غرفة الكشف ٢",
+  "CLINIC-SPACE-EXAM-01": "غرفة الكشف 1",
+  "CLINIC-SPACE-EXAM-02": "غرفة الكشف 2",
   "CLINIC-SPACE-WC": "دورة مياه العيادة",
-  "CLINIC-D-EXAM-01": "باب غرفة الكشف ١",
-  "CLINIC-D-EXAM-02": "باب غرفة الكشف ٢",
-  "CLINIC-SINK-EXAM-02": "نقطة غسل اليدين، غرفة الكشف ٢",
-  "CLINIC-VENT-EXAM-02": "نقطة تهوية غرفة الكشف ٢",
+  "CLINIC-D-EXAM-01": "باب غرفة الكشف 1",
+  "CLINIC-D-EXAM-02": "باب غرفة الكشف 2",
+  "CLINIC-SINK-EXAM-02": "نقطة غسل اليدين، غرفة الكشف 2",
+  "CLINIC-VENT-EXAM-02": "نقطة تهوية غرفة الكشف 2",
   "SALON-SPACE-STYLING": "منطقة التصفيف",
   "SALON-SPACE-TREATMENT": "غرفة العناية",
   "SALON-SPACE-NAIL": "منطقة الأظافر",
@@ -551,10 +551,10 @@ const elementLabels: Record<string, string> = {
   "SPACE-WC": "دورة المياه المهيأة",
   "EQ-ESPRESSO-01": "ماكينة الإسبريسو",
   "PLB-SINK-3C-01": "حوض الغسيل الثلاثي",
-  "EQ-EXAM-BED-01": "سرير الكشف ١",
-  "EQ-EXAM-BED-02": "سرير الكشف ٢",
+  "EQ-EXAM-BED-01": "سرير الكشف 1",
+  "EQ-EXAM-BED-02": "سرير الكشف 2",
   "CAB-MED-WASTE-01": "خزانة النفايات الطبية",
-  "EQ-STYLING-01": "محطة التصفيف ١",
+  "EQ-STYLING-01": "محطة التصفيف 1",
   "EQ-WASH-BASIN-01": "كرسي وحوض الغسيل",
   "CAB-CHEM-01": "خزانة المواد الكيميائية",
   "MEP-HOOD-01": "شفاط المطبخ",
@@ -1305,7 +1305,7 @@ function ActivityPartitions({
         />
         <DoorAssembly
           id="CLINIC-D-EXAM-01"
-          name="باب غرفة الفحص ١"
+          name="باب غرفة الفحص 1"
           position={[0.35, 0, 2.75]}
           width={0.95}
           orientation="side"
@@ -1314,7 +1314,7 @@ function ActivityPartitions({
         />
         <DoorAssembly
           id="CLINIC-D-EXAM-02"
-          name="باب غرفة الفحص ٢"
+          name="باب غرفة الفحص 2"
           position={[0.35, 0, -1.75]}
           width={secondDoorWidth}
           orientation="side"
@@ -1879,7 +1879,7 @@ function ExamBed({
       <Part
         {...common}
         id={id}
-        name={id.endsWith("01") ? "سرير الكشف ١" : "سرير الكشف ٢"}
+        name={id.endsWith("01") ? "سرير الكشف 1" : "سرير الكشف 2"}
         position={[0, 0.72, 0]}
         size={[0.82, 0.18, 2.05]}
         color="#d9e8e7"
@@ -2344,7 +2344,7 @@ function ClinicFitout({
       ) : (
         <SinkStation
           id="CLINIC-SINK-EXAM-02"
-          name="نقطة غسل اليدين، غرفة الفحص ٢"
+          name="نقطة غسل اليدين، غرفة الفحص 2"
           position={[6.65, 0, -1.45]}
           width={0.78}
           common={common}

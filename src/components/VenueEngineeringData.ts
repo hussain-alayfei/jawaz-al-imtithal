@@ -2,6 +2,28 @@ import { SERVICE_KEYS, SERVICE_META, type ServiceKey } from "./EngineeringNetwor
 import type { VenueKind, VenueSpot } from "./VenueScene3D";
 import { VENUE_SPOTS } from "./VenueScene3D";
 
+/** The forms of an Arabic counted noun (the rule of `counted` in src/screens/results/findings.ts):
+    1 `one`, 2 `two`, 3–10 `few` (plural), 11–99 `many` (accusative singular), 100, 101, 102… `hundred`.
+    `single` is the whole phrase for one («عنصر واحد», «نقطة واحدة»); digits stay Western. */
+export interface CountForms { one:string;two:string;few:string;many:string;hundred:string;single?:string }
+/** The noun that follows the figure n, when the figure is written apart from it (a stat over its label). */
+export function countNoun(n:number,forms:CountForms):string{
+  if(n===1)return forms.one;
+  if(n===2)return forms.two;
+  const tail=n%100;
+  if(tail>=3&&tail<=10)return forms.few;
+  if(tail>=11)return forms.many;
+  return forms.hundred;
+}
+/** The figure and its noun in running text: «عنصر واحد», «عنصران», «4 عناصر», «28 عنصرًا», «100 عنصر». */
+export function countPhrase(n:number,forms:CountForms):string{
+  if(n===1)return forms.single??forms.one+" واحد";
+  if(n===2)return forms.two;
+  return n+" "+countNoun(n,forms);
+}
+export const ELEMENT_FORMS:CountForms={one:"عنصر",two:"عنصران",few:"عناصر",many:"عنصرًا",hundred:"عنصر"};
+export const POINT_FORMS:CountForms={one:"نقطة",two:"نقطتان",few:"نقاط",many:"نقطة",hundred:"نقطة",single:"نقطة واحدة"};
+
 export type VenueDiscipline = "architectural" | "structural" | "mep" | "fire";
 export interface VenueBimElement {
   id: string;

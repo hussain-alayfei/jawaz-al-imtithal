@@ -18,9 +18,12 @@ import {
   EngineeringNetworks3D, SERVICE_KEYS, SERVICE_META,
   findServiceNode, type ServiceKey, type ServiceVisibility,
 } from "./EngineeringNetworks3D";
-import { TwinHaze, TwinStreet, VenueScene3D, VENUE_META, VENUE_SPOTS, getVenueSpot, type VenueKind } from "./VenueScene3D";
+import {
+  TWIN_MAX_DISTANCE, TwinHaze, TwinStreet, VenueScene3D, VENUE_META, VENUE_SPOTS, easeStep, fitScale, getVenueSpot,
+  markCamera, type VenueKind,
+} from "./VenueScene3D";
 import { VenueAnalysisPanel, VenueBimPanel } from "./VenueEngineeringPanel";
-import { getVenueElement, type VenueBimElement } from "./VenueEngineeringData";
+import { countNoun, getVenueElement, type CountForms, type VenueBimElement } from "./VenueEngineeringData";
 import "./EngineeringTwinStudio.css";
 
 type Vec3 = [number, number, number];
@@ -69,6 +72,11 @@ const TABS: { key: PanelTab; label: string }[] = [
   { key: "files", label: "الملفات" },
   { key: "analysis", label: "التحليلات" },
 ];
+/** «3 نتائج غير مطابقة», «11 نتيجة غير مطابقة» (the figure is drawn apart). */
+const FAIL_FORMS: CountForms = {
+  one: "نتيجة غير مطابقة", two: "نتيجتان غير مطابقتين", few: "نتائج غير مطابقة",
+  many: "نتيجة غير مطابقة", hundred: "نتيجة غير مطابقة",
+};
 const VIEW_PRESETS: [Preset, string][] = [["iso", "منظور"], ["top", "علوي"], ["front", "واجهة"], ["inside", "داخلي"]];
 /** Glyphs from src/brand/icons share one weight across the studio. */
 const ICON = { size: 18, strokeWidth: 1.6, "aria-hidden": true } as const;
@@ -95,6 +103,12 @@ const viewDefaults: Record<Preset, { position: Vec3; target: Vec3 }> = {
   inside: { position: [6.5, 7.5, 10.5], target: [0, 5, -1] },
 };
 const sColor = (system: ServiceKey) => SERVICE_META[system].color;
+const buildingFov = (free: number) => free < 661 ? 45 : free < 1000 ? 44 : 41;
+/** The corners of the five-storey building with its roof equipment: the default views keep them in view. */
+const buildingOutline = (floorCount: number): Vec3[] => {
+  const top = floorCount * STOREY_HEIGHT + 2.4;
+  return [-8, 8].flatMap(x => [-6, 6].flatMap(z => [0, top].map(y => [x, y, z] as Vec3)));
+};
 
 function Block({
   p, s, color, opacity = 1, metal = 0, roughness = 0.75, onClick,
@@ -248,11 +262,11 @@ function CameraRig({ preset, selected, floor, nonce, floorCount, freeWidth }: {
   /** Width of the canvas the panel leaves free. */
   freeWidth: number;
 }) {
-  const { camera, size } = useThree();
+  const { camera, size, gl } = useThree();
   const free = Math.min(size.width, freeWidth || size.width);
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = free < 661 ? 45 : free < 1000 ? 44 : 41;
+      camera.fov = buildingFov(free);
       camera.updateProjectionMatrix();
     }
   }, [camera, free]);
@@ -283,19 +297,29 @@ function CameraRig({ preset, selected, floor, nonce, floorCount, freeWidth }: {
     if (free < 661) {
       desired.current.sub(focus.current).multiplyScalar(floor === "all" ? 1.48 : 1.06).add(focus.current);
     }
+    /* The whole building then fits the free part of the canvas (a portrait tablet beside the panel). */
+    if (floor === "all" && !selected && preset !== "inside") {
+      const scale = fitScale(desired.current, focus.current, buildingFov(free), free, size.height, buildingOutline(floorCount));
+      if (scale > 1) desired.current.sub(focus.current).multiplyScalar(scale).add(focus.current);
+    }
     active.current = true;
-  }, [preset, selected, floor, nonce, free, floorCount]);
-  useFrame(() => {
+    markCamera(gl.domElement, true);
+  }, [preset, selected, floor, nonce, free, floorCount, size.height, gl]);
+  useFrame((_, delta) => {
     if (!active.current || !controls.current) return;
-    camera.position.lerp(desired.current, 0.12);
-    controls.current.target.lerp(focus.current, 0.12);
+    const k = easeStep(0.12, delta);
+    camera.position.lerp(desired.current, k);
+    controls.current.target.lerp(focus.current, k);
     controls.current.update();
     if (camera.position.distanceTo(desired.current) < 0.04
-      && controls.current.target.distanceTo(focus.current) < 0.04) active.current = false;
+      && controls.current.target.distanceTo(focus.current) < 0.04) {
+      active.current = false;
+      markCamera(gl.domElement, false);
+    }
   });
   return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08}
-    minDistance={2} maxDistance={68} minPolarAngle={0.03} maxPolarAngle={Math.PI * 0.47}
-    onStart={() => { active.current = false; }} />;
+    minDistance={2} maxDistance={TWIN_MAX_DISTANCE} minPolarAngle={0.03} maxPolarAngle={Math.PI * 0.47}
+    onStart={() => { active.current = false; markCamera(gl.domElement, false); }} />;
 }
 
 /**
@@ -307,11 +331,12 @@ function ViewShift({ x, y }: { x: number; y: number }) {
   const camera = useThree((state) => state.camera);
   const size = useThree((state) => state.size);
   const current = useRef({ x, y, w: 0, h: 0 });
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!(camera instanceof THREE.PerspectiveCamera)) return;
     const c = current.current;
-    const nx = Math.abs(x - c.x) < 0.5 ? x : c.x + (x - c.x) * 0.16;
-    const ny = Math.abs(y - c.y) < 0.5 ? y : c.y + (y - c.y) * 0.16;
+    const k = easeStep(0.16, delta);
+    const nx = Math.abs(x - c.x) < 0.5 ? x : c.x + (x - c.x) * k;
+    const ny = Math.abs(y - c.y) < 0.5 ? y : c.y + (y - c.y) * k;
     const sizeChanged = c.w !== size.width || c.h !== size.height;
     if (!sizeChanged && nx === c.x && ny === c.y && camera.view?.enabled) return;
     current.current = { x: nx, y: ny, w: size.width, h: size.height };
@@ -440,7 +465,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const [preset, setPreset] = useState<Preset>("iso");
   const [selected, setSelected] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
-  /** Desktop: the panel floats over the scene and folds away to a pill. */
+  /** Desktop: the panel floats over the scene and folds away to a button («عرض اللوحة»). */
   const [panelOpen, setPanelOpen] = useState(true);
   /** Phones: the panel is a bottom sheet, peeking or open. */
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -625,7 +650,6 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     if (!state.moved) return;
     const height = panel.getBoundingClientRect().height;
     const offset = Math.min(Math.max(0, height - shift.peek), Math.max(0, state.base + dy));
-    panel.style.transition = "none";
     panel.style.transform = `translateY(${offset}px)`;
   };
   const onHandleUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -633,7 +657,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
     const state = drag.current;
     drag.current = null;
     if (!state || !panel) return;
-    panel.style.transition = "";
+    /* The drag's inline position never outlives it: the class alone places the sheet. */
     panel.style.transform = "";
     dragged.current = state.moved;
     if (!state.moved) return;
@@ -742,7 +766,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
   const sheetInert = sheet && !sheetOpen ? true : undefined;
 
   const selection = inspected && (
-    <section className="tw-selection" aria-labelledby={uid + "-selection"} aria-live="polite">
+    <section className="tw-selection" aria-labelledby={uid + "-selection"} aria-live="polite" data-testid="twin-selection">
       <div className="tw-selection__top">
         <span className="tw-selection__system">
           <span className="tw-dot" style={{ "--dot": inspectedSystem?.color } as CSSProperties} aria-hidden="true" />
@@ -761,7 +785,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
 
   return (
     <div className={"twin-studio" + (sheet ? " is-sheet" : "") + (sheet && sheetOpen ? " has-sheet-open" : "")}
-      ref={overlayRef} role="dialog" aria-modal="true"
+      ref={overlayRef} role="dialog" aria-modal="true" data-testid="twin-studio"
       aria-labelledby={titleId} dir="rtl" data-focus={selected !== null || preset === "inside" ? "true" : undefined}>
       <header className="tw-bar">
         <div className="tw-bar__start">
@@ -783,7 +807,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
             {isFullscreen ? <Minimize2 {...ICON}/> : <Maximize2 {...ICON}/>}
           </IconButton>}
           <button type="button" className="btn btn--secondary btn--small tw-bar__back" onClick={onClose}
-            aria-keyshortcuts="Escape">{TWIN_CLOSE}</button>
+            aria-keyshortcuts="Escape" data-testid="twin-close">{TWIN_CLOSE}</button>
         </div>
         {/* Phones: the note sits under the scene switcher, where there is room for it. */}
         <p className="tw-bar__note tw-bar__note--row">{TWIN_NOTE}</p>
@@ -792,7 +816,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
       <div className={"tw-body" + (panelOpen ? "" : " is-collapsed")} ref={stageRef}
         style={{ "--tw-peek": shift.peek + "px" } as CSSProperties}>
         <main className="tw-stage" aria-label="المشهد ثلاثي الأبعاد">
-          <div className="tw-canvas twin-studio__canvas">
+          <div className="tw-canvas twin-studio__canvas" data-testid="twin-canvas">
             <Canvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "high-performance" }}
               camera={{ position: [23, 19, 23], fov: 38, near: 0.06, far: 3200 }}
               onCreated={({gl}) => {
@@ -813,24 +837,24 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
           </div>
           {/* The free part of the stage (beside the panel): only the view switcher floats here. */}
           <div className="tw-free">
-            <div className="tw-views" role="group" aria-label="زاوية العرض">
+            <div className="tw-views" role="group" aria-label="زاوية العرض" data-testid="twin-views">
               <button type="button" className="tw-views__reset" onClick={reset} aria-label="إعادة ضبط المشهد" title="إعادة ضبط المشهد">
                 <RotateCcw {...ICON_SM}/>
               </button>
               <span className="tw-views__rule" aria-hidden="true" />
               {VIEW_PRESETS.map(([key, label]) =>
-                <button type="button" key={key} className="tw-seg__item" aria-pressed={preset === key}
+                <button type="button" key={key} className="tw-seg__item" aria-pressed={preset === key} data-preset={key}
                   onClick={() => {setPreset(key); setSelected(null); setNonce(n => n + 1);}}>{label}</button>)}
             </div>
           </div>
         </main>
 
-        {!sheet && !panelOpen && <button ref={showRef} type="button" className="tw-reopen"
+        {!sheet && !panelOpen && <button ref={showRef} type="button" className="tw-reopen" data-testid="twin-panel-show"
           aria-expanded={false} aria-controls={panelId} onClick={showPanel}>
           <PanelRightOpen {...ICON}/>عرض اللوحة
         </button>}
 
-        <aside id={panelId} ref={panelRef} aria-label="لوحة الاستوديو"
+        <aside id={panelId} ref={panelRef} aria-label="لوحة الاستوديو" data-testid="twin-panel"
           className={"tw-panel" + (inspected ? " has-selection" : "") + (sheet && sheetOpen ? " is-sheet-open" : "")}
           hidden={!sheet && !panelOpen ? true : undefined}>
           <div className="tw-panel__peek" ref={peekRef}>
@@ -838,16 +862,17 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               aria-expanded={sheetOpen} aria-controls={bodyId}
               aria-label={sheetOpen ? "طي اللوحة" : "توسيع اللوحة"}
               onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={onHandleUp}
-              onPointerCancel={onHandleUp} onClick={onHandleClick}>
+              onPointerCancel={onHandleUp} onLostPointerCapture={onHandleUp} onClick={onHandleClick}
+              data-testid="twin-sheet-handle">
               <span aria-hidden="true" />
             </button>}
             <div className="tw-panel__head">
               <div className="tw-panel__heading">
                 <p className="tw-panel__kicker">{kicker}</p>
-                <h2>{sceneTitle}</h2>
+                <h2 data-testid="twin-scene-title">{sceneTitle}</h2>
                 <p className="tw-panel__line">{sceneLine}</p>
               </div>
-              {!sheet && <button type="button" ref={hideRef} className="icon-btn tw-panel__hide"
+              {!sheet && <button type="button" ref={hideRef} className="icon-btn tw-panel__hide" data-testid="twin-panel-hide"
                 aria-label="إخفاء اللوحة" title="إخفاء اللوحة"
                 aria-expanded={true} aria-controls={panelId} onClick={hidePanel}>
                 <PanelRightClose {...ICON}/>
@@ -859,12 +884,13 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               {TABS.map((item, index) => <button type="button" key={item.key} id={uid + "-tab-" + item.key}
                 ref={(el) => { tabRefs.current[index] = el; }}
                 className="tw-seg__item" role="tab" aria-selected={tab === item.key} aria-controls={bodyId}
+                data-testid={"twin-tab-" + item.key}
                 tabIndex={tab === item.key ? 0 : -1} onKeyDown={onTabKey}
                 onClick={() => chooseTab(item.key)}>{item.label}</button>)}
             </div>
           </div>
 
-          <div className="tw-panel__body" id={bodyId} ref={bodyRef} role="tabpanel"
+          <div className="tw-panel__body" id={bodyId} ref={bodyRef} role="tabpanel" data-testid="twin-panel-body"
             aria-labelledby={uid + "-tab-" + tab} tabIndex={0} inert={sheetInert}>
             {tab === "systems" && <>
               <section className="tw-group" aria-labelledby={uid + "-g-systems"}>
@@ -876,7 +902,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                     return <button key={item.key} type="button"
                       className={"tw-row tw-system" + (system === item.key ? " is-active" : "")}
                       style={{ "--dot": item.color } as CSSProperties}
-                      data-network-visible={shown}
+                      data-network-visible={shown} data-system={item.key}
                       onClick={() => setFocusSystem(item.key)} aria-pressed={system === item.key}>
                       {item.key === "all" ? <Layers3 className="tw-system__icon" {...ICON_SM}/>
                         : item.key === "architecture" ? <Building2 className="tw-system__icon" {...ICON_SM}/>
@@ -916,7 +942,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               </section>
               <section className="tw-group" aria-labelledby={uid + "-g-floors"}>
                 <h3 className="tw-group__title" id={uid + "-g-floors"}>الأدوار</h3>
-                <div className="tw-list tw-floors">
+                <div className="tw-list tw-floors" data-testid="twin-floors">
                   {FLOOR_LIST.map(item => <ListRow key={item.key} active={floor === item.key} title={item.label}
                     detail={item.key!=="all" && item.key!=="roof" ? getFloorTitle(activity,Math.max(0,levelOf(item.key))) : undefined}
                     onClick={() => chooseFloor(item.key)} />)}
@@ -957,7 +983,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
               {isBuilding ? <section className="tw-group" aria-labelledby={uid + "-g-points"}>
                 <h3 className="tw-group__title" id={uid + "-g-points"}>نقاط الخدمات التفصيلية</h3>
                 <p className="tw-group__note">{floorTitle}{system!=="all"&&system!=="architecture" ? " · " + SYSTEM_LIST.find(s=>s.key===system)?.label : ""}. اختر نقطة لتقترب منها الكاميرا.</p>
-                <div className="tw-list">
+                <div className="tw-list" data-testid="twin-detail-points">
                   {detailPoints.map(point => <ListRow key={point.id} active={selected === point.id}
                     title={point.label} detail={point.specification} onClick={() => showDetailPoint(point)} />)}
                 </div>
@@ -968,7 +994,7 @@ export function EngineeringTwinStudio({ projectName, activityName, activityId, f
                 <dl className="tw-facts">
                   <div><dt>مصدر هندسة المشهد</dt><dd>إجرائي تجريبي</dd></div>
                   <div><dt>الربط مع IFC</dt><dd>{isBuilding?"غير مرتبط هندسيًا":"معرّفات تجريبية فقط"}</dd></div>
-                  <div><dt>نتائج الفحص</dt><dd>{findingsCount>0?<><span className="num">{findingsCount}</span> غير مطابق في آخر فحص، ولا تُعرض هنا</>:"مستقلة عن هذا المشهد"}</dd></div>
+                  <div><dt>نتائج الفحص</dt><dd>{findingsCount>0?<><span className="num">{findingsCount}</span> {countNoun(findingsCount,FAIL_FORMS)} في آخر فحص، ولا تُعرض هنا</>:"مستقلة عن هذا المشهد"}</dd></div>
                 </dl>
                 <p className="tw-group__note">مشاهد المقهى والمطعم والعمارة أمثلة ثلاثية الأبعاد مولّدة بالكود، وليست هندسة IFC أو مخططات تنفيذ. نتائج الفحص الأصلية مستقلة عنها.</p>
               </section>

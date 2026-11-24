@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Download, FileCode2, FileText, FolderOpen, Info, Layers3, LoaderCircle, MousePointer2, XCircle } from "../brand/icons";
+import { ELEMENT_FORMS, countPhrase } from "./VenueEngineeringData";
 type Kind="architecture"|"mep"|"fire";
 export interface DemoFileElement {
  id:string;sceneId:string;label:string;type:string;floor:number;position:[number,number,number];description:string;system?:string;
@@ -39,7 +40,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
       throw Error("الملف ينقصه عنصر مطلوب: "+element.sceneId);
    }
    setActive(file.id);setFloor("all");
-   setMessage("تمت قراءة "+file.count+" عنصرًا من "+file.name+" وربط معرفاتها بعناصر المجسم التجريبي.");
+   setMessage("قُرئ "+countPhrase(file.count,ELEMENT_FORMS)+" من "+file.name+"، ورُبطت معرّفاتها بعناصر المجسم التجريبي.");
    if(file.elements[0])onPick(file.elements[0]);
   }catch(e){setError(true);setMessage(e instanceof Error?e.message:"تعذرت قراءة الملف");}
   finally{setBusy(null);}
@@ -49,7 +50,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
  return <section className="bim-library" data-testid="bim-demo-library" aria-label="ملفات BIM النموذجية">
    <div className="bim-library__intro">
      <div className="bim-library__title"><FolderOpen size={18}/><strong>ملفات BIM الجاهزة</strong></div>
-     <p>4 ملفات IFC4 مملوءة ببيانات توضيحية لخمس طوابق. اختر ملفًا لاستعراض عناصره داخل التوأم الرقمي.</p>
+     <p>4 ملفات IFC4 مملوءة ببيانات توضيحية لخمسة طوابق. اختر ملفًا لاستعراض عناصره داخل التوأم الرقمي.</p>
      <span className="bim-library__demo"><Info size={13}/> تجربة دلالية اصطناعية؛ المجسم مولّد بالكود وليس من هندسة IFC</span>
    </div>
    {!manifest && !error && <div className="bim-library__loading"><LoaderCircle size={15}/> فتح الفهرس…</div>}
@@ -62,7 +63,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
       </div>
       <p>{f.desc}</p>
       <div className="bim-library__file-actions">
-       <button type="button" onClick={()=>void load(f)} disabled={busy!==null} aria-label={"عرض "+f.name+" في المشهد"}>
+       <button type="button" data-testid="bim-file-open" onClick={()=>void load(f)} disabled={busy!==null} aria-label={"عرض "+f.name+" في المشهد"}>
         {busy===f.id?<LoaderCircle size={13}/>:active===f.id?<CheckCircle2 size={13}/>:<Layers3 size={13}/>}
         {active===f.id?"معروض الآن":"عرض في 3D"}
        </button>
@@ -91,7 +92,7 @@ export function DemoBimPanel({onPick}:{onPick:(element:DemoFileElement)=>void}){
     {error?<XCircle size={14}/>:<CheckCircle2 size={14}/>} {message}
    </p>}
    {file && <div className="bim-library__content" data-testid="bim-file-elements">
-     <header><span><FileText size={14}/><strong>عناصر {file.name}</strong></span><b>{listed.length} عنصر</b></header>
+     <header><span><FileText size={14}/><strong>عناصر {file.name}</strong></span><b>{countPhrase(listed.length,ELEMENT_FORMS)}</b></header>
      <label>عرض العناصر حسب الدور
        <select aria-label="تصفية عناصر BIM حسب الدور" value={floor} onChange={e=>setFloor(e.target.value)}>
         <option value="all">جميع الأدوار (5)</option>
