@@ -42,13 +42,17 @@ export function parseArea(text: string): number {
     .trim()
     .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
     .replace("٫", ".");
-  if (!normalized) return 0;
+  // Plain decimals only: no exponents ("1e3"), signs or separators.
+  if (!/^\d+(\.\d*)?$/.test(normalized)) return 0;
   const value = Number(normalized);
   return Number.isFinite(value) ? value : 0;
 }
 
+/** The largest licensed area the field accepts (m²): well above any single shop, below typos. */
+export const MAX_AREA_M2 = 100000;
+
 export function isAreaValid(area: number): boolean {
-  return Number.isFinite(area) && area > 0;
+  return Number.isFinite(area) && area > 0 && area <= MAX_AREA_M2;
 }
 
 export function formatArea(area: number): string {
@@ -80,7 +84,8 @@ type ErrorKey = keyof typeof copy.check.errors;
 const CODE_TO_KEY: Record<string, ErrorKey> = {
   INVALID_EXTENSION: "type",
   UNSUPPORTED_EXTENSION: "type",
-  INVALID_ENVELOPE: "type",
+  INVALID_ENVELOPE: "notStep",
+  INCOMPLETE_FILE: "incomplete",
   MISSING_SCHEMA: "type",
   NON_IFC_RECORD: "type",
   FILE_TOO_LARGE: "size",
@@ -108,6 +113,14 @@ export interface CheckFailure {
   kind?: ErrorKey;
   stageId?: StageId;
   code?: string;
+}
+
+/** The error a file read fails with (readUpload), as the sentence to show under the picker. */
+export function readFailureMessage(error: unknown): string {
+  const code = error instanceof Error ? error.message : "";
+  if (code === "EMPTY_FILE") return copy.check.errors.empty;
+  if (code === "NOT_STEP") return copy.check.errors.notStep;
+  return copy.check.errors.parse;
 }
 
 export function describeFailure(error: unknown): CheckFailure {

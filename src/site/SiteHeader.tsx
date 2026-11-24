@@ -28,6 +28,17 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const sheetId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  /* The menu is for narrow screens: widening past them (a phone turned sideways) closes it. */
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 834px)");
+    const onChange = () => {
+      if (wide.matches) setOpen(false);
+    };
+    wide.addEventListener?.("change", onChange);
+    return () => wide.removeEventListener?.("change", onChange);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -42,6 +53,24 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
       if (event.key === "Escape") {
         setOpen(false);
         toggleRef.current?.focus();
+        return;
+      }
+      /* Tab stays inside the open menu: the toggle and the sheet's links. */
+      if (event.key !== "Tab" || !headerRef.current) return;
+      const stops = [
+        toggleRef.current,
+        ...headerRef.current.querySelectorAll<HTMLElement>(".gn__sheet a"),
+      ].filter((item): item is HTMLElement => Boolean(item));
+      if (!stops.length) return;
+      const first = stops[0];
+      const last = stops[stops.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !headerRef.current.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !headerRef.current.contains(active))) {
+        event.preventDefault();
+        first.focus();
       }
     };
     const previous = document.body.style.overflow;
@@ -60,7 +89,7 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   };
 
   return (
-    <header className={`gn${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`}>
+    <header ref={headerRef} className={`gn${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`}>
       <div className="gn__inner">
         <Wordmark className="gn__brand" onClick={() => { setOpen(false); onNavigate("home"); }} />
 

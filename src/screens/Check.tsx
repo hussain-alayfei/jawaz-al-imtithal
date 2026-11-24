@@ -17,6 +17,7 @@ import { copy } from "../content/copy";
 import { SAMPLE_FILES, sampleById, type SampleFile, type SampleId } from "../content/samples";
 import { StatusMark } from "../brand/ui";
 import { tallyOf } from "./results/findings";
+import { saveLastCheck } from "../app/lastCheck";
 import {
   STAGE_IDS,
   checkFileMeta,
@@ -27,6 +28,7 @@ import {
   formatDuration,
   isAreaValid,
   parseArea,
+  readFailureMessage,
   readUpload,
   sampleSetup,
   stagesDone,
@@ -44,7 +46,7 @@ const wizard = copy.web.wizard;
 /* Strings this screen needs that copy.ts does not have. */
 const AREA_UNIT = "م²";
 const AREA_UNIT_SPOKEN = "بالمتر المربع";
-const AREA_ERROR = "أدخل مساحة أكبر من صفر.";
+const AREA_ERROR = "أدخل مساحة الترخيص رقمًا أكبر من صفر ولا يتجاوز 100000 م².";
 const DROP_HERE = "اسحب الملف هنا";
 const READING = "جارٍ قراءة الملف.";
 const CANCEL = "إلغاء";
@@ -249,6 +251,8 @@ export default function Check({
         if (signal.aborted) return;
         setOutcome({ key: request.key, run: result });
         setNotice(wizard.done);
+        // Kept on this device only, so a reload of the results or the report can rebuild them.
+        void saveLastCheck({ upload, activityId: request.activityId, facility: request.facility });
       } catch (error: unknown) {
         if (signal.aborted) return;
         setOutcome({ key: request.key, failure: describeFailure(error) });
@@ -342,9 +346,9 @@ export default function Check({
       focusFileRow.current = true;
       setFile(upload);
       setChoice("file");
-    } catch {
+    } catch (error: unknown) {
       if (token !== readToken.current) return;
-      setFileError(copy.check.errors.parse);
+      setFileError(readFailureMessage(error));
     } finally {
       if (token === readToken.current) setReading(false);
     }
@@ -837,10 +841,10 @@ export default function Check({
                     <StatusMark status="fail" label={`${tally.failed} ${copy.status.fail}`} />
                   </li>
                   <li>
-                    <StatusMark status="pass" label={`${tally.passed} ${copy.status.pass}`} />
+                    <StatusMark status="unknown" label={`${tally.unknown} ${copy.status.unknown}`} />
                   </li>
                   <li>
-                    <StatusMark status="unknown" label={`${tally.unknown} ${copy.status.unknown}`} />
+                    <StatusMark status="pass" label={`${tally.passed} ${copy.status.pass}`} />
                   </li>
                 </ul>
                 <div className="ck-foot">

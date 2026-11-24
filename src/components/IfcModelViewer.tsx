@@ -1556,7 +1556,7 @@ export default function IfcModelViewer({
                 <LayoutGrid size={18} strokeWidth={1.6} />
               </IconButton>
               {layers.length > 0 && (
-                <IconButton label="طبقات الشبكات" aria-pressed={layersOpen} aria-controls="vw-layers"
+                <IconButton label="طبقات الشبكات" aria-pressed={layersOpen} aria-controls={layersOpen ? "vw-layers" : undefined}
                   onClick={() => setLayersOpen((v) => !v)} data-testid="ifc-layers-toggle">
                   <Layers size={18} strokeWidth={1.6} />
                 </IconButton>

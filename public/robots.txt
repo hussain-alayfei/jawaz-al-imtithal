@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jawaz-al-imtithal.vercel.app/sitemap.xml

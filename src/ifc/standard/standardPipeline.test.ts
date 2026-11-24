@@ -334,7 +334,7 @@ describe("building services read from the file (systems, ports, connections)", (
         activityId: "restaurant",
         facility: getDefaultFacility("restaurant"),
       }),
-    ).rejects.toMatchObject({ code: "INVALID_ENVELOPE" });
+    ).rejects.toMatchObject({ code: "INCOMPLETE_FILE" });
   });
 
   it.each([

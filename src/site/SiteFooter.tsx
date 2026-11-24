@@ -1,15 +1,22 @@
 import { useState } from "react";
 import { copy } from "../content/copy";
-import { SAMPLE_FILES } from "../content/samples";
+import { SAMPLE_FILES, type SampleId } from "../content/samples";
 import type { NavTarget } from "./SiteHeader";
 import "./site.css";
 
 const REQUIREMENTS_URL = "https://momah.gov.sa/ar/node/14955";
 
-type Item = { label: string; href: string; target?: NavTarget; download?: string; external?: boolean };
+type Item = { label: string; href: string; target?: NavTarget; sample?: SampleId; external?: boolean };
 
 /** Footer: fine print first, then a small link directory, then the legal line. */
-export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => void }) {
+export function SiteFooter({
+  onNavigate,
+  onSample,
+}: {
+  onNavigate: (target: NavTarget) => void;
+  /** Open the check on its review step with this sample chosen. */
+  onSample: (id: SampleId) => void;
+}) {
   const [openCol, setOpenCol] = useState<number>();
   const year = new Date().getFullYear();
 
@@ -29,7 +36,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
     },
     {
       title: copy.web.footer.files,
-      items: SAMPLE_FILES.map((sample) => ({ label: sample.label, href: sample.url, download: sample.fileName })),
+      items: SAMPLE_FILES.map((sample) => ({ label: sample.label, href: `#/check?sample=${sample.id}`, sample: sample.id })),
     },
     {
       title: copy.web.footer.twin,
@@ -46,7 +53,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
           ))}
         </div>
 
-        <nav className="gf__dir" aria-label={copy.web.nav.label}>
+        <nav className="gf__dir" aria-label={copy.web.nav.footerLabel}>
           {columns.map((column, index) => {
             const expanded = openCol === index;
             const listId = `gf-col-${index}`;
@@ -68,14 +75,15 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
                     <li key={item.label}>
                       <a
                         href={item.href}
-                        download={item.download}
                         target={item.external ? "_blank" : undefined}
                         rel={item.external ? "noreferrer" : undefined}
                         onClick={
-                          item.target
+                          item.target || item.sample
                             ? (event) => {
+                                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                                 event.preventDefault();
-                                onNavigate(item.target!);
+                                if (item.sample) onSample(item.sample);
+                                else onNavigate(item.target!);
                               }
                             : undefined
                         }

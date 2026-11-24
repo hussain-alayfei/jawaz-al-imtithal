@@ -215,7 +215,7 @@ export async function runStandardStages({
     if (!complete) {
       throw new IfcProcessingError(
         "validate",
-        "INVALID_ENVELOPE",
+        "INCOMPLETE_FILE",
         "الملف غير مكتمل: لا ينتهي بالسطر END-ISO-10303-21، وربما انقطع أثناء التصدير أو الرفع.",
       );
     }
@@ -279,7 +279,7 @@ export async function runStandardStages({
       throw new IfcProcessingError(
         "completeness",
         "STANDARD_ACTIVITY_UNSUPPORTED",
-        "فحص ملفات IFC القياسية متاح حاليًا لنشاط المطعم فقط. اختر نشاط المطعم أو ارفع ملفًا بعقد بيانات موائم.",
+        "فحص ملفات IFC القياسية متاح حاليًا لنشاط المطاعم فقط، فاختر «مطعم» في بيانات المشروع.",
       );
     }
     const classified = facts.spaces.filter((s) => s.role).length;

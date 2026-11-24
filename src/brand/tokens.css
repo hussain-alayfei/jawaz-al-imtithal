@@ -535,3 +535,26 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* Skip link: hidden until focused, then the first thing on the page. */
+.skip-link {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--radius-btn);
+  background: var(--brand);
+  color: #ffffff;
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.app__screen[hidden] {
+  display: none;
+}

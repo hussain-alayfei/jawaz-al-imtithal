@@ -13,8 +13,7 @@ import {
   sampleSetup,
   stagesDone,
   stepStatus,
-  withFacilityDefaults,
-} from "./logic";
+  withFacilityDefaults, readFailureMessage, isAreaValid } from "./logic";
 
 describe("check screen helpers", () => {
   it("accepts only .ifc files up to 50 MB", () => {
@@ -28,12 +27,23 @@ describe("check screen helpers", () => {
     expect(parseArea("٢٨٤٫٥")).toBe(284.5);
     expect(parseArea("")).toBe(0);
     expect(parseArea("abc")).toBe(0);
+    expect(parseArea("1e3")).toBe(0);
+    expect(isAreaValid(99999999)).toBe(false);
   });
 
   it("maps engine errors to the short copy and keeps the engine message", () => {
-    const type = describeFailure(new IfcProcessingError("validate", "INVALID_ENVELOPE", "الملف لا يبدأ بغلاف STEP."));
+    const type = describeFailure(new IfcProcessingError("validate", "INVALID_EXTENSION", "الملف ليس بامتداد .ifc."));
     expect(type.headline).toBe(copy.check.errors.type);
-    expect(type.detail).toBe("الملف لا يبدأ بغلاف STEP.");
+    expect(type.detail).toBe("الملف ليس بامتداد .ifc.");
+
+    const notStep = describeFailure(new IfcProcessingError("validate", "INVALID_ENVELOPE", "الملف لا يبدأ بغلاف STEP."));
+    expect(notStep.headline).toBe(copy.check.errors.notStep);
+
+    const cut = describeFailure(new IfcProcessingError("validate", "INCOMPLETE_FILE", "الملف غير مكتمل."));
+    expect(cut.headline).toBe(copy.check.errors.incomplete);
+    expect(readFailureMessage(new Error("EMPTY_FILE"))).toBe(copy.check.errors.empty);
+    expect(readFailureMessage(new Error("NOT_STEP"))).toBe(copy.check.errors.notStep);
+    expect(readFailureMessage(new Error("other"))).toBe(copy.check.errors.parse);
 
     const activity = describeFailure(
       new IfcProcessingError("completeness", "STANDARD_ACTIVITY_UNSUPPORTED", "متاح لنشاط المطعم فقط."),
