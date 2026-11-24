@@ -644,11 +644,11 @@
   }
 
   /* The frame is 78% of the screen tall, or 4:5 of its width when that is lower (so a 16:9 render keeps
-     most of its width). The frame and the rail pin together, centred in the space under the header and
+     most of its width), and never so tall that the rail under it leaves the screen. The frame and the rail pin together, centred in the space under the header and
      at least 24px below it. */
   .hm-story__pin {
-    --hm-frame-h: min(78vh, 80cqi);
     --hm-rail-h: 68px;
+    --hm-frame-h: min(78vh, 80cqi, 100vh - var(--header-h) - var(--hm-rail-h) - 48px);
     position: sticky;
     inset-block-start: max(
       calc(var(--header-h) + 24px),
