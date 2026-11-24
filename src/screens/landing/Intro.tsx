@@ -55,7 +55,6 @@ export function Intro() {
             />
           </div>
           <figcaption className="hm-intro__caption">
-            <span>{copy.web.intro.caption}</span>
             <span className="hm-intro__credit">{copy.web.intro.credit}</span>
           </figcaption>
         </figure>
