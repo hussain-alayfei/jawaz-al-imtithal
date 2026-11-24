@@ -41,9 +41,17 @@ function routeFromHash(hash: string): Route {
   return "landing";
 }
 
-/** "#/how", "#/clauses", "#/model": the landing page scrolled to that section (shareable links). */
+/** The header link that matches the page: the check, a home-page section opened by its link, or home. */
+function headerCurrent(route: string): NavTarget | undefined {
+  if (route === "check") return "check";
+  if (route !== "landing") return undefined;
+  const section = /^#\/(model|clauses|faq)$/.exec(window.location.hash)?.[1];
+  return (section as NavTarget | undefined) ?? "home";
+}
+
+/** "#/how", "#/clauses", "#/model", "#/faq": the landing page scrolled to that section (shareable links). */
 function sectionFromHash(hash: string): string | undefined {
-  const match = /^#\/(how|clauses|model)$/.exec(hash);
+  const match = /^#\/(how|clauses|model|faq)$/.exec(hash);
   return match ? `home-${match[1]}` : undefined;
 }
 
@@ -193,7 +201,7 @@ export default function App() {
 
   return (
     <div className="app" dir="rtl" lang="ar">
-      {route !== "twin" && <SiteHeader current={route === "check" ? "check" : undefined} onNavigate={navigate} />}
+      {route !== "twin" && <SiteHeader current={headerCurrent(route)} onNavigate={navigate} />}
 
       {route === "landing" && <Landing onStart={startCheck} onSample={startSample} onTwin={() => go("twin")} />}
 

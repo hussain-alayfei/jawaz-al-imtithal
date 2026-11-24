@@ -3,9 +3,15 @@ import laptopModelUrl from "../../assets/site/laptop-model.webp";
 import reportDeskUrl from "../../assets/site/report-desk.webp";
 import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
+import { SIZES, srcSetOf } from "./images";
 import { HOME } from "./strings";
 
-const IMAGES = [planDeskUrl, laptopModelUrl, reportDeskUrl];
+/* 1536×1152 originals, with smaller copies for srcset. */
+const IMAGES = [
+  { src: planDeskUrl, srcSet: srcSetOf("plan-desk", planDeskUrl, 1536) },
+  { src: laptopModelUrl, srcSet: srcSetOf("laptop-model", laptopModelUrl, 1536) },
+  { src: reportDeskUrl, srcSet: srcSetOf("report-desk", reportDeskUrl, 1536) },
+];
 
 /** The three stages of a check: three rows, a large picture (about 58% of the row) and its words side by
     side, the picture changing sides each row (in RTL the first row's picture sits on the visual left). */
@@ -28,7 +34,9 @@ export function HowRows() {
             <div className="hm-row__media">
               <img
                 className="hm-row__img"
-                src={IMAGES[index]}
+                src={IMAGES[index].src}
+                srcSet={IMAGES[index].srcSet}
+                sizes={SIZES.rows}
                 alt={HOME.howAlts[index]}
                 width={1536}
                 height={1152}

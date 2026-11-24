@@ -8,7 +8,7 @@ const REQUIREMENTS_URL = "https://momah.gov.sa/ar/node/14955";
 
 type Item = { label: string; href: string; target?: NavTarget; download?: string; external?: boolean };
 
-/** Apple-style footer: fine print first, then a small link directory, then the legal line. */
+/** Footer: fine print first, then a small link directory, then the legal line. */
 export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => void }) {
   const [openCol, setOpenCol] = useState<number>();
   const year = new Date().getFullYear();
@@ -20,6 +20,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (target: NavTarget) => 
         { label: copy.web.nav.cta, href: "#/check", target: "check" },
         { label: copy.web.nav.model, href: "#/model", target: "model" },
         { label: copy.web.nav.rules, href: "#/clauses", target: "clauses" },
+        { label: copy.web.nav.faq, href: "#/faq", target: "faq" },
       ],
     },
     {

@@ -45,11 +45,12 @@
   --page-max: 1120px;
   --text-max: 680px;
 
-  --radius: 12px;
-  --radius-lg: 22px;
-  --radius-xl: 30px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-pill: 980px;
-  --header-h: 64px;
+  --radius-btn: 4px;
+  --header-h: 72px;
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -82,7 +83,7 @@
 
 @media (max-width: 833px) {
   :root {
-    --header-h: 56px;
+    --header-h: 60px;
   }
 }
 
@@ -172,9 +173,9 @@ img {
   padding-inline: var(--gutter);
 }
 
-/* Buttons: pills at system proportions. Regular weight, 17px, 44px tall; one filled green primary, an
-   outlined secondary of the same size, and text links with a thin chevron for everything else. No scaling,
-   glow or heavy shadow: colour alone says it is pressable. */
+/* Buttons: formal and rectangular. A 4px radius, medium weight, 44px tall (48px large); one solid green
+   primary, a white secondary with a green border, and plain text links for everything else. No pills,
+   blur, glow or press scaling. */
 .btn {
   --btn-bg: transparent;
   --btn-fg: var(--brand);
@@ -182,35 +183,35 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   min-height: 44px;
-  padding: 10px 22px;
+  padding: 9px 22px;
   border: 1px solid var(--btn-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--btn-bg);
   color: var(--btn-fg);
   font-family: var(--font);
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.2;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 160ms var(--ease),
-    border-color 160ms var(--ease),
-    color 160ms var(--ease);
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
 }
 
 .btn .icon {
   flex: none;
-  width: 1.1em;
-  height: 1.1em;
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .btn[disabled],
 .btn[aria-disabled="true"] {
-  opacity: 0.38;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -223,37 +224,36 @@ img {
 
 .btn--primary:hover,
 .btn--accent:hover {
-  --btn-bg: #0c8a57;
-  --btn-border: #0c8a57;
-}
-
-.btn--primary:active,
-.btn--accent:active {
   --btn-bg: var(--brand-hover);
   --btn-border: var(--brand-hover);
 }
 
+.btn--primary:active,
+.btn--accent:active {
+  --btn-bg: #06522f;
+  --btn-border: #06522f;
+}
+
 .btn--secondary {
-  --btn-bg: transparent;
+  --btn-bg: #ffffff;
   --btn-fg: var(--brand);
   --btn-border: var(--brand);
 }
 
 .btn--secondary:hover {
-  --btn-bg: var(--brand);
-  --btn-fg: var(--brand-ink);
+  --btn-bg: var(--brand-tint);
 }
 
-/* Grey pill for quiet actions next to a primary (like a system "gray" button). */
+/* Neutral action next to a primary: white with a grey border and dark text. */
 .btn--quiet {
-  --btn-bg: var(--surface-2);
+  --btn-bg: #ffffff;
   --btn-fg: var(--ink);
-  --btn-border: var(--surface-2);
+  --btn-border: var(--line-strong);
 }
 
 .btn--quiet:hover {
-  --btn-bg: #dcdce1;
-  --btn-border: #dcdce1;
+  --btn-bg: var(--surface);
+  --btn-border: var(--ink-2);
 }
 
 .btn--on-dark,
@@ -264,14 +264,14 @@ img {
 }
 
 .btn--large {
-  min-height: 50px;
-  padding: 12px 28px;
-  font-size: 18px;
+  min-height: 48px;
+  padding: 11px 26px;
+  font-size: 17px;
 }
 
 .btn--small {
-  min-height: 32px;
-  padding: 5px 15px;
+  min-height: 34px;
+  padding: 5px 14px;
   font-size: 14px;
 }
 
@@ -280,35 +280,34 @@ img {
   align-items: center;
 }
 
-/* Text link. Add .link--more for the thin chevron («آلية الفحص ‹»). */
+/* Text link. Add .link--more for a small arrow («آلية الفحص ←»). */
 .link {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--brand);
   font: inherit;
-  font-weight: 400;
+  font-weight: 500;
   text-decoration: none;
   cursor: pointer;
 }
 
 .link:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
 }
 
 .link--more::after {
   content: "";
-  width: 0.7em;
-  height: 0.7em;
-  margin-inline-start: 2px;
+  width: 0.85em;
+  height: 0.85em;
   background: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.25 2.75 5 8l5.25 5.25' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10.25 2.75 5 8l5.25 5.25' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13 8H3m4-4L3 8l4 4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13 8H3m4-4L3 8l4 4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 /* Glyphs (src/brand/icons.tsx) sit on the text's centre line. */
@@ -318,31 +317,31 @@ img {
   vertical-align: -0.15em;
 }
 
-/* Round icon buttons: a translucent grey disc with a dark glyph; pressed (a tool switched on) is ink. */
+/* Icon buttons: white squares with a grey border and a dark glyph; a tool switched on is green. */
 .icon-btn {
   display: inline-grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  border: 0;
-  background: rgb(210 210 215 / 0.64);
-  color: rgb(0 0 0 / 0.66);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
   cursor: pointer;
   transition:
-    background-color 160ms var(--ease),
-    color 160ms var(--ease);
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
 }
 
 .icon-btn:hover {
-  background: rgb(223 223 227 / 0.86);
-  color: rgb(0 0 0 / 0.8);
+  background: var(--surface);
+  border-color: var(--line-strong);
 }
 
 .icon-btn[aria-pressed="true"] {
-  background: var(--ink);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #ffffff;
 }
 
@@ -353,12 +352,13 @@ img {
   }
 }
 
-/* Segmented control: a grey track and a raised white thumb for the chosen item. Screens build theirs from
-   these values (.rs-seg, .vw__views, .tw-seg). */
+/* Segmented control (a button group): one bordered box, items divided by thin lines, the chosen item
+   filled green. Screens build theirs from these values (.rs-seg, .vw__views, .tw-seg). */
 :root {
-  --seg-track: #e8e8ed;
-  --seg-thumb: #ffffff;
-  --seg-thumb-shadow: 0 1px 2px rgb(0 0 0 / 0.1), 0 0 0 0.5px rgb(0 0 0 / 0.06);
+  --seg-track: #ffffff;
+  --seg-border: var(--line-strong);
+  --seg-on: var(--brand);
+  --seg-on-ink: #ffffff;
 }
 
 /* Status marks: a round glyph plus the status word. */

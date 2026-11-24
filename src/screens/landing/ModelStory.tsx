@@ -6,6 +6,7 @@ import story4Url from "../../assets/site/story-4.webp";
 import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
 import { follow } from "./follow";
+import { SIZES, srcSetOf } from "./images";
 import { HOME } from "./strings";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -14,6 +15,8 @@ import { useMediaQuery } from "./useMediaQuery";
 const SHOTS: readonly string[] = [story1Url, story2Url, story3Url, story4Url];
 const SHOT_WIDTH = 1920;
 const SHOT_HEIGHT = 1080;
+/* The files are 2400×1350, with smaller copies for srcset (scripts/responsive-images.py). */
+const SHOT_SRCSETS: readonly string[] = SHOTS.map((url, index) => srcSetOf(`story-${index + 1}`, url, 2400));
 
 /** From this width the story runs beside one pinned frame; below it each step shows its own picture. */
 const WIDE = "(min-width: 1024px)";
@@ -25,6 +28,8 @@ function ShotImage({ index, active }: { index: number; active?: boolean }) {
       data-active={active || undefined}
       aria-hidden={active === false ? true : undefined}
       src={SHOTS[index]}
+      srcSet={SHOT_SRCSETS[index]}
+      sizes={SIZES.story}
       alt={HOME.modelAlts[index]}
       width={SHOT_WIDTH}
       height={SHOT_HEIGHT}

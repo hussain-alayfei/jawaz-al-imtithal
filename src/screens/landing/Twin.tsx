@@ -1,7 +1,10 @@
 import twinUrl from "../../assets/site/twin.webp";
 import { copy } from "../../content/copy";
 import { follow } from "./follow";
+import { SIZES, srcSetOf } from "./images";
 import { HOME } from "./strings";
+
+const TWIN_SRCSET = srcSetOf("twin", twinUrl, 1600);
 
 /** The digital twin studio: one row, a large picture on the visual right and the words beside it. The
     picture is the studio's own 3D scene, captured with its panels hidden. */
@@ -15,6 +18,8 @@ export function Twin({ onTwin }: { onTwin: () => void }) {
             <img
               className="hm-row__img hm-row__img--wide"
               src={twinUrl}
+              srcSet={TWIN_SRCSET}
+              sizes={SIZES.twin}
               alt={HOME.twinAlt}
               width={1600}
               height={1000}

@@ -2,14 +2,16 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import heroUrl from "../../assets/site/hero.webp";
 import { copy } from "../../content/copy";
 import { Latin } from "./Latin";
-import { follow, goToSection } from "./follow";
+import { Box } from "../../brand/icons";
+import { follow } from "./follow";
+import { SIZES, srcSetOf } from "./images";
 
 /** The opening photograph, edge to edge: the whole building stands low in the frame and the evening sky
     above it carries the headline, one line and two actions in white. The sky's own colour sits behind the
     photo (and continues it upward where the screen is narrower than the photo), so the words are readable
-    before the file arrives; the photo then fades in and settles. Scrolling out of the hero, the words lift
-    and fade, the photo drifts and grows a little, and the lower corners round off (--hp, 0 to 1). */
-export function Hero({ onStart }: { onStart: () => void }) {
+    before the file arrives; the photo and the words then fade in. Two actions: start a check, or open the
+    digital twin studio. */
+export function Hero({ onStart, onTwin }: { onStart: () => void; onTwin: () => void }) {
   const { hero } = copy.web;
   const heroRef = useRef<HTMLElement>(null);
   const headRef = useRef<HTMLDivElement>(null);
@@ -21,38 +23,6 @@ export function Hero({ onStart }: { onStart: () => void }) {
     /* A slow network never keeps the picture hidden. */
     const timeout = window.setTimeout(() => setReady(true), 2500);
     return () => window.clearTimeout(timeout);
-  }, []);
-
-  /* How far the page has scrolled past the hero, 0 to 1, for the stylesheet's exit motion. */
-  useEffect(() => {
-    const section = heroRef.current;
-    if (!section) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-    let last = "";
-    const update = () => {
-      frame = 0;
-      const height = section.offsetHeight || 1;
-      const progress = reduce.matches ? 0 : Math.min(1, Math.max(0, window.scrollY / height));
-      const value = progress.toFixed(4);
-      if (value !== last) {
-        last = value;
-        section.style.setProperty("--hp", value);
-      }
-    };
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    reduce.addEventListener?.("change", schedule);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      reduce.removeEventListener?.("change", schedule);
-    };
   }, []);
 
   /* Where the words end, for the stylesheet: the photo is set low enough that the palms start below the
@@ -75,6 +45,8 @@ export function Hero({ onStart }: { onStart: () => void }) {
           ref={imageRef}
           className="hm-hero__img"
           src={heroUrl}
+          srcSet={srcSetOf("hero", heroUrl, 2400)}
+          sizes={SIZES.hero}
           alt={hero.imageAlt}
           width={2400}
           height={1200}
@@ -94,15 +66,12 @@ export function Hero({ onStart }: { onStart: () => void }) {
           <Latin text={hero.sub} />
         </p>
         <div className="hm-hero__actions">
-          <a href="#/check" className="btn btn--large hm-hero__cta" onClick={follow(onStart)}>
+          <a href="#/check" className="btn btn--primary btn--large hm-hero__cta" onClick={follow(onStart)}>
             {hero.cta}
           </a>
-          <a
-            href="#/model"
-            className="btn btn--large hm-hero__ghost"
-            onClick={follow(() => goToSection("home-model", "#/model"))}
-          >
-            {hero.link}
+          <a href="#/twin" className="btn btn--large hm-hero__twin" onClick={follow(onTwin)}>
+            <Box size={20} />
+            {hero.twin}
           </a>
         </div>
       </div>

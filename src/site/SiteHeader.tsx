@@ -3,7 +3,7 @@ import { Wordmark } from "../brand/ui";
 import { copy } from "../content/copy";
 import "./site.css";
 
-export type NavTarget = "home" | "how" | "clauses" | "model" | "twin" | "check";
+export type NavTarget = "home" | "how" | "clauses" | "model" | "faq" | "twin" | "check";
 
 export interface SiteHeaderProps {
   /** The link that matches the current page, for aria-current. */
@@ -11,14 +11,18 @@ export interface SiteHeaderProps {
   onNavigate: (target: NavTarget) => void;
 }
 
+/* Order: home, the service itself, how it works, what it checks against, then questions. The digital twin
+   is a separate studio reached from the hero and the footer, not a page of the service. */
 const LINKS: { target: NavTarget; label: string; href: string }[] = [
+  { target: "home", label: copy.web.nav.home, href: "#/" },
   { target: "check", label: copy.web.nav.check, href: "#/check" },
   { target: "model", label: copy.web.nav.model, href: "#/model" },
   { target: "clauses", label: copy.web.nav.rules, href: "#/clauses" },
-  { target: "twin", label: copy.web.nav.twin, href: "#/twin" },
+  { target: "faq", label: copy.web.nav.faq, href: "#/faq" },
 ];
 
-/** Translucent global navigation: wordmark and four links. The check starts from the page content, not the header. */
+/** Global navigation: the wordmark at the start, then five links. Solid white with a rule underneath; the
+    current page carries a green bar. */
 export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -88,6 +92,7 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
         >
           <span aria-hidden="true" />
           <span aria-hidden="true" />
+          <span aria-hidden="true" />
         </button>
       </div>
 
@@ -95,7 +100,12 @@ export function SiteHeader({ current, onNavigate }: SiteHeaderProps) {
         <ul>
           {LINKS.map((link) => (
             <li key={link.target}>
-              <a href={link.href} className="gn__sheet-link" onClick={go(link.target)}>
+              <a
+                href={link.href}
+                className="gn__sheet-link"
+                aria-current={current === link.target ? "page" : undefined}
+                onClick={go(link.target)}
+              >
                 {link.label}
               </a>
             </li>

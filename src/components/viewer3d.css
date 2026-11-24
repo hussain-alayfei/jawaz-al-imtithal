@@ -75,20 +75,21 @@
 }
 
 .v3__tools .icon-btn {
-  background: rgb(232 232 237 / 0.86);
-  color: rgb(0 0 0 / 0.72);
+  background: #ffffff;
+  border-color: var(--seg-border);
+  color: var(--ink);
 }
 
 .v3__tools .icon-btn:hover:not(:disabled) {
-  background: rgb(222 222 227 / 0.94);
-  color: var(--ink);
+  background: var(--surface);
 }
 
 .v3__tools .icon-btn.is-active,
 .v3__tools .icon-btn[aria-pressed="true"],
 .v3__tools .icon-btn.is-active:hover,
 .v3__tools .icon-btn[aria-pressed="true"]:hover {
-  background: var(--ink);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #ffffff;
 }
 

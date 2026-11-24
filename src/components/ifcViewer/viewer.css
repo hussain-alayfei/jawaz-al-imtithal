@@ -158,13 +158,12 @@
 
 .vw__views {
   display: inline-flex;
-  padding: 3px;
-  gap: 2px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: rgb(232 232 237 / 0.86);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--seg-border);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+  background: #ffffff;
   box-shadow: var(--vw-shadow);
 }
 
@@ -173,12 +172,12 @@
   height: 38px;
   padding-inline: 14px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   background: transparent;
   color: var(--ink-2);
   font: inherit;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -187,15 +186,18 @@
     color 200ms var(--ease);
 }
 
+.vw-seg + .vw-seg {
+  border-inline-start: 1px solid var(--seg-border);
+}
+
 .vw-seg:hover:not(:disabled):not([aria-pressed="true"]) {
+  background: var(--surface);
   color: var(--ink);
 }
 
 .vw-seg[aria-pressed="true"] {
-  background: var(--seg-thumb);
-  color: var(--ink);
-  font-weight: 500;
-  box-shadow: var(--seg-thumb-shadow);
+  background: var(--seg-on);
+  color: var(--seg-on-ink);
 }
 
 .vw-seg:disabled {
@@ -221,20 +223,21 @@
   gap: 8px;
 }
 
-/* Round icon buttons over the scene: frosted grey discs with a dark glyph; a tool switched on is ink. */
+/* Icon tools over the scene: white squares with a grey border; a tool switched on is green. */
 .vw__tools .icon-btn {
-  background: rgb(232 232 237 / 0.86);
-  color: rgb(0 0 0 / 0.72);
+  background: #ffffff;
+  border-color: var(--seg-border);
+  color: var(--ink);
 }
 
 .vw__tools .icon-btn:hover:not(:disabled) {
-  background: rgb(222 222 227 / 0.94);
-  color: var(--ink);
+  background: var(--surface);
 }
 
 .vw__tools .icon-btn[aria-pressed="true"],
 .vw__tools .icon-btn[aria-pressed="true"]:hover {
-  background: var(--ink);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #ffffff;
 }
 
@@ -248,7 +251,7 @@
   max-width: 160px;
   padding-inline: 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   background: var(--paper);
   color: var(--ink);
   font: inherit;
