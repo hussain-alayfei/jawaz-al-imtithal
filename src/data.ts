@@ -13,7 +13,19 @@ export interface FacilityDetails {
   area: number;
   floors: number;
   capacity: number;
+  /** Commercial registration number (10 digits), optional; entered on the check page's first step. */
+  commercialRegistration?: string;
+  /**
+   * The visitor's own answers for clauses a file cannot prove (check page, «متطلبات المنشأة»). A declaration
+   * only: it never changes a clause's status.
+   */
+  declarations?: FacilityDeclarations;
 }
+
+/** Clauses the visitor answers for themselves on the check page (see src/screens/check/declarations.ts). */
+export type DeclarationId = "facade" | "ventilation" | "access";
+export type DeclarationAnswer = "yes" | "no" | "unsure";
+export type FacilityDeclarations = Partial<Record<DeclarationId, DeclarationAnswer>>;
 
 export interface ModelMetadata {
   activityId: ActivityId;
@@ -174,6 +186,35 @@ export const getDefaultFacility = (activityId: ActivityId): FacilityDetails => (
 });
 
 export const defaultFacility = getDefaultFacility("restaurant");
+
+/** Cities offered on the check page's «الموقع والمساحة» step: the main Saudi cities, then «مدينة أخرى». */
+export const saudiCities: readonly string[] = [
+  "الرياض",
+  "جدة",
+  "مكة المكرمة",
+  "المدينة المنورة",
+  "الدمام",
+  "الخبر",
+  "الظهران",
+  "الأحساء",
+  "الجبيل",
+  "الطائف",
+  "تبوك",
+  "بريدة",
+  "حائل",
+  "أبها",
+  "خميس مشيط",
+  "جازان",
+  "نجران",
+  "الباحة",
+  "سكاكا",
+  "عرعر",
+  "ينبع",
+  "مدينة أخرى",
+];
+
+/** Building types offered on the same step. */
+export const buildingTypes: readonly string[] = ["مبنى مستقل", "ضمن مجمع تجاري", "ضمن مبنى متعدد الاستخدامات"];
 
 const sharedPasses: Finding[] = [
   {

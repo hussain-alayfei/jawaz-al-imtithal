@@ -36,12 +36,16 @@ export async function readUpload(file: File): Promise<IfcUpload> {
   return { name: file.name, size: bytes.byteLength, bytes, lastModified: file.lastModified };
 }
 
+/** Arabic-Indic and Persian digits as Western digits («١٢٣» and «۱۲۳» become "123"). */
+export function normalizeDigits(text: string): string {
+  return text
+    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0));
+}
+
 /** Licence area typed in the field; anything that is not a positive number is 0. */
 export function parseArea(text: string): number {
-  const normalized = text
-    .trim()
-    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
-    .replace("٫", ".");
+  const normalized = normalizeDigits(text.trim()).replace("٫", ".");
   // Plain decimals only: no exponents ("1e3"), signs or separators.
   if (!/^\d+(\.\d*)?$/.test(normalized)) return 0;
   const value = Number(normalized);
@@ -60,8 +64,8 @@ export function formatArea(area: number): string {
 }
 
 /**
- * The check page asks only for the activity and the licence area. The engine also needs the
- * other facility fields, so any that are blank fall back to the activity's defaults.
+ * The engine needs every facility field; any left blank (a sample link skips the data steps) falls back
+ * to the activity's defaults.
  */
 export function withFacilityDefaults(facility: FacilityDetails, activityId: ActivityId): FacilityDetails {
   const defaults = getDefaultFacility(activityId);
@@ -166,14 +170,61 @@ export function stagesDone(stages: readonly { state: string }[]): number {
   return stages.filter((stage) => stage.state === "completed").length;
 }
 
-/** The check is a three-step wizard: project data, plan file, review and check. */
-export type WizardStep = 1 | 2 | 3;
+/** The trade name is required; anything but spaces will do. */
+export function isProjectNameValid(name: string): boolean {
+  return name.trim().length > 0;
+}
+
+/** The commercial registration number as stored: Western digits, spaces removed. */
+export function normalizeRegistration(text: string): string {
+  return normalizeDigits(text).replace(/\s+/g, "");
+}
+
+/** Optional: a blank field is valid; anything typed must be exactly 10 digits. */
+export function isRegistrationValid(text: string): boolean {
+  const value = normalizeRegistration(text);
+  return value === "" || /^\d{10}$/.test(value);
+}
+
+/** The most floors the field accepts: the floors the activity occupies, not the whole tower. */
+export const MAX_FLOORS = 20;
+
+/** Number of floors typed in the field; anything that is not a whole number is 0. */
+export function parseFloors(text: string): number {
+  const value = normalizeDigits(text.trim());
+  return /^\d{1,3}$/.test(value) ? Number(value) : 0;
+}
+
+export function isFloorsValid(floors: number): boolean {
+  return Number.isInteger(floors) && floors >= 1 && floors <= MAX_FLOORS;
+}
+
+export function formatFloors(floors: number): string {
+  return isFloorsValid(floors) ? String(floors) : "";
+}
+
+/** Date of a run as the report shows it, with Western digits. */
+export function formatRunDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "long" }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+/**
+ * The check is a seven-step wizard: activity, location and area, related bodies, files, facility
+ * requirements, the digital copy (review and run) and the passport (after a finished run).
+ */
+export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export const WIZARD_STEPS: readonly WizardStep[] = [1, 2, 3, 4, 5, 6, 7];
 
 export type StepStatus = "done" | "current" | "upcoming";
 
 /**
  * How the step indicator draws a step. Steps before the current one are done (and lead back); the current step
- * also shows as done once the check has finished, so the indicator ends with three checks.
+ * also shows as done once its work is finished (the run on step 6).
  */
 export function stepStatus(step: WizardStep, current: WizardStep, finished = false): StepStatus {
   if (step < current) return "done";
