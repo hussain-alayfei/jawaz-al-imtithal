@@ -184,7 +184,7 @@ const openPlanStep = async (page, context) => {
   await expectHeading(page, WIZARD.locationTitle, context);
   await main.getByLabel("المدينة").selectOption("الرياض");
   await main.getByLabel("الحي").fill("حي العليا");
-  await main.getByLabel("نوع المبنى").selectOption("مبنى مستقل");
+  await main.getByText("مبنى مستقل", { exact: true }).click();
   await main.getByLabel("عدد الأدوار").fill("1");
   await main.getByRole("button", { name: WIZARD.next }).click();
   await expectHeading(page, WIZARD.bodiesTitle, context);
@@ -200,7 +200,8 @@ const openPlanStep = async (page, context) => {
 const answerRequirements = async (page, context) => {
   const main = page.locator("main");
   await expectHeading(page, WIZARD.requirementsTitle, context);
-  const groups = main.locator("fieldset");
+  // Only the live step: the step that is fading out (an inert copy without data-live) is not counted.
+  const groups = main.locator("[data-live] fieldset");
   const count = await groups.count();
   if (count !== 3) throw new Error(`${context}: expected 3 declaration questions, found ${count}.`);
   for (const [index, answer] of [[0, "نعم"], [1, "غير متأكد"], [2, "لا"]]) {

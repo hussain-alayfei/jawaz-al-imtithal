@@ -13,6 +13,10 @@ import {
   sampleSetup,
   stagesDone,
   stepStatus,
+  stepsDone,
+  PHASES,
+  WIZARD_STEPS,
+  phaseOf,
   withFacilityDefaults, readFailureMessage, isAreaValid,
   MAX_FLOORS,
   isFloorsValid,
@@ -113,6 +117,20 @@ describe("wizard steps", () => {
     ]);
     expect(stepStatus(6, 6, false)).toBe("current");
     expect(stepStatus(7, 7, true)).toBe("done");
+  });
+
+  it("groups the seven steps into three named phases, each step in exactly one", () => {
+    expect(PHASES.flatMap((phase) => phase.steps)).toEqual([...WIZARD_STEPS]);
+    expect(copy.web.wizard.phases).toHaveLength(PHASES.length);
+    expect(copy.web.wizard.phaseNotes).toHaveLength(PHASES.length);
+    expect(WIZARD_STEPS.map((step) => phaseOf(step))).toEqual([0, 0, 0, 1, 1, 2, 2]);
+  });
+
+  it("counts the done steps for the progress bar", () => {
+    expect(stepsDone(1)).toBe(0);
+    expect(stepsDone(4)).toBe(3);
+    expect(stepsDone(6, true)).toBe(6);
+    expect(stepsDone(7, true)).toBe(7);
   });
 
   it("fills only what a sample link needs before the review", () => {

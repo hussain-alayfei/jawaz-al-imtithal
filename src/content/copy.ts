@@ -201,6 +201,17 @@ export const copy = {
       overviewTitle: "سبع خطوات للحصول على جواز موائم",
       overviewLede: "من بيانات النشاط إلى ملخص الفحص، ويُقرأ ملف المخطط في متصفحك دون رفعه إلى خادم.",
       overviewStart: "ابدأ الآن",
+      /* What to have ready, beside «ابدأ الآن». */
+      overviewReadyTitle: "قبل البدء",
+      overviewReady: "جهّز ملف المخطط بصيغة IFC ومساحة الترخيص بالمتر المربع، أو جرّب أحد المخططات التجريبية.",
+      /* The seven steps fall into three phases (src/screens/check/logic.ts, PHASES): 1 to 3, 4 and 5, 6 and 7. */
+      phases: ["بيانات المنشأة", "الملف والمتطلبات", "الفحص والجواز"],
+      /* One line per phase on the overview. */
+      phaseNotes: [
+        "النشاط والموقع والجهات التي تنطبق متطلباتها على المنشأة.",
+        "ملف المخطط، وإقرارك بما لا يثبته الملف.",
+        "فحص الملف في متصفحك، ثم ملخص الجاهزية.",
+      ],
       steps: [
         "بيانات النشاط",
         "الموقع والمساحة",

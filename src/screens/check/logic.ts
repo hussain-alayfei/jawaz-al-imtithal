@@ -220,6 +220,21 @@ export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const WIZARD_STEPS: readonly WizardStep[] = [1, 2, 3, 4, 5, 6, 7];
 
+/**
+ * The seven steps in three phases, named in copy.web.wizard.phases: the facility's data (1 to 3), the file and
+ * the requirements (4 and 5), the check and the passport (6 and 7).
+ */
+export const PHASES: readonly { steps: readonly WizardStep[] }[] = [
+  { steps: [1, 2, 3] },
+  { steps: [4, 5] },
+  { steps: [6, 7] },
+];
+
+/** Index in PHASES of the phase a step belongs to. */
+export function phaseOf(step: WizardStep): number {
+  return PHASES.findIndex((phase) => phase.steps.includes(step));
+}
+
 export type StepStatus = "done" | "current" | "upcoming";
 
 /**
@@ -230,6 +245,11 @@ export function stepStatus(step: WizardStep, current: WizardStep, finished = fal
   if (step < current) return "done";
   if (step === current) return finished ? "done" : "current";
   return "upcoming";
+}
+
+/** How many steps the progress bar shows as done (all seven once the passport is open). */
+export function stepsDone(current: WizardStep, finished = false): number {
+  return WIZARD_STEPS.filter((step) => stepStatus(step, current, finished) === "done").length;
 }
 
 /**
