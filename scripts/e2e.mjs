@@ -24,16 +24,27 @@ const chromePath =
    a minute while it warms up, so steps that wait on it get a long timeout. */
 const SLOW = 240_000;
 
-/* The check is a three-step wizard (src/screens/Check.tsx, copy.web.wizard). */
+/* The check is an overview and a seven-step wizard (src/screens/Check.tsx, copy.web.wizard). */
 const WIZARD = {
-  projectTitle: "بيانات المشروع",
-  planTitle: "ملف المخطط",
-  reviewTitle: "المراجعة وبدء الفحص",
+  overviewTitle: "سبع خطوات للحصول على جواز موائم",
+  overviewStart: "ابدأ الآن",
+  activityTitle: "بيانات النشاط",
+  locationTitle: "الموقع والمساحة",
+  bodiesTitle: "الجهات ذات العلاقة",
+  bodiesConfirm: "اطّلعت على الجهات ذات العلاقة",
+  planTitle: "إرفاق الملفات",
+  requirementsTitle: "متطلبات المنشأة",
+  reviewTitle: "نسخة موائم الرقمية",
+  passportTitle: "جواز موائم",
+  passportNotice: "ملخص استرشادي مستقل، وليس موافقة أو ترخيصًا من أي جهة",
+  declared: "إقرار المستخدم",
   running: "جارٍ قراءة الملف وقياس العناصر ومقارنتها بالاشتراطات.",
   errorTitle: "تعذر إكمال الفحص.",
   next: "التالي",
   start: "بدء الفحص",
+  openModel: "عرض النموذج والنتائج",
   results: "عرض النتائج",
+  report: "التقرير",
   change: "تغيير الملف",
 };
 
@@ -139,11 +150,11 @@ const expectReview = async (page, context) => {
   }
 };
 
-/** From the review step: start the check, wait for its summary and open the results. */
+/** From the review step: start the check, wait for its summary and open the 3D results. */
 const startAndOpenResults = async (page, context) => {
   const main = page.locator("main");
   await main.getByRole("button", { name: WIZARD.start }).click();
-  const results = main.getByRole("button", { name: WIZARD.results });
+  const results = main.getByRole("button", { name: WIZARD.openModel });
   try {
     await results.waitFor({ timeout: 120_000 });
   } catch {
@@ -161,12 +172,41 @@ const runSample = async (page, sampleId) => {
   await startAndOpenResults(page, `Sample ${sampleId}`);
 };
 
-/** A fresh check up to step 2 (project data keeps its defaults). */
+/** A fresh check from the overview up to step 4 (the file), filling steps 1 to 3. */
 const openPlanStep = async (page, context) => {
+  const main = page.locator("main");
   await page.goto(`${baseUrl}/#/check`, { waitUntil: "networkidle" });
-  await expectHeading(page, WIZARD.projectTitle, context);
-  await page.locator("main").getByRole("button", { name: WIZARD.next }).click();
+  await expectHeading(page, WIZARD.overviewTitle, context);
+  await main.getByRole("button", { name: WIZARD.overviewStart }).click();
+  await expectHeading(page, WIZARD.activityTitle, context);
+  await main.getByLabel("الاسم التجاري").fill("مطعم الاختبار");
+  await main.getByRole("button", { name: WIZARD.next }).click();
+  await expectHeading(page, WIZARD.locationTitle, context);
+  await main.getByLabel("المدينة").selectOption("الرياض");
+  await main.getByLabel("الحي").fill("حي العليا");
+  await main.getByLabel("نوع المبنى").selectOption("مبنى مستقل");
+  await main.getByLabel("عدد الأدوار").fill("1");
+  await main.getByRole("button", { name: WIZARD.next }).click();
+  await expectHeading(page, WIZARD.bodiesTitle, context);
+  // The confirmation is required: «التالي» stays on the step until it is ticked.
+  await main.getByRole("button", { name: WIZARD.next }).click();
+  await expectText(page, "أكّد الاطلاع على الجهات ذات العلاقة", `${context}: step 3 validation`);
+  await main.getByLabel(WIZARD.bodiesConfirm).check();
+  await main.getByRole("button", { name: WIZARD.next }).click();
   await expectHeading(page, WIZARD.planTitle, context);
+};
+
+/** Step 5: one answer per declaration, then on to the review. */
+const answerRequirements = async (page, context) => {
+  const main = page.locator("main");
+  await expectHeading(page, WIZARD.requirementsTitle, context);
+  const groups = main.locator("fieldset");
+  const count = await groups.count();
+  if (count !== 3) throw new Error(`${context}: expected 3 declaration questions, found ${count}.`);
+  for (const [index, answer] of [[0, "نعم"], [1, "غير متأكد"], [2, "لا"]]) {
+    await groups.nth(index).getByRole("radio", { name: answer, exact: true }).check();
+  }
+  await main.getByRole("button", { name: WIZARD.next }).click();
 };
 
 const summary = {};
@@ -193,10 +233,22 @@ try {
   //    start, then the results with the real model.
   await page.locator('main a[href="#/check"]').first().click();
   await page.waitForURL(/#\/check/);
+  await expectHeading(page, WIZARD.overviewTitle, "Check overview");
+  if ((await page.locator("main ol li").count()) < 7) throw new Error("Check overview: fewer than seven step cards.");
+  await shot(page, "02a-check-overview");
   await page.goto(`${baseUrl}/#/check?sample=tiles`, { waitUntil: "domcontentloaded" });
   await expectReview(page, "Landing sample link");
   await shot(page, "02-check-review");
-  await startAndOpenResults(page, "Tiles sample");
+  // Start, then step 7 (the passport) and its «عرض النتائج».
+  await page.locator("main").getByRole("button", { name: WIZARD.start }).click();
+  await page.locator("main").getByRole("button", { name: WIZARD.openModel }).waitFor({ timeout: 120_000 });
+  await page.locator("main").getByRole("button", { name: new RegExp(`^${WIZARD.next}`) }).click();
+  await expectHeading(page, WIZARD.passportTitle, "Tiles passport");
+  await expectText(page, WIZARD.passportNotice, "Tiles passport notice");
+  await expectText(page, "11 من 14", "Tiles passport scope");
+  await shot(page, "02b-check-passport");
+  await page.locator("main").getByRole("button", { name: WIZARD.results }).click();
+  await page.waitForURL(/#\/results/, { timeout: 60_000 });
   await expectText(page, "11 من 14", "Tiles sample scope");
   await expectText(page, "4.5.2", "Tiles sample failing clause");
   summary.tilesCanvas = await ensureUsableCanvas(page, "Tiles results");
@@ -206,6 +258,7 @@ try {
   await page.getByRole("button", { name: /التقرير/ }).first().click();
   await page.waitForURL(/#\/report/);
   await expectText(page, "تقرير الفحص", "Report");
+  await expectHeading(page, WIZARD.declared, "Report declarations");
   await shot(page, "04-report");
   await page.goBack();
   await page.waitForURL(/#\/results/);
@@ -230,6 +283,7 @@ try {
   await check.getByRole("radio", { name: "submission-v1.ifc" }).waitFor();
   await shot(page, "06-check-file");
   await next.click();
+  await answerRequirements(page, "Contract file");
   await expectReview(page, "Contract file");
   await startAndOpenResults(page, "Contract file");
   await expectText(page, "مشهد توضيحي", "Contract file scene label");
@@ -241,6 +295,7 @@ try {
   await check.locator('input[type="file"]').setInputFiles(path.join(fixtureDirectory, "invalid", "unsupported-schema.ifc"));
   await check.getByRole("radio", { name: "unsupported-schema.ifc" }).waitFor();
   await check.getByRole("button", { name: WIZARD.next }).click();
+  await answerRequirements(page, "Rejected file");
   await expectReview(page, "Rejected file");
   await check.getByRole("button", { name: WIZARD.start }).click();
   await expectHeading(page, WIZARD.errorTitle, "Rejected file");
@@ -266,6 +321,7 @@ try {
   await ensureNoHorizontalScroll(phone, "11-phone-check-plan");
   await phone.locator("main").getByText("مطعم بمغسلة غير موصولة بالصرف").click();
   await phone.locator("main").getByRole("button", { name: WIZARD.next }).click();
+  await answerRequirements(phone, "Phone check");
   await expectReview(phone, "Phone check");
   await ensureNoHorizontalScroll(phone, "12-phone-check-review");
 

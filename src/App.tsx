@@ -70,7 +70,7 @@ function sectionFromHash(hash: string): string | undefined {
   return match ? `home-${match[1]}` : undefined;
 }
 
-/** "#/check?sample=tiles" opens the check page on its review step with that ready sample chosen; the visitor starts the check. */
+/** "#/check?sample=tiles" skips the overview and opens the check page on its review step (step 6) with that ready sample chosen; the visitor starts the check. */
 function sampleFromHash(hash: string): SampleId | undefined {
   const query = hash.split("?")[1];
   if (!query) return undefined;
@@ -247,10 +247,14 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  /* A new activity brings its defaults, but keeps the area the visitor typed. */
+  /* A new activity brings its defaults, but keeps the area and the registration number the visitor typed. */
   const changeActivity = (next: ActivityId) => {
     setActivityId(next);
-    setFacility((previous) => ({ ...getDefaultFacility(next), area: previous.area }));
+    setFacility((previous) => ({
+      ...getDefaultFacility(next),
+      area: previous.area,
+      ...(previous.commercialRegistration ? { commercialRegistration: previous.commercialRegistration } : {}),
+    }));
   };
 
   const startCheck = () => {
@@ -337,6 +341,12 @@ export default function App() {
             setRun(nextRun);
             go("results");
           }}
+          onReport={(nextRun) => {
+            setAutoSample(undefined);
+            setRun(nextRun);
+            go("report");
+          }}
+          onNew={startCheck}
           onHome={() => go("landing")}
           onTwin={() => go("twin")}
         />

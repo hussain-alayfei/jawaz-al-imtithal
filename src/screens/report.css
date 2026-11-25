@@ -202,6 +202,50 @@
   color: var(--muted);
 }
 
+/* «إقرار المستخدم»: the visitor's declarations, a quiet list between the summary and the findings. */
+.rp-declared {
+  padding-block-start: 72px;
+}
+
+.rp-declared h2 {
+  font-size: var(--t-h3);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.rp-declared__list {
+  margin-block: 20px 0;
+  margin-inline: 0;
+  border-block-start: 1px solid var(--line);
+}
+
+.rp-declared__list > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding-block: 14px;
+  border-block-end: 1px solid var(--line);
+}
+
+.rp-declared__list dt {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.rp-declared__list dt .rp-finding__no {
+  margin-inline-end: 6px;
+}
+
+.rp-declared__list dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 /* Groups and findings */
 .rp-group {
   padding-block-start: 96px;
@@ -690,8 +734,35 @@
     padding-block-start: 0;
   }
 
-  /* The first group follows the summary on page 1, so the first page is never left half empty. */
-  .rp-summary + .rp-group {
+  /* The declarations stay with the summary on page 1. */
+  .rp-declared {
+    padding-block-start: 18px;
+    break-inside: avoid;
+  }
+
+  .rp-declared h2 {
+    font-size: 18px;
+  }
+
+  .rp-declared__list {
+    margin-block-start: 8px;
+    border-color: #9a9a9a;
+  }
+
+  .rp-declared__list > div {
+    padding-block: 5px;
+    border-color: #9a9a9a;
+  }
+
+  .rp-declared__list dt,
+  .rp-declared__list dd {
+    font-size: 12.5px;
+  }
+
+  /* The first group follows the summary (and the declarations) on page 1, so the first page is never left
+     half empty. */
+  .rp-summary + .rp-group,
+  .rp-declared + .rp-group {
     break-before: auto;
     padding-block-start: 28px;
   }

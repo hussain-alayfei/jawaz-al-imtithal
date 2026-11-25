@@ -13,7 +13,16 @@ import {
   sampleSetup,
   stagesDone,
   stepStatus,
-  withFacilityDefaults, readFailureMessage, isAreaValid } from "./logic";
+  withFacilityDefaults, readFailureMessage, isAreaValid,
+  MAX_FLOORS,
+  isFloorsValid,
+  isProjectNameValid,
+  isRegistrationValid,
+  normalizeRegistration,
+  parseFloors,
+  formatFloors,
+} from "./logic";
+import { DECLARATIONS, answerLabel, declarationsComplete } from "./declarations";
 
 describe("check screen helpers", () => {
   it("accepts only .ifc files up to 50 MB", () => {
@@ -99,8 +108,11 @@ describe("wizard steps", () => {
   });
 
   it("shows the last step as done once the check has finished", () => {
-    expect([1, 2, 3].map((step) => stepStatus(step as 1 | 2 | 3, 3, true))).toEqual(["done", "done", "done"]);
-    expect(stepStatus(3, 3, false)).toBe("current");
+    expect([1, 2, 3, 4, 5, 6, 7].map((step) => stepStatus(step as 1, 6, true))).toEqual([
+      "done", "done", "done", "done", "done", "done", "upcoming",
+    ]);
+    expect(stepStatus(6, 6, false)).toBe("current");
+    expect(stepStatus(7, 7, true)).toBe("done");
   });
 
   it("fills only what a sample link needs before the review", () => {
@@ -112,5 +124,50 @@ describe("wizard steps", () => {
   it("formats the chosen file's size", () => {
     expect(formatBytes(882_390)).toBe("861.7 KB");
     expect(formatBytes(2_380_763)).toBe("2.3 MB");
+  });
+
+  it("accepts an empty commercial registration number or exactly 10 digits", () => {
+    expect(isRegistrationValid("")).toBe(true);
+    expect(isRegistrationValid("   ")).toBe(true);
+    expect(isRegistrationValid("1010123456")).toBe(true);
+    expect(isRegistrationValid("١٠١٠١٢٣٤٥٦")).toBe(true);
+    expect(isRegistrationValid("1010 123 456")).toBe(true);
+    expect(isRegistrationValid("101012345")).toBe(false);
+    expect(isRegistrationValid("10101234567")).toBe(false);
+    expect(isRegistrationValid("10101234a6")).toBe(false);
+    expect(isRegistrationValid("-101012345")).toBe(false);
+    expect(normalizeRegistration("١٠١٠ ١٢٣٤٥٦")).toBe("1010123456");
+  });
+
+  it("reads the number of floors as a whole number from 1 to the limit", () => {
+    expect(parseFloors("2")).toBe(2);
+    expect(parseFloors("٣")).toBe(3);
+    expect(parseFloors(" 1 ")).toBe(1);
+    expect(parseFloors("1.5")).toBe(0);
+    expect(parseFloors("")).toBe(0);
+    expect(parseFloors("abc")).toBe(0);
+    expect(parseFloors("-2")).toBe(0);
+    expect(isFloorsValid(1)).toBe(true);
+    expect(isFloorsValid(MAX_FLOORS)).toBe(true);
+    expect(isFloorsValid(0)).toBe(false);
+    expect(isFloorsValid(MAX_FLOORS + 1)).toBe(false);
+    expect(isFloorsValid(2.5)).toBe(false);
+    expect(formatFloors(0)).toBe("");
+    expect(formatFloors(3)).toBe("3");
+  });
+
+  it("requires a trade name", () => {
+    expect(isProjectNameValid("مطعم النخيل")).toBe(true);
+    expect(isProjectNameValid("   ")).toBe(false);
+  });
+
+  it("asks about the three clauses the file cannot prove, and needs an answer for each", () => {
+    expect(DECLARATIONS.map((item) => item.clause)).toEqual(["4.3.2", "4.7.1", "4.4.1"]);
+    expect(DECLARATIONS.every((item) => item.subject.length > 0)).toBe(true);
+    expect(declarationsComplete(undefined)).toBe(false);
+    expect(declarationsComplete({ facade: "yes", ventilation: "no" })).toBe(false);
+    expect(declarationsComplete({ facade: "yes", ventilation: "no", access: "unsure" })).toBe(true);
+    expect(answerLabel(undefined)).toBe("لم يُجب");
+    expect(answerLabel("unsure")).toBe("غير متأكد");
   });
 });

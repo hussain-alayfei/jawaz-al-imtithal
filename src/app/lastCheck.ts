@@ -10,6 +10,8 @@ import type { IfcUpload } from "../ifc/types";
 export interface LastCheck {
   upload: IfcUpload;
   activityId: ActivityId;
+  /** As the check read it, with the commercial registration number and the visitor's declarations (the report's
+      «إقرار المستخدم»); entries saved before these fields existed simply lack them. */
   facility: FacilityDetails;
   savedAt: number;
 }

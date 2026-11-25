@@ -281,7 +281,7 @@ export const copy = {
       declarationsLede: "بنود لا يثبتها ملف المخطط. أجب عن كل منها بحسب حال منشأتك.",
       declarationsError: "أجب عن كل الأسئلة للمتابعة، ويمكنك اختيار «غير متأكد».",
       /* Step 6 */
-      reviewTitle: "مراجعة البيانات",
+      reviewLede: "راجع ما أدخلته، ثم ابدأ فحص الملف. تُبنى النسخة الرقمية من ملف المخطط في متصفحك.",
       reviewActivity: "النشاط",
       reviewArea: "مساحة الترخيص",
       reviewFile: "ملف المخطط",
@@ -297,6 +297,7 @@ export const copy = {
       /* Step 7 */
       passportLabel: "ملخص الجاهزية",
       passportNotice: "ملخص استرشادي مستقل، وليس موافقة أو ترخيصًا من أي جهة.",
+      passportPlace: "المدينة والحي",
       passportDate: "تاريخ الفحص",
       passportCounts: "نتيجة البنود",
       results: "عرض النتائج",

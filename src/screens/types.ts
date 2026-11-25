@@ -18,10 +18,15 @@ export interface CheckProps {
   facility: FacilityDetails;
   onActivityChange: (activityId: ActivityId) => void;
   onFacilityChange: (facility: FacilityDetails) => void;
-  /** When set, choose this sample and open the review step; the check starts only from «ابدأ الفحص». */
+  /** When set, skip the overview, choose this sample and open the review step (step 6); the check starts only
+      from «بدء الفحص». */
   autoSample?: SampleId;
-  /** Called once the check finished; the shell then shows the results screen. */
+  /** Open the results screen for a finished check («عرض النموذج والنتائج», «عرض النتائج»). */
   onDone: (run: ComplianceRun) => void;
+  /** Open the report for a finished check (step 7, «التقرير»). */
+  onReport: (run: ComplianceRun) => void;
+  /** Start a new check from the overview (step 7, «فحص جديد»). */
+  onNew: () => void;
   onHome: () => void;
   /** Open the digital twin studio (for the illustrative BIM library). */
   onTwin: () => void;

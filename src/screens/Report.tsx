@@ -22,6 +22,7 @@ import {
   tallyOf,
   type FindingGroup,
 } from "./results/findings";
+import { DECLARATIONS, DECLARATION_NOTE, DECLARATION_TITLE, answerLabel } from "./check/declarations";
 import "./report.css";
 
 /* Local strings (missing from copy.ts). */
@@ -200,6 +201,7 @@ export default function Report({ run, onBack, notify }: ReportProps) {
   const scopeText = scopeOf(run);
   const activity = activityOf(run);
   const area = areaOf(run);
+  const declarations = run.facility?.declarations;
 
   const downloadReport = () => {
     const sections = groups
@@ -276,6 +278,12 @@ blockquote{margin:12px 0 0;padding-inline-start:14px;border-inline-start:2px sol
 <h2>${escapeHtml(copy.report.summary)}</h2>
 <p>${escapeHtml(copy.results.scope)}: ${escapeHtml(scopeText)}</p>
 <p class="counts"><span>${summary.failed} ${escapeHtml(copy.status.fail)}</span><span>${summary.unknown} ${escapeHtml(copy.status.unknown)}</span><span>${summary.passed} ${escapeHtml(copy.status.pass)}</span></p>
+<h2>${escapeHtml(DECLARATION_TITLE)}</h2>
+<p class="note">${escapeHtml(DECLARATION_NOTE)}</p>
+<table><tbody>${DECLARATIONS.map(
+      (item) =>
+        `<tr><th>${escapeHtml(`${item.clause} ${item.subject}`)}</th><td>${escapeHtml(answerLabel(declarations?.[item.id]))}</td></tr>`,
+    ).join("")}</tbody></table>
 ${sections}
 <hr>
 <p class="foot">${escapeHtml(copy.report.disclaimer)}<br>${escapeHtml(copy.footer.basis)}</p>
@@ -387,6 +395,23 @@ ${sections}
             </li>
           </ul>
           {findings.length === 0 && <p className="rp-note">{copy.results.empty}</p>}
+        </section>
+
+        {/* The visitor's own answers for clauses the file cannot prove. Shown as entered; no clause's status
+            depends on them. */}
+        <section className="rp-declared" aria-labelledby="rp-declared-title">
+          <h2 id="rp-declared-title">{DECLARATION_TITLE}</h2>
+          <p className="rp-note">{DECLARATION_NOTE}</p>
+          <dl className="rp-declared__list">
+            {DECLARATIONS.map((item) => (
+              <div key={item.id}>
+                <dt>
+                  <span className="rp-finding__no">{item.clause}</span> {item.subject}
+                </dt>
+                <dd>{answerLabel(declarations?.[item.id])}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {clauseGroups.map((group) => (
